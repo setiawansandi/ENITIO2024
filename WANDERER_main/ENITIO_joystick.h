@@ -60,4 +60,4 @@ class Joystick{
         }
 };
 
-Joystick Player_joystick;
+Joystick Player_joystick, MainMenu_joystick;

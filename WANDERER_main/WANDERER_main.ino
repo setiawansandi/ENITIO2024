@@ -1,10 +1,12 @@
 #include "ENITIO_enums.h"
+#include "ENITIO_const.h"
 #include "ENITIO_ir.h"
 #include "ENITIO_joystick.h"
 #include "ENITIO_buzzer.h"
 #include "ENITIO_EspNOW.h"
 #include "ENITIO_OLED.h"
 #include "ENITIO_player_bluetooth.h"
+#include "MainMenu.h"
 #include "TreasureHuntPlayer.h"
 
 TaskHandle_t backgroundTask;
@@ -50,5 +52,10 @@ void setup() {
 }
 
 void loop() {
-      PLAYER.gameMainLoop();
+  if (currentProcess == MainMenuProcess){
+
+  }
+  else if (currentProcess == TreasureHuntProcess){
+    PLAYER.gameMainLoop();
+  }
 }

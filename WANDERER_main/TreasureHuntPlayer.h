@@ -13,7 +13,7 @@
 #define FEEDBACK_WAIT 5000
 
 #define EN_RECOVER_DURATION 10000
-#define MANA_DECAY_DURATION 10000
+#define MAX_EN_DECAY_DURATION 10000
 #define VIRUS_DECAY_DURATION 10000
 
 class TreasureHuntPlayer
@@ -40,7 +40,7 @@ class TreasureHuntPlayer
 
     unsigned long Nav_start = 0;
     unsigned long tempNoti_start = 0;
-    unsigned long last_mana_decay = 0;
+    unsigned long last_max_en_decay = 0;
     unsigned long last_en_recover = 0;
     unsigned long last_hp_decay = 0;
 
@@ -53,6 +53,8 @@ class TreasureHuntPlayer
     int LastL1TreasureCollected = -1;
 
     bool infectedWithVirus = 0;
+
+    bool gameStarted = 0;
 
   public:
     void setup_initial_state(int id, int og, bool isGL) {
@@ -123,15 +125,15 @@ class TreasureHuntPlayer
         En = 0;
         permNoti = "    You Are Killed!     ";
         unsigned long currTime = millis();
-        if (currTime - last_mana_decay >= MANA_DECAY_DURATION){
-          MANA--;
-          last_mana_decay = currTime;
+        if (currTime - last_max_en_decay >= MAX_EN_DECAY_DURATION){
+          MaxEn = max(MaxEn - 1, 0);
+          last_max_en_decay = currTime;
         }
       }
       else {
         permNoti = "";
         unsigned long currTime = millis();
-        last_mana_decay = currTime;
+        last_max_en_decay = currTime;
         if (En >= MaxEn){
           last_en_recover = currTime;
         }
@@ -161,8 +163,23 @@ class TreasureHuntPlayer
         }
       }
     }
+    
+    void handleJoystick_waiting(){
+      joystick_pos joystick_pos = Player_joystick.read_Joystick();
+      if (Player_joystick.get_state() == 0) {
+        switch (joystick_pos)
+        { 
+        case button:
+          currentProcess = MainMenuProcess;
+          break;
 
-    void handleJoystick(){
+        default:
+          break;
+        }
+      }
+    }
+
+    void handleJoystickInGame(){
       joystick_pos joystick_pos = Player_joystick.read_Joystick();
       if (Player_joystick.get_state() == 0) {
         switch (joystick_pos)
@@ -199,6 +216,11 @@ class TreasureHuntPlayer
         case button:
           if (lastPageNav != currentPage)
             currentPage = lastPageNav;
+          if (currentPage == exitPage) {
+            currentProcess = MainMenuProcess;
+            currentPage = mainPage; // reset current page
+            lastPageNav = currentPage;
+          } 
           break;
 
         default:
@@ -277,6 +299,10 @@ class TreasureHuntPlayer
         }
       }
     } ; 
+
+    void update_display_waiting(){
+      TreasureHunt_OLED.display_WaitingPage();
+    }
     
     void update_display() {
       String noti_to_display;
@@ -323,14 +349,36 @@ class TreasureHuntPlayer
       }
     };
 
+    int get_game_state(){
+      // retrieve game state from server
+      // 0 mean game did not start
+      // 1 mean in game
+      // once the game has started then we dunnid to check anymore
+   
+      if (!gameStarted) {
+        gameStarted = dbc.hasGameStarted();
+        if (gameStarted) {
+            // start BLE functions
+            setup_initial_state(id, og, isGL); // initialize Player
+        }
+        return gameStarted;
+      } else return 1;
+    }
+
     void gameMainLoop(){
-      handleJoystick();
-      sendAction();
-      receiveAction();
-      receiveFeedback();
-      update_player_state();
-      update_display();
-      update_sound();
+      if (!get_game_state()){
+        handleJoystick_waiting();
+        update_display_waiting();
+      }
+      else { 
+        handleJoystickInGame();
+        sendAction();
+        receiveAction();
+        receiveFeedback();
+        update_player_state();
+        update_display();
+        update_sound();
+      }
   };
 
   void gameBackgroundProcess(){
