@@ -36,6 +36,8 @@ flask-wtf==1.0.1
     # via -r requirements.in
 greenlet==1.1.2
     # via sqlalchemy
+importlib-resources==5.8.0
+    # via -r requirements.in
 itsdangerous==2.1.2
     # via
     #   flask
