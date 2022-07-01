@@ -64,6 +64,19 @@ const unsigned char enitioLogo [] PROGMEM = {
   0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 
 };
 
+void StartUpDisplay(){
+  display.clearDisplay();
+  display.setTextSize(1); // Draw SIZE
+
+  display.setTextColor(SSD1306_WHITE); 
+
+  display.drawBitmap(0, 4, enitioLogo, 128, 44, WHITE); 
+
+  display.setCursor(0, 56);
+  display.println("   Please wait ...   ");
+  display.display();
+}
+
 class MainMenu_OLED {
   private:
 
@@ -72,18 +85,197 @@ class MainMenu_OLED {
       display.clearDisplay();
       display.setTextSize(1); // Draw SIZE
 
-      display.setTextColor(SSD1306_BLACK, SSD1306_WHITE); // Draw 'inverse' text
+      display.setTextColor(SSD1306_WHITE); 
   
       display.drawBitmap(0, 4, enitioLogo, 128, 44, WHITE); 
 
-      display.setTextColor(SSD1306_WHITE);
-      display.setCursor(44, 56);
-      display.println(F("< Main >"));
+      switch (ProcessNav) {
+        case MainMenuProcess:
+          display.setCursor(26, 56);
+          display.println(F("< Main Menu >"));
+          break;
+
+        case ProfileProcess:
+          display.setCursor(34, 56);
+          display.print(F("< "));
+          display.setTextColor(SSD1306_BLACK, SSD1306_WHITE);
+          display.print(F("Profile"));
+          display.setTextColor(SSD1306_WHITE);
+          display.print(F(" >"));
+          break;
+
+        case TreasureHuntProcess:
+          display.setCursor(15, 56);
+          display.print(F("< "));
+          display.setTextColor(SSD1306_BLACK, SSD1306_WHITE);
+          display.print(F("Treasure Hunt"));
+          display.setTextColor(SSD1306_WHITE);
+          display.print(F(" >"));
+          break;
+
+        case SnakeGameProcess:
+          display.setCursor(40, 56);
+          display.print(F("< "));
+          display.setTextColor(SSD1306_BLACK, SSD1306_WHITE);
+          display.print(F("Snake"));
+          display.setTextColor(SSD1306_WHITE);
+          display.print(F(" >"));
+          break;
+
+        case MusicProcess:
+          display.setCursor(40, 56);
+          display.print(F("< "));
+          display.setTextColor(SSD1306_BLACK, SSD1306_WHITE);
+          display.print(F("Music"));
+          display.setTextColor(SSD1306_WHITE);
+          display.print(F(" >"));
+          break;
+
+        case FactoryResetProcess:
+          display.setCursor(15, 56);
+          display.print(F("< "));
+          display.setTextColor(SSD1306_BLACK, SSD1306_WHITE);
+          display.print(F("Factory Reset"));
+          display.setTextColor(SSD1306_WHITE);
+          display.print(F(" >"));
+          break;
+
+        case CreditProcess:
+          display.setCursor(37, 56);
+          display.print(F("< "));
+          display.setTextColor(SSD1306_BLACK, SSD1306_WHITE);
+          display.print(F("Credit"));
+          display.setTextColor(SSD1306_WHITE);
+          display.print(F(" >"));
+          break;
+      }
       display.display();
     }
 };
 
 MainMenu_OLED MainMenu_OLED;
+
+class Profile_OLED {
+  private:
+
+  public:
+    void display_CompleteProfilePage(int OG, int isGL, String name){
+      display.clearDisplay();
+      display.setTextSize(1); // Draw SIZE
+      display.setTextColor(SSD1306_BLACK, SSD1306_WHITE); // Draw 'inverse' text
+      display.setCursor(0, 0);
+      display.println(F("     Your Profile    ")); 
+
+      display.setTextColor(SSD1306_WHITE);
+      display.setCursor(0, 12);
+      display.print("Name: ");
+      display.println(name);
+
+      display.setCursor(0, 24);
+
+      if (isGL == 1){
+        display.println("Freshman"); 
+      }
+      else {
+        display.println("Group Leader");
+      }
+
+      display.setCursor(0, 36);
+      switch (OG){
+          case ALATAR:
+            display.println("OG: Alatar ");
+            break;
+          case DRACHEN:
+            display.println("OG: Drachen ");
+            break;
+          case EVA:
+            display.println("OG: Eva ");
+            break;
+          case INVICTA:
+            display.println("OG: Invicta ");
+            break;
+        }
+
+      display.setCursor(10, 56);
+      display.setTextColor(SSD1306_BLACK, SSD1306_WHITE);
+      display.println("(Press to go back)"); 
+      display.display();
+    }
+
+    void display_OGregisteringPage(int OG_pointer){
+      display.clearDisplay();
+      // change text display here
+      display.setTextSize(1);
+      display.setTextColor(SSD1306_BLACK, SSD1306_WHITE);
+
+      display.setCursor(0,0);
+      // menu title
+      display.println(" Choose your OG...   ");
+      //---------------------------------
+
+      display.setTextColor(SSD1306_WHITE);
+
+      display.setCursor(10, 12);
+      
+      display.println("ALATAR");
+
+      display.setCursor(10, 22);
+      
+      display.println("DRACHEN");
+
+      display.setCursor(10, 32);
+      
+      display.println("EVA");
+
+      display.setCursor(10, 42);
+      
+      display.println("INVICTA");
+      
+      // prints the cursor to highlight menu items
+      display.setCursor(2, (OG_pointer * 10) + 12);
+      display.println(">");
+
+      display.setCursor(14, 56);
+      display.setTextColor(SSD1306_BLACK, SSD1306_WHITE);
+      display.println("(Press to choose)"); 
+
+      display.display();
+    }
+
+    void display_isGLregisteringPage(int isGL_pointer){
+      display.clearDisplay();
+      // change text display here
+      display.setTextSize(1);
+      display.setTextColor(SSD1306_BLACK, SSD1306_WHITE);
+
+      display.setCursor(0,0);
+      // menu title
+      display.println(" Are you a GL?       ");
+      //---------------------------------
+
+      display.setTextColor(SSD1306_WHITE);
+
+      display.setCursor(10, 12);
+      
+      display.println("YES");
+
+      display.setCursor(10, 22);
+      
+      display.println("NO");
+      
+      // prints the cursor to highlight menu items
+      display.setCursor(2, (isGL_pointer * 10) + 12);
+      display.println(">");
+
+      display.setCursor(14, 56);
+      display.setTextColor(SSD1306_BLACK, SSD1306_WHITE);
+      display.println("(Press to choose)"); 
+
+      display.display();
+    }
+};
+
+Profile_OLED Profile_OLED;
 
 const int mainPage = 0;
 const int powerupPage = 1;
@@ -152,10 +344,10 @@ class TreasureHunt_OLED {
           break;
 
          case powerupPage:
-          display.setCursor(28, 56);
+          display.setCursor(30, 56);
           display.print(F("< "));
           display.setTextColor(SSD1306_BLACK, SSD1306_WHITE);
-          display.print(F("Power-up"));
+          display.print(F("Power-Up"));
           display.setTextColor(SSD1306_WHITE);
           display.print(F(" >"));
           break;
@@ -191,7 +383,7 @@ class TreasureHunt_OLED {
     }
 
     void display_powerupPage(){
-
+      
     }
 
     void display_infoPage(int OG, int ID, int MANA, int MaxEn, String noti, int pageNav)
@@ -253,10 +445,10 @@ class TreasureHunt_OLED {
             break;
 
           case powerupPage:
-            display.setCursor(28, 56);
+            display.setCursor(30, 56);
             display.print(F("< "));
             display.setTextColor(SSD1306_BLACK, SSD1306_WHITE);
-            display.print(F("Power-up"));
+            display.print(F("Power-Up"));
             display.setTextColor(SSD1306_WHITE);
             display.print(F(" >"));
             break;
@@ -310,4 +502,3 @@ class TreasureHunt_OLED {
 };
 
 TreasureHunt_OLED TreasureHunt_OLED;
-

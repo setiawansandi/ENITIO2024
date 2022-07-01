@@ -1,5 +1,3 @@
-#include <esp_now.h>
-#include <WiFi.h>
 #include "ENITIO_wifi.h"
 
 typedef struct feedback_message {
@@ -35,63 +33,15 @@ class EspNOW {
     }
 
     void getDeviceMACAddress(int attacker_OG, int attacker_ID){
-//      int playerIdentifier = attacker_OG*pow(16,2) + attacker_ID;
-//      MAC_ADDRESS target_addr = dbc.getDeviceMACAddress(playerIdentifier);
-//      broadcastAddress[0] = target_addr.n1;
-//      broadcastAddress[1] = target_addr.n2;
-//      broadcastAddress[2] = target_addr.n3;
-//      broadcastAddress[3] = target_addr.n4;
-//      broadcastAddress[4] = target_addr.n5;
-//      broadcastAddress[5] = target_addr.n6;
-     if ((attacker_OG == 0) && (attacker_ID == 0)){
-      broadcastAddress[0] = 12;
-      broadcastAddress[1] = 184;
-      broadcastAddress[2] = 21;
-      broadcastAddress[3] = 246;
-      broadcastAddress[4] = 3;
-      broadcastAddress[5] = 240;
-     }
-     if ((attacker_OG == 0) && (attacker_ID == 1)){
-      broadcastAddress[0] = 12;
-      broadcastAddress[1] = 184;
-      broadcastAddress[2] = 21;
-      broadcastAddress[3] = 245;
-      broadcastAddress[4] = 231;
-      broadcastAddress[5] = 112;
-     }
-     if ((attacker_OG == 0) && (attacker_ID == 2)){
-      broadcastAddress[0] = 120;
-      broadcastAddress[1] = 33;
-      broadcastAddress[2] = 132;
-      broadcastAddress[3] = 146;
-      broadcastAddress[4] = 11;
-      broadcastAddress[5] = 184;
-     }
-     if ((attacker_OG == 1) && (attacker_ID == 0)){
-      broadcastAddress[0] = 12;
-      broadcastAddress[1] = 184;
-      broadcastAddress[2] = 21;
-      broadcastAddress[3] = 245;
-      broadcastAddress[4] = 233;
-      broadcastAddress[5] = 60;
-     }
-     if ((attacker_OG == 1) && (attacker_ID == 1)){
-      broadcastAddress[0] = 232;
-      broadcastAddress[1] = 49;
-      broadcastAddress[2] = 205;
-      broadcastAddress[3] = 215;
-      broadcastAddress[4] = 5;
-      broadcastAddress[5] = 12;
-     }
-     if ((attacker_OG == 1) && (attacker_ID == 2)){
-      broadcastAddress[0] = 232;
-      broadcastAddress[1] = 49;
-      broadcastAddress[2] = 205;
-      broadcastAddress[3] = 214;
-      broadcastAddress[4] = 248;
-      broadcastAddress[5] = 236;
-     }
-     }
+      int playerIdentifier = attacker_OG*pow(16,2) + attacker_ID;
+      MAC_ADDRESS target_addr = dbc.getDeviceMACAddress(playerIdentifier);
+      broadcastAddress[0] = target_addr.n1;
+      broadcastAddress[1] = target_addr.n2;
+      broadcastAddress[2] = target_addr.n3;
+      broadcastAddress[3] = target_addr.n4;
+      broadcastAddress[4] = target_addr.n5;
+      broadcastAddress[5] = target_addr.n6;
+    }
   
    void send_data(int attacker_OG, int attacker_ID, int attackee_OG, bool is_attackee_killed){
             // Register peer

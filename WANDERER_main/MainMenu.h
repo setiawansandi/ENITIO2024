@@ -1,5 +1,3 @@
-#define NAV_WAIT 4000
-
 class MainMenu {
     private:
         int lastProcessNav = 0;
@@ -7,7 +5,7 @@ class MainMenu {
     
     public:
         void handle_joystick(){
-            joystick_pos joystick_pos = MainMenu_joystick.read_Joystick();
+            joystick_pos joystick_pos = Player_joystick.read_Joystick();
             if (Player_joystick.get_state() == 0) {
                 switch (joystick_pos)
                 {
@@ -16,7 +14,7 @@ class MainMenu {
                     if (lastProcessNav > 6) lastProcessNav -= 7;
                     if (lastProcessNav < 0) lastProcessNav += 7;
                     Nav_start = millis();
-                    MainMenu_joystick.set_state();
+                    Player_joystick.set_state();
                     break;
 
                 case right:
@@ -24,12 +22,14 @@ class MainMenu {
                     if (lastProcessNav > 6) lastProcessNav -= 7;
                     if (lastProcessNav < 0) lastProcessNav += 7;
                     Nav_start = millis();
-                    MainMenu_joystick.set_state();
+                    Player_joystick.set_state();
                     break;
                 
                 case button:
                     if (lastProcessNav != currentProcess)
                         currentProcess = lastProcessNav;
+                    lastProcessNav = 0;
+                    Player_joystick.set_state();
                     break;
 
                 default:
@@ -54,6 +54,8 @@ class MainMenu {
 
         void MainMenuLoop(){
             handle_joystick();
-            update_display()
+            update_display();
         }
 };
+
+MainMenu My_MainMenu;

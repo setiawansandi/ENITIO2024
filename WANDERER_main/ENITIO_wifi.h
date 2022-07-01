@@ -1,5 +1,7 @@
 #include <HTTPClient.h>
 #include <Arduino_JSON.h>
+#include <esp_now.h>
+#include <WiFi.h>
 
 /**  WiFi Credentials **/
 #define WIFI_SSID "TP-Link_E45E"  // For some reason if your WIFI_SSID contains spaces it wont work
@@ -98,11 +100,27 @@ class DBConnection {
             return true;
         };
 
-        int hasGameStarted() {
+        bool registerWanderer(int OG, String mac_addr) {
+            String url = DATABASE_URL + "player_registration";
+            String httpRequestData = "{\"OG\": " + String(OG) + ", \"mac_address\": \"" + mac_addr + "\" }";
+            Serial.println(httpRequestData);
+            String jsonArray = POST_Request(url.c_str(), httpRequestData.c_str());
+            Serial.println(jsonArray);
+            return jsonArray != "{}";
+        };
+
+        bool hasGameStarted() {
             String url = DATABASE_URL + "game_status";
             String jsonArray = GET_Request(url.c_str());
-            return retrieveParameterFromJSONArray("has_game_started", jsonArray).toInt();
+            String gameStatus = retrieveParameterFromJSONArray("has_game_started", jsonArray);
+            return gameStatus == "1";
         }
+
+        int getPlayerID(int OG, String mac_addr) {
+            String url = DATABASE_URL + "player_id/" + String(OG) + "/" + mac_addr;
+            String jsonArray = GET_Request(url.c_str());
+            return retrieveParameterFromJSONArray("player_id", jsonArray).toInt();
+        };
         
         MAC_ADDRESS getDeviceMACAddress(int playerIdentifier) {
             String url = DATABASE_URL + "player/" + String(playerIdentifier);
