@@ -14,6 +14,10 @@
 
 // BLE Variables
 NimBLEScan *pScan;
+NimBLEServer* pServer;
+NimBLEAdvertising* pAdvertising;
+NimBLEService* pVirusService;
+NimBLECharacteristic* pVirusCharacteristic;
 int scanTime = 2;
 
 class PlayerBluetooth {
@@ -24,7 +28,7 @@ class PlayerBluetooth {
             pScan = NimBLEDevice::getScan();
             pScan->setActiveScan(true);
         };
-        bool scan() {
+        void scan() {
             // Returns all devices found after scanTime seconds
             NimBLEScanResults results = pScan->start(2, false);
             int virus_device_counter = 0;
@@ -46,6 +50,28 @@ class PlayerBluetooth {
             }
             if (virus_device_counter == 0) isThereVirus = false;
             
+        };
+
+        void startSpreadingVirus() {
+            pServer = NimBLEDevice::createServer();
+            // Create Virus Service
+            pVirusService = pServer->createService(virusServiceUUID);
+            pVirusCharacteristic = pVirusService->createCharacteristic(
+                                      virusCharacteristicUUID,
+                                      NIMBLE_PROPERTY::READ | NIMBLE_PROPERTY::WRITE
+                                    );
+            pVirusService->start();
+
+            // Prepare Advertising
+            pAdvertising = NimBLEDevice::getAdvertising();
+            pAdvertising->setScanResponse(true);
+            pAdvertising->addServiceUUID(pVirusService->getUUID());
+            pAdvertising->start();
+        };
+
+        void stopSpreadingVirus() {
+            pAdvertising->stop();
+            pAdvertising->removeServiceUUID(pVirusService->getUUID());
         };
 };
 

@@ -9,8 +9,8 @@
 #define EAP_ANONYMOUS_IDENTITY  ""
 #define EAP_IDENTITY  "@student.main.ntu.edu.sg"
 #define EAP_PASSWORD  ""
-#define HOME_WIFI_SSID "garage@eee"
-#define HOME_WIFI_PASSWORD "garage@eee"
+#define HOME_WIFI_SSID "TP-Link_E45E"
+#define HOME_WIFI_PASSWORD "63824377"
 const char *ssid = "NTUSECURE";
 int wifi_reconnect_counter = 0;
 

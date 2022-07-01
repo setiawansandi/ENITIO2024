@@ -15,6 +15,8 @@
 #define MAX_EN_DECAY_DURATION 10000
 #define VIRUS_DECAY_DURATION 10000
 
+int game_started_buffer = 0;
+
 class TreasureHuntPlayer
 {
   private:
@@ -53,9 +55,13 @@ class TreasureHuntPlayer
 
     bool infectedWithVirus = 0;
 
-    bool gameStarted = 0;
+    bool isFeedbacking = false;
 
+    int OG_to_fb;
+    int ID_to_fb;
+   
   public:
+    bool gameStarted = 0;
     void setup_initial_state(int id, int og, bool isGL) {
       ID = id;
       OG = og ;
@@ -167,6 +173,7 @@ class TreasureHuntPlayer
             if (currTime - last_hp_decay >= VIRUS_DECAY_DURATION) {
                 HP--;
                 EEPROM.write(PLAYER_HP_add, HP);
+                Player_Bluetooth.startSpreadingVirus();
                 last_hp_decay = currTime;
             };
             permNoti = "    You Are Infected!   ";
@@ -178,6 +185,7 @@ class TreasureHuntPlayer
                 HP--;
                 EEPROM.write(PLAYER_HP_add, HP);
                 last_hp_decay = currTime;
+                Player_Bluetooth.startSpreadingVirus();
                 permNoti = "    You Are Infected!   ";
             }
         }
@@ -275,7 +283,11 @@ class TreasureHuntPlayer
           Serial.printf("Attacked. Current HP: %d \n", HP);
           tempNoti = "       Attacked      ";
           tempNoti_start = millis();
-          feedback(OG_, ID_);
+
+          OG_to_fb = OG_;
+          ID_to_fb = ID_;
+          isFeedbacking = true;
+          // feedback(OG_, ID_);
           Player_Buzzer.sound(NOTE_E3);
         }
         break;
@@ -286,6 +298,7 @@ class TreasureHuntPlayer
         tempNoti = "        Healed       ";
         tempNoti_start = millis();
         infectedWithVirus = 0;
+        Player_Bluetooth.stopSpreadingVirus();
         break;
       
       default:
@@ -381,7 +394,7 @@ class TreasureHuntPlayer
       // once the game has started then we dunnid to check anymore
    
       if (!gameStarted) {
-        gameStarted = dbc.hasGameStarted();
+        gameStarted = game_started_buffer;
         if (gameStarted) {
           int og = EEPROM.read(OG_add);
           bool isGL = EEPROM.read(isGL_add);
@@ -411,8 +424,19 @@ class TreasureHuntPlayer
   };
 
   void gameBackgroundProcess(){
-    Player_Bluetooth.scan();
-    delay(50);
+    if (isFeedbacking) {
+      feedback(OG_to_fb, ID_to_fb);
+      isFeedbacking = false;
+    }
+    else {
+      if (!infectedWithVirus){
+        Player_Bluetooth.scan();
+        delay(50);
+      }
+      else{
+        delay(50);
+      }
+    }
   }
 };
 

@@ -256,7 +256,7 @@ int get_game_state(){
 
 int receive_id(){
       // receive ID from server, need to wait for all the Treasure to subscribe to the server first then the server will randomly assign ID
-      int id = 3; // temp
+      int id = 1; // temp
       return id;
 }
 
