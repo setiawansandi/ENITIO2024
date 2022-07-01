@@ -1,9 +1,3 @@
-/*  enums_ENITIO.h
-
-    This header file contains enumeration of all IR codes used in ENITIO, and provide
-    functions to simplify IR usage in Navitas and games.
-*/
-
 #ifndef ENITIO_enums_h
 #define ENITIO_enums_h
 

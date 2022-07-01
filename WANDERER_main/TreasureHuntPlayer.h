@@ -9,11 +9,10 @@
 #define TEMP_NOTI_WAIT 6000 // including being Attacked, Healed, Successfully Attack and Successfully Collect
 #define NOTI_SOUND_DURATION 200
 #define TEMP_NOTI_BLINKING 300
-#define NAV_WAIT 4000
 #define FEEDBACK_WAIT 5000
 
 #define EN_RECOVER_DURATION 10000
-#define MANA_DECAY_DURATION 10000
+#define MAX_EN_DECAY_DURATION 10000
 #define VIRUS_DECAY_DURATION 10000
 
 class TreasureHuntPlayer
@@ -40,7 +39,7 @@ class TreasureHuntPlayer
 
     unsigned long Nav_start = 0;
     unsigned long tempNoti_start = 0;
-    unsigned long last_mana_decay = 0;
+    unsigned long last_max_en_decay = 0;
     unsigned long last_en_recover = 0;
     unsigned long last_hp_decay = 0;
 
@@ -54,11 +53,28 @@ class TreasureHuntPlayer
 
     bool infectedWithVirus = 0;
 
+    bool gameStarted = 0;
+
   public:
     void setup_initial_state(int id, int og, bool isGL) {
       ID = id;
       OG = og ;
       _isGL = isGL;
+
+      if (EEPROM.read(PLAYER_enable_add) == 0){
+        EEPROM.write(PLAYER_enable_add, 1);
+        EEPROM.commit();
+      }
+      else {
+        HP = EEPROM.read(PLAYER_HP_add);
+        En = EEPROM.read(PLAYER_EN_add);
+        MaxHP = EEPROM.read(PLAYER_MaxHP_add);
+        MaxEn = EEPROM.read(PLAYER_MaxEn_add);
+        MANA = EEPROM.read(PLAYER_MANA_add);
+        numKilled = EEPROM.read(PLAYER_numKilled_add);
+        numL1Treasure = EEPROM.read(PLAYER_numL1Treasure_add);
+        numL2Treasure = EEPROM.read(PLAYER_numL2Treasure_add);
+      }
     }
 
     void sendAction() {
@@ -84,6 +100,7 @@ class TreasureHuntPlayer
         start_receiving_feedback = millis();
 
         En--;
+        EEPROM.write(PLAYER_EN_add, En);
       }
     };
 
@@ -121,23 +138,26 @@ class TreasureHuntPlayer
     void update_player_state(){
       if (HP == 0){
         En = 0;
+        EEPROM.write(PLAYER_EN_add, En);
         permNoti = "    You Are Killed!     ";
         unsigned long currTime = millis();
-        if (currTime - last_mana_decay >= MANA_DECAY_DURATION){
-          MANA--;
-          last_mana_decay = currTime;
+        if (currTime - last_max_en_decay >= MAX_EN_DECAY_DURATION){
+          MaxEn = max(MaxEn - 1, 0);
+          EEPROM.write(PLAYER_MaxEn_add, MaxEn);
+          last_max_en_decay = currTime;
         }
       }
       else {
         permNoti = "";
         unsigned long currTime = millis();
-        last_mana_decay = currTime;
+        last_max_en_decay = currTime;
         if (En >= MaxEn){
           last_en_recover = currTime;
         }
         else {
           if (currTime - last_en_recover >= EN_RECOVER_DURATION){
             En++ ;
+            EEPROM.write(PLAYER_EN_add, En);
             last_en_recover = currTime;
           }
         }
@@ -146,6 +166,7 @@ class TreasureHuntPlayer
         if (infectedWithVirus) {
             if (currTime - last_hp_decay >= VIRUS_DECAY_DURATION) {
                 HP--;
+                EEPROM.write(PLAYER_HP_add, HP);
                 last_hp_decay = currTime;
             };
             permNoti = "    You Are Infected!   ";
@@ -155,14 +176,32 @@ class TreasureHuntPlayer
             if (Player_Bluetooth.isThereVirus) {
                 infectedWithVirus = true;
                 HP--;
+                EEPROM.write(PLAYER_HP_add, HP);
                 last_hp_decay = currTime;
                 permNoti = "    You Are Infected!   ";
             }
         }
       }
+      EEPROM.commit();
+    }
+    
+    void handleJoystick_waiting(){
+      joystick_pos joystick_pos = Player_joystick.read_Joystick();
+      if (Player_joystick.get_state() == 0) {
+        switch (joystick_pos)
+        { 
+        case button:
+          currentProcess = MainMenuProcess;
+          Player_joystick.set_state();
+          break;
+
+        default:
+          break;
+        }
+      }
     }
 
-    void handleJoystick(){
+    void handleJoystickInGame(){
       joystick_pos joystick_pos = Player_joystick.read_Joystick();
       if (Player_joystick.get_state() == 0) {
         switch (joystick_pos)
@@ -199,6 +238,12 @@ class TreasureHuntPlayer
         case button:
           if (lastPageNav != currentPage)
             currentPage = lastPageNav;
+          if (currentPage == exitPage) {
+            currentProcess = MainMenuProcess;
+            currentPage = mainPage; // reset current page
+            lastPageNav = currentPage;
+          } 
+          Player_joystick.set_state();
           break;
 
         default:
@@ -226,6 +271,7 @@ class TreasureHuntPlayer
       case attack:
         if(HP > 0) {
           HP = max(HP - MANA_, 0);
+          EEPROM.write(PLAYER_HP_add, HP);
           Serial.printf("Attacked. Current HP: %d \n", HP);
           tempNoti = "       Attacked      ";
           tempNoti_start = millis();
@@ -236,6 +282,7 @@ class TreasureHuntPlayer
         
       case heal:
         HP = min(HP + MANA_, MaxHP);
+        EEPROM.write(PLAYER_HP_add, HP);
         tempNoti = "        Healed       ";
         tempNoti_start = millis();
         infectedWithVirus = 0;
@@ -277,6 +324,10 @@ class TreasureHuntPlayer
         }
       }
     } ; 
+
+    void update_display_waiting(){
+      TreasureHunt_OLED.display_WaitingPage();
+    }
     
     void update_display() {
       String noti_to_display;
@@ -310,8 +361,8 @@ class TreasureHuntPlayer
         case achievementPage:
           TreasureHunt_OLED.display_achievementPage(numKilled, numL1Treasure, numL2Treasure, noti_to_display, lastPageNav);
           break;
-        case leaderboardPage:
-          TreasureHunt_OLED.display_leaderboardPage();
+        case powerupPage:
+          TreasureHunt_OLED.display_powerupPage();
           break;
       }
     }
@@ -323,14 +374,40 @@ class TreasureHuntPlayer
       }
     };
 
+    int get_game_state(){
+      // retrieve game state from server
+      // 0 mean game did not start
+      // 1 mean in game
+      // once the game has started then we dunnid to check anymore
+   
+      if (!gameStarted) {
+        gameStarted = dbc.hasGameStarted();
+        if (gameStarted) {
+          int og = EEPROM.read(OG_add);
+          bool isGL = EEPROM.read(isGL_add);
+          int id = dbc.getPlayerID(og, my_MAC_address);
+          EEPROM.write(ID_add, id);
+          Serial.println(id);
+          setup_initial_state(id, og, isGL); // initialize Player
+        }
+        return gameStarted;
+      } else return 1;
+    }
+
     void gameMainLoop(){
-      handleJoystick();
-      sendAction();
-      receiveAction();
-      receiveFeedback();
-      update_player_state();
-      update_display();
-      update_sound();
+      if (!get_game_state()){
+        handleJoystick_waiting();
+        update_display_waiting();
+      }
+      else { 
+        handleJoystickInGame();
+        sendAction();
+        receiveAction();
+        receiveFeedback();
+        update_player_state();
+        update_display();
+        update_sound();
+      }
   };
 
   void gameBackgroundProcess(){
