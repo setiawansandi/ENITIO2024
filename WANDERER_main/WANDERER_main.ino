@@ -18,8 +18,12 @@ TaskHandle_t backgroundTask;
 void backgroundTaskCode(void * pvParameters){
   for ( ; ; ) {
     if (currentProcess == TreasureHuntProcess){
-      PLAYER.gameBackgroundProcess();
-      delay(50);
+      if (!PLAYER.gameStarted){
+        game_started_buffer = dbc.hasGameStarted();
+      }
+      else{
+        PLAYER.gameBackgroundProcess();
+      }
     }
     else{
       delay(50);
@@ -39,6 +43,8 @@ void setup() {
       // initialize serial
       Serial.begin(115200);
       EEPROM.begin(EEPROM_SIZE);
+
+      clearEEPROM();
 
       // check OLED display
       if(!display.begin(SSD1306_SWITCHCAPVCC, SCREEN_ADDRESS)) {

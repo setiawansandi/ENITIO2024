@@ -257,11 +257,11 @@ class Profile_OLED {
 
       display.setCursor(10, 12);
       
-      display.println("YES");
+      display.println("NO");
 
       display.setCursor(10, 22);
       
-      display.println("NO");
+      display.println("YES");
       
       // prints the cursor to highlight menu items
       display.setCursor(2, (isGL_pointer * 10) + 12);

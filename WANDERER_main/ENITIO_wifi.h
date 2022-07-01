@@ -51,13 +51,30 @@ class DBConnection {
                 Serial.println("Parsing input failed!");
                 return mac_addr;
             }
+            Serial.println(JSON.stringify(json_obj["mac_address_part0"]));
+            String n1 = JSON.stringify(json_obj["mac_address_part5"]);
+            String n2 = JSON.stringify(json_obj["mac_address_part4"]);
+            String n3 = JSON.stringify(json_obj["mac_address_part3"]);
+            String n4 = JSON.stringify(json_obj["mac_address_part2"]);
+            String n5 = JSON.stringify(json_obj["mac_address_part1"]);
+            String n6 = JSON.stringify(json_obj["mac_address_part0"]);
+
+            n1 = n1.substring(1, n1.length() - 1);
+            n2 = n2.substring(1, n2.length() - 1);
+            n3 = n3.substring(1, n3.length() - 1);
+            n4 = n4.substring(1, n4.length() - 1);
+            n5 = n5.substring(1, n5.length() - 1);
+            n6 = n6.substring(1, n6.length() - 1);
             
-            mac_addr.n1 = JSON.stringify(json_obj["mac_address_part5"]).toInt();
-            mac_addr.n2 = JSON.stringify(json_obj["mac_address_part4"]).toInt();
-            mac_addr.n3 = JSON.stringify(json_obj["mac_address_part3"]).toInt();
-            mac_addr.n4 = JSON.stringify(json_obj["mac_address_part2"]).toInt();
-            mac_addr.n5 = JSON.stringify(json_obj["mac_address_part1"]).toInt();
-            mac_addr.n6 = JSON.stringify(json_obj["mac_address_part0"]).toInt();
+            mac_addr.n1 = n1.toInt();
+            mac_addr.n2 = n2.toInt();
+            mac_addr.n3 = n3.toInt();
+            mac_addr.n4 = n4.toInt();
+            mac_addr.n5 = n5.toInt();
+            mac_addr.n6 = n6.toInt();
+
+            Serial.println(mac_addr.n6);
+
             return mac_addr;
         }
         
