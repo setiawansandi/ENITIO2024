@@ -31,20 +31,13 @@ void backgroundTaskCode(void * pvParameters){
   }
 };
 
-void clearEEPROM(){
-  int i;
-  for (i=0; i<EEPROM_SIZE; i++){
-    EEPROM.write(i,0);
-  }
-  EEPROM.commit();
-};
 
 void setup() {
       // initialize serial
       Serial.begin(115200);
       EEPROM.begin(EEPROM_SIZE);
 
-      clearEEPROM();
+      // clearEEPROM();
 
       // check OLED display
       if(!display.begin(SSD1306_SWITCHCAPVCC, SCREEN_ADDRESS)) {
@@ -87,5 +80,9 @@ void loop() {
   }
   else if (currentProcess == ProfileProcess){
     My_Profile.ProfileLoop();
+  }
+  else if (currentProcess == FactoryResetProcess){
+    clearEEPROM();
+    currentProcess = MainMenuProcess;
   }
 }

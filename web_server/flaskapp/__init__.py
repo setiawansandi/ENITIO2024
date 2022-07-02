@@ -12,7 +12,7 @@ app = Flask(__name__, instance_relative_config=True, template_folder='templates'
 # load config
 app.config.from_pyfile('config.py', silent=False)
 app.config.from_object(Config)
-csrf = CSRFProtect(app)
+# csrf = CSRFProtect(app)
 bcrypt = Bcrypt(app)
 
 login_manager = LoginManager(app)
