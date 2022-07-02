@@ -1,11 +1,17 @@
 #include <HTTPClient.h>
+#include "esp_wpa2.h" //wpa2 library for connections to Enterprise networks
 #include <Arduino_JSON.h>
 #include <esp_now.h>
 #include <WiFi.h>
 
+// WiFi Based on https://github.com/martinius96/ESP32-eduroam/blob/master/2022/test_2.0.3/test_2.0.3.ino
+
 /**  WiFi Credentials **/
-#define WIFI_SSID "TP-Link_E45E"  // For some reason if your WIFI_SSID contains spaces it wont work
-#define WIFI_PASSWORD "63824377"
+#define EAP_ANONYMOUS_IDENTITY  ""
+#define EAP_IDENTITY  "@student.main.ntu.edu.sg"
+#define EAP_PASSWORD  ""
+#define HOME_WIFI_SSID "TP-Link_E45E"
+#define HOME_WIFI_PASSWORD "63824377"
 
 struct MAC_ADDRESS {
   int n1;
@@ -101,7 +107,8 @@ class DBConnection {
     public:
         bool connectToWiFi() {
             // returns True if connected, False if timeout
-            WiFi.begin(WIFI_SSID, WIFI_PASSWORD);
+            WiFi.begin(HOME_WIFI_SSID, HOME_WIFI_PASSWORD);
+            // WiFi.begin(ssid, WPA2_AUTH_PEAP, EAP_ANONYMOUS_IDENTITY, EAP_IDENTITY, EAP_PASSWORD);
             Serial.print("Connecting to Wi-Fi");
             int counter = 0;
             while (WiFi.status() != WL_CONNECTED) {
