@@ -73,7 +73,7 @@ def register_player():
 @app.route("/game_status")
 def has_game_started():
     status = GameStatus.query.filter_by(name="started").first()
-    return jsonify({"has_game_started": status.value})  # for testing purposes
+    return jsonify({"has_game_started": int(status.value)})
 
 
 @app.route("/start_game")
@@ -151,3 +151,27 @@ def unset_all_player_ids():
     status.value = "0"
     db.session.commit()
     return {"result": "OK"}
+
+
+@app.route("/delete_all_players")
+def delete_all_players():
+    treasures = Treasure.query.all()
+    for treasure in treasures:
+        treasure.collected_by = None
+
+    players = Player.query.all()
+    for player in players:
+        db.session.delete(player)
+
+    db.session.commit()
+    return {"result": "OK"}
+
+
+@app.route("/get_all_players")
+def get_all_players():
+    players = Player.query.all()
+    result = dict()
+    for player in players:
+        result[player.mac_address] = "OG " + str(player.OG) + " ID " + str(player.participant_id)
+
+    return jsonify(result)

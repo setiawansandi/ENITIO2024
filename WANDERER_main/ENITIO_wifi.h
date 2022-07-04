@@ -12,6 +12,8 @@
 #define EAP_PASSWORD  "P1&S1bTV!20061976"
 #define HOME_WIFI_SSID "TP-Link_E45E"
 #define HOME_WIFI_PASSWORD "63824377"
+const char *ssid = "NTUSECURE";
+int wifi_reconnect_counter = 0;
 
 const char *ssid = "NTUSECURE";
 int wifi_reconnect_counter = 0;

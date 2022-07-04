@@ -31,13 +31,6 @@ void backgroundTaskCode(void * pvParameters){
   }
 };
 
-void clearEEPROM(){
-  int i;
-  for (i=0; i<EEPROM_SIZE; i++){
-    EEPROM.write(i,0);
-  }
-  EEPROM.commit();
-};
 
 void setup() {
       // initialize serial

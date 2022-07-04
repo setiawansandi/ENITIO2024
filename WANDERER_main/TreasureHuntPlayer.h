@@ -59,6 +59,7 @@ class TreasureHuntPlayer
 
     int OG_to_fb;
     int ID_to_fb;
+
    
   public:
     bool gameStarted = 0;
@@ -171,7 +172,7 @@ class TreasureHuntPlayer
         // Check if player is infected with virus
         if (infectedWithVirus) {
             if (currTime - last_hp_decay >= VIRUS_DECAY_DURATION) {
-                HP--;
+                HP = max(HP - 1, 0);
                 EEPROM.write(PLAYER_HP_add, HP);
                 Player_Bluetooth.startSpreadingVirus();
                 last_hp_decay = currTime;
@@ -297,8 +298,10 @@ class TreasureHuntPlayer
         EEPROM.write(PLAYER_HP_add, HP);
         tempNoti = "        Healed       ";
         tempNoti_start = millis();
+        if (infectedWithVirus) {
+            Player_Bluetooth.stopSpreadingVirus();
+        }
         infectedWithVirus = 0;
-        Player_Bluetooth.stopSpreadingVirus();
         break;
       
       default:

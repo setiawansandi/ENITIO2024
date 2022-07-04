@@ -1,3 +1,11 @@
+void clearEEPROM(){
+  int i;
+  for (i=0; i<EEPROM_SIZE; i++){
+    EEPROM.write(i,0);
+  }
+  EEPROM.commit();
+};
+
 class MainMenu {
     private:
         int lastProcessNav = 0;
