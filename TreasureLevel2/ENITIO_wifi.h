@@ -7,8 +7,8 @@
 
 /**  WiFi Credentials **/
 #define EAP_ANONYMOUS_IDENTITY  ""
-#define EAP_IDENTITY  "quan005@student.main.ntu.edu.sg"
-#define EAP_PASSWORD  "P1&S1bTV!20061976"
+#define EAP_IDENTITY  ""
+#define EAP_PASSWORD  ""
 #define HOME_WIFI_SSID "TP-Link_E45E"
 #define HOME_WIFI_PASSWORD "63824377"
 const char *ssid = "NTUSECURE";

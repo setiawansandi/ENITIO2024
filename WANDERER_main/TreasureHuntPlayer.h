@@ -1,10 +1,3 @@
-#define ENABLE_add 0 
-#define ID_add 1
-#define HP_add 2
-#define En_add 3
-#define MaxEn_add 4
-#define MANA_add 5
-
 #define ACTION_RECV_WAIT 150 // [ms] 
 #define TEMP_NOTI_WAIT 6000 // including being Attacked, Healed, Successfully Attack and Successfully Collect
 #define NOTI_SOUND_DURATION 200
@@ -63,6 +56,39 @@ class TreasureHuntPlayer
    
   public:
     bool gameStarted = 0;
+
+    void reset(){
+      HP = 12;
+      MaxHP = 12;
+      En = 5; // energy
+      MaxEn = 5;
+      MANA = 3;
+
+      tempNoti = "";
+      permNoti = "";
+  
+      Nav_start = 0;
+      tempNoti_start = 0;
+      last_max_en_decay = 0;
+      last_en_recover = 0;
+      last_hp_decay = 0;
+  
+      start_receiving_feedback = 0;
+  
+      numKilled = 0;
+      numL1Treasure = 0;
+      numL2Treasure = 0;
+  
+      LastL1TreasureCollected = -1;
+  
+      infectedWithVirus = 0;
+  
+      isFeedbacking = false;
+
+      gameStarted = 0 ;
+    }
+
+    
     void setup_initial_state(int id, int og, bool isGL) {
       ID = id;
       OG = og ;
@@ -70,6 +96,11 @@ class TreasureHuntPlayer
 
       if (EEPROM.read(PLAYER_enable_add) == 0){
         EEPROM.write(PLAYER_enable_add, 1);
+        EEPROM.write(PLAYER_HP_add, HP);
+        EEPROM.write(PLAYER_EN_add, En);
+        EEPROM.write(PLAYER_MaxHP_add, MaxHP);
+        EEPROM.write(PLAYER_MaxEn_add, MaxEn);
+        EEPROM.write(PLAYER_MANA_add, MANA);
         EEPROM.commit();
       }
       else {
@@ -374,12 +405,14 @@ class TreasureHuntPlayer
         case infoPage:
           TreasureHunt_OLED.display_infoPage(OG, ID, MANA, MaxEn, noti_to_display, lastPageNav);
           break;
-        case achievementPage:
-          TreasureHunt_OLED.display_achievementPage(numKilled, numL1Treasure, numL2Treasure, noti_to_display, lastPageNav);
-          break;
-        case powerupPage:
-          TreasureHunt_OLED.display_powerupPage();
-          break;
+//        case achievementPage:
+//          TreasureHunt_OLED.display_achievementPage(numKilled, numL1Treasure, numL2Treasure, noti_to_display, lastPageNav);
+//          break;
+//        case powerupPage:
+//          TreasureHunt_OLED.display_powerupPage();
+//          break;
+        default:
+          currentPage = mainPage;
       }
     }
 

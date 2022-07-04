@@ -13,17 +13,17 @@ const int CreditProcess = 6 ;
 
 #define EEPROM_SIZE 20
 
-#define PROFILE_enable_add 0
-#define OG_add 1
-#define NAME_add 2
-#define isGL_add 3
-#define ID_add 4
-#define PLAYER_enable_add 5
-#define PLAYER_HP_add 6
-#define PLAYER_EN_add 7
-#define PLAYER_MaxHP_add 8
-#define PLAYER_MaxEn_add 9
-#define PLAYER_MANA_add 10
-#define PLAYER_numKilled_add 11
-#define PLAYER_numL1Treasure_add 12
-#define PLAYER_numL2Treasure_add 13
+const int PROFILE_enable_add = 0;
+const int OG_add = 1;
+const int NAME_add = 2;
+const int isGL_add = 3;
+const int ID_add = 4;
+const int PLAYER_enable_add = 5;
+const int PLAYER_HP_add = 6;
+const int PLAYER_EN_add = 7;
+const int PLAYER_MaxHP_add = 8;
+const int PLAYER_MaxEn_add = 9;
+const int PLAYER_MANA_add = 10;
+const int PLAYER_numKilled_add = 11;
+const int PLAYER_numL1Treasure_add = 12;
+const int PLAYER_numL2Treasure_add = 13;
