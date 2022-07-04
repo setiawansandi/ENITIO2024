@@ -10,6 +10,12 @@ class Profile{
         int currentRegisteringPage = 0;
     
     public:
+        void reset(){
+          OG_pointer = 0;
+          isGL_pointer = 0;
+          currentRegisteringPage = 0;
+        }
+    
         void handleJoystickRegistered(){
             joystick_pos joystick_pos = Player_joystick.read_Joystick();
             if (Player_joystick.get_state() == 0) {
@@ -73,7 +79,7 @@ class Profile{
                     EEPROM.write(isGL_add, isGL);
 //                    EEPROM.write(NAME_add, "Alex");
                     EEPROM.write(OG_add, OG);
-                    dbc.registerWanderer(OG, my_MAC_address);
+                    dbc.registerWanderer(OG, my_MAC_address); 
                     EEPROM.write(PROFILE_enable_add, 1);
                     EEPROM.commit();
                     Player_joystick.set_state();

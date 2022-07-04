@@ -31,6 +31,13 @@ void backgroundTaskCode(void * pvParameters){
   }
 };
 
+void clearEEPROM(){
+  int i;
+  for (i=0; i<EEPROM_SIZE; i++){
+    EEPROM.write(i,0);
+  }
+  EEPROM.commit();
+};
 
 void setup() {
       // initialize serial
@@ -83,6 +90,11 @@ void loop() {
   }
   else if (currentProcess == FactoryResetProcess){
     clearEEPROM();
+    My_Profile.reset();
+    PLAYER.reset();
+    currentProcess = MainMenuProcess;
+  }
+  else {
     currentProcess = MainMenuProcess;
   }
 }
