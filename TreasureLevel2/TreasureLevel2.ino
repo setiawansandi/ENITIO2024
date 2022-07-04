@@ -57,7 +57,7 @@ class TreasureLevel2
 
     void setup_initial_state(int id){
       ID = id;
-      if (ID <= 1) _isVirus = true;
+      if (ID >= 9) _isVirus = true;
       else _isVirus = false;
 
       if (EEPROM.read(ENABLE_add) == 0){
@@ -256,7 +256,7 @@ int get_game_state(){
 
 int receive_id(){
       // receive ID from server, need to wait for all the Treasure to subscribe to the server first then the server will randomly assign ID
-      int id = 1; // temp
+      int id = 10; // temp
       return id;
 }
 

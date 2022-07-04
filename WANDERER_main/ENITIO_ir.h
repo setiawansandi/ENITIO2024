@@ -1,4 +1,3 @@
-#include <Arduino.h>
 #include <IRremote.h>
 
 #define IR_RECEIVE_PIN     32

@@ -44,7 +44,7 @@ void setup() {
       Serial.begin(115200);
       EEPROM.begin(EEPROM_SIZE);
 
-      clearEEPROM();
+      // clearEEPROM();
 
       // check OLED display
       if(!display.begin(SSD1306_SWITCHCAPVCC, SCREEN_ADDRESS)) {
@@ -87,5 +87,9 @@ void loop() {
   }
   else if (currentProcess == ProfileProcess){
     My_Profile.ProfileLoop();
+  }
+  else if (currentProcess == FactoryResetProcess){
+    clearEEPROM();
+    currentProcess = MainMenuProcess;
   }
 }

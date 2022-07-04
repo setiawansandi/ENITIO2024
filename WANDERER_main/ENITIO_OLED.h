@@ -173,7 +173,7 @@ class Profile_OLED {
 
       display.setCursor(0, 24);
 
-      if (isGL == 1){
+      if (isGL == 0){
         display.println("Freshman"); 
       }
       else {
