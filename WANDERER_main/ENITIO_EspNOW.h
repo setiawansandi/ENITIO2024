@@ -33,14 +33,14 @@ class EspNOW {
     }
 
     void getDeviceMACAddress(int attacker_OG, int attacker_ID){
-      int playerIdentifier = attacker_OG*pow(16,2) + attacker_ID;
-      MAC_ADDRESS target_addr = dbc.getDeviceMACAddress(playerIdentifier);
-      broadcastAddress[0] = target_addr.n1;
-      broadcastAddress[1] = target_addr.n2;
-      broadcastAddress[2] = target_addr.n3;
-      broadcastAddress[3] = target_addr.n4;
-      broadcastAddress[4] = target_addr.n5;
-      broadcastAddress[5] = target_addr.n6;
+//      int playerIdentifier = attacker_OG*pow(16,2) + attacker_ID;
+//      MAC_ADDRESS target_addr = dbc.getDeviceMACAddress(playerIdentifier);
+      broadcastAddress[0] = 4;
+      broadcastAddress[1] = 8;
+      broadcastAddress[2] = 22;
+      broadcastAddress[3] = 1;
+      broadcastAddress[4] = attacker_OG;
+      broadcastAddress[5] = attacker_ID;
     }
   
    void send_data(int attacker_OG, int attacker_ID, int attackee_OG, bool is_attackee_killed){

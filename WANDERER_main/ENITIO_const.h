@@ -1,5 +1,6 @@
 int currentProcess = 0;
 String my_MAC_address;
+uint8_t my_MAC_address_arr[6] = {};
 
 const int MainMenuProcess = 0 ;
 const int ProfileProcess = 1 ;
