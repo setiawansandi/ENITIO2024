@@ -9,8 +9,8 @@
 #define EAP_ANONYMOUS_IDENTITY  ""
 #define EAP_IDENTITY  ""
 #define EAP_PASSWORD  ""
-#define HOME_WIFI_SSID "TP-Link_E45E"
-#define HOME_WIFI_PASSWORD "63824377"
+#define HOME_WIFI_SSID "Pistachio Sapa Hotel"
+#define HOME_WIFI_PASSWORD "123456789"
 const char *ssid = "NTUSECURE";
 int wifi_reconnect_counter = 0;
 
@@ -65,8 +65,8 @@ class DBConnection {
     public:
         bool connectToWiFi() {
             // returns True if connected, False if timeout
-//            WiFi.begin(HOME_WIFI_SSID, HOME_WIFI_PASSWORD);
-             WiFi.begin(ssid, WPA2_AUTH_PEAP, EAP_ANONYMOUS_IDENTITY, EAP_IDENTITY, EAP_PASSWORD);
+            WiFi.begin(HOME_WIFI_SSID, HOME_WIFI_PASSWORD);
+//             WiFi.begin(ssid, WPA2_AUTH_PEAP, EAP_ANONYMOUS_IDENTITY, EAP_IDENTITY, EAP_PASSWORD);
             Serial.print("Connecting to Wi-Fi");
             int counter = 0;
             while (WiFi.status() != WL_CONNECTED) {

@@ -104,10 +104,12 @@ void loop() {
     My_Profile.ProfileLoop();
   }
   else if (currentProcess == FactoryResetProcess){
+    StartUpDisplay();
     clearEEPROM();
-    My_Profile.reset();
-    PLAYER.reset();
-    esp_wifi_set_mac(WIFI_IF_AP, &my_MAC_address_arr[0]);
+//    My_Profile.reset();
+//    PLAYER.reset();
+//    esp_wifi_set_mac(WIFI_IF_AP, &my_MAC_address_arr[0]);
+    ESP.restart();
     currentProcess = MainMenuProcess;
   }
   else {

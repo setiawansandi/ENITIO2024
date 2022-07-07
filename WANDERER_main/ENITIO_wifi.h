@@ -11,8 +11,8 @@
 #define EAP_ANONYMOUS_IDENTITY  ""
 #define EAP_IDENTITY  ""
 #define EAP_PASSWORD  ""
-#define HOME_WIFI_SSID "TRAN VAN VIET 1"
-#define HOME_WIFI_PASSWORD "viet2020"
+#define HOME_WIFI_SSID "Pistachio Sapa Hotel"
+#define HOME_WIFI_PASSWORD "123456789"
 
 const char *ssid = "NTUSECURE";
 int wifi_reconnect_counter = 0;
