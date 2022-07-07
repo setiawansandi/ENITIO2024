@@ -6,3 +6,5 @@ flask-login
 flask-bcrypt
 flask-wtf
 importlib_resources
+mysql
+mysql-connector-python

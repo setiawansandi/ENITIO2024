@@ -2,7 +2,7 @@ from flaskapp import db, bcrypt
 
 
 class Player(db.Model):
-    id = db.Column(db.Integer, primary_key=True)
+    id = db.Column(db.Integer, primary_key=True, autoincrement=True, nullable=False)
     OG = db.Column(db.Integer, nullable=False)
     participant_id = db.Column(db.Integer)  # in place of name, sequential number inside OG
     mac_address = db.Column(db.Text)
@@ -16,7 +16,7 @@ class Player(db.Model):
 
 
 class Treasure(db.Model):
-    id = db.Column(db.Integer, primary_key=True)
+    id = db.Column(db.Integer, primary_key=True, autoincrement=True, nullable=False)
     name = db.Column(db.Text, nullable=False)
     level = db.Column(db.Integer, primary_key=True)
     location = db.Column(db.Text)
@@ -36,7 +36,7 @@ class Treasure(db.Model):
 
 
 class GameStatus(db.Model):
-    id = db.Column(db.Integer, primary_key=True)
+    id = db.Column(db.Integer, primary_key=True, autoincrement=True, nullable=False)
     name = db.Column(db.Text, nullable=False)
     value = db.Column(db.Text, nullable=False)
 
