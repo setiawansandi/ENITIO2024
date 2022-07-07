@@ -207,7 +207,6 @@ class TreasureHuntPlayer
             if (currTime - last_hp_decay >= VIRUS_DECAY_DURATION) {
                 HP = max(HP - 1, 0);
                 EEPROM.write(PLAYER_HP_add, HP);
-                Player_Bluetooth.startSpreadingVirus();
                 last_hp_decay = currTime;
             };
             permNoti = "    You Are Infected!   ";
