@@ -65,6 +65,21 @@ void setup() {
       dbc.connectToWiFi();
       my_MAC_address = WiFi.macAddress();
 
+      char* ptr; //start and end pointer for strtol
+      
+      my_MAC_address_arr[0] = strtol(my_MAC_address.c_str(), &ptr, HEX );
+      for( uint8_t i = 1; i < 6; i++ )
+      {
+        my_MAC_address_arr[i] = strtol(ptr+1, &ptr, HEX );
+      }
+      Serial.print(my_MAC_address_arr[0], HEX);
+      for( uint8_t i = 1; i < 6; i++)
+      {
+        Serial.print(':');
+        Serial.print(my_MAC_address_arr[i], HEX);
+      }
+
+      Serial.println(my_MAC_address);
       
       Player_Bluetooth.initialise();
 
@@ -92,6 +107,7 @@ void loop() {
     clearEEPROM();
     My_Profile.reset();
     PLAYER.reset();
+    esp_wifi_set_mac(WIFI_IF_AP, &my_MAC_address_arr[0]);
     currentProcess = MainMenuProcess;
   }
   else {

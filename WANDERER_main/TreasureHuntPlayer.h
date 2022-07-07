@@ -10,6 +10,8 @@
 
 int game_started_buffer = 0;
 
+uint8_t newMACAddress[] = {4, 8, 22, 1, 255, 255};
+
 class TreasureHuntPlayer
 {
   private:
@@ -48,12 +50,6 @@ class TreasureHuntPlayer
 
     bool infectedWithVirus = 0;
 
-    bool isFeedbacking = false;
-
-    int OG_to_fb;
-    int ID_to_fb;
-
-   
   public:
     bool gameStarted = 0;
 
@@ -83,9 +79,8 @@ class TreasureHuntPlayer
   
       infectedWithVirus = 0;
   
-      isFeedbacking = false;
-
       gameStarted = 0 ;
+      game_started_buffer = 0;
     }
 
     
@@ -93,6 +88,13 @@ class TreasureHuntPlayer
       ID = id;
       OG = og ;
       _isGL = isGL;
+
+      newMACAddress[4] = OG;
+      newMACAddress[5] = ID;
+      esp_wifi_set_mac(WIFI_IF_AP, &newMACAddress[0]);
+
+      Serial.print("[NEW] ESP8266 Board MAC Address:  ");
+      Serial.println(WiFi.macAddress());
 
       if (EEPROM.read(PLAYER_enable_add) == 0){
         EEPROM.write(PLAYER_enable_add, 1);
@@ -180,7 +182,7 @@ class TreasureHuntPlayer
         permNoti = "    You Are Killed!     ";
         unsigned long currTime = millis();
         if (currTime - last_max_en_decay >= MAX_EN_DECAY_DURATION){
-          MaxEn = max(MaxEn - 1, 0);
+          MaxEn = max(MaxEn - 1, 1);
           EEPROM.write(PLAYER_MaxEn_add, MaxEn);
           last_max_en_decay = currTime;
         }
@@ -315,11 +317,7 @@ class TreasureHuntPlayer
           Serial.printf("Attacked. Current HP: %d \n", HP);
           tempNoti = "       Attacked      ";
           tempNoti_start = millis();
-
-          OG_to_fb = OG_;
-          ID_to_fb = ID_;
-          isFeedbacking = true;
-          // feedback(OG_, ID_);
+          feedback(OG_, ID_);
           Player_Buzzer.sound(NOTE_E3);
         }
         break;
@@ -460,11 +458,6 @@ class TreasureHuntPlayer
   };
 
   void gameBackgroundProcess(){
-    if (isFeedbacking) {
-      feedback(OG_to_fb, ID_to_fb);
-      isFeedbacking = false;
-    }
-    else {
       if (!infectedWithVirus){
         Player_Bluetooth.scan();
         delay(50);
@@ -472,8 +465,7 @@ class TreasureHuntPlayer
       else{
         delay(50);
       }
-    }
-  }
+   }
 };
 
 TreasureHuntPlayer PLAYER;
