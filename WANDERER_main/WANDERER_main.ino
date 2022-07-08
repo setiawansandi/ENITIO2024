@@ -94,6 +94,12 @@ void setup() {
 }
 
 void loop() {
+  // First check if ESP is connected to WiFi
+  if ((WiFi.status() != WL_CONNECTED) && (millis() - last_disconnected_time > 10000)) {
+    Serial.println("Lost WiFi Connection.. attempting to reconnect");
+    dbc.startWiFiConnection();
+    last_disconnected_time = millis();
+  }
   if (currentProcess == MainMenuProcess){
     My_MainMenu.MainMenuLoop();
   }

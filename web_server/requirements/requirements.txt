@@ -51,6 +51,14 @@ markupsafe==2.1.1
     #   jinja2
     #   mako
     #   wtforms
+mysql==0.0.3
+    # via -r requirements.in
+mysql-connector-python==8.0.29
+    # via -r requirements.in
+mysqlclient==2.1.1
+    # via mysql
+protobuf==4.21.2
+    # via mysql-connector-python
 pycparser==2.21
     # via cffi
 sqlalchemy==1.4.37

@@ -42,6 +42,11 @@ def upgrade():
     sa.ForeignKeyConstraint(['collected_by_id'], ['player.id'], ),
     sa.PrimaryKeyConstraint('id', 'level')
     )
+
+    # add autoincrement for MYSQL
+    op.alter_column('game_status', 'id',type_=sa.INTEGER, nullable=False, autoincrement=True, existing_autoincrement=True)
+    op.alter_column('player', 'id', type_=sa.INTEGER, nullable=False, autoincrement=True, existing_autoincrement=True)
+    op.alter_column('treasure', 'id', type_=sa.INTEGER, nullable=False, autoincrement=True, existing_autoincrement=True)
     # ### end Alembic commands ###
 
 

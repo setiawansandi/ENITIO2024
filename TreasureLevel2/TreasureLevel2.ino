@@ -291,6 +291,14 @@ void setup() {
 }
 
 void loop() {
+  // First check if ESP is connected to WiFi
+  if (WiFi.status() != WL_CONNECTED) {
+    bool isWiFiConnected = dbc.connectToWiFi();
+    if (!isWiFiConnected) {
+        // timeout
+        ESP.restart();
+    }
+  }
   switch (get_game_state()){
     case 0:
       Treasure.display_not_playing_yet();

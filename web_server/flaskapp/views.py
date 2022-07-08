@@ -36,12 +36,17 @@ def set_treasure_as_collected(name):
 def get_player_mac_address(identifier):
     player_details = retrieve_OG_participant_id_from_identifier(identifier)
     player = Player.query.filter_by(OG=player_details["OG"], participant_id=player_details["participant_id"]).first()
-    if player:
-        result = dict()
-        mac_address_str = player.mac_address
-        result["mac_address"] = mac_address_str
-        for i, mac_address_part in enumerate(mac_address_str.split(":")):
-            result["mac_address_part" + str(5 - i)] = str(int(mac_address_part, 16))
+    if player and player.participant_id:
+        OG_hex_str = "{0:x}".format(player.OG)
+        participant_id_hex_str = "{0:x}".format(player.participant_id)
+        result = {"mac_address_part5": "04",
+                  "mac_address_part4": "08",
+                  "mac_address_part3": "22",
+                  "mac_address_part2": "01",
+                  "mac_address_part1": f"{OG_hex_str: 0>2}",
+                  "mac_address_part0": f"{participant_id_hex_str: 0>2}",
+                  "mac_address": f"04:08:22:01:{OG_hex_str: 0>2}:{participant_id_hex_str: 0>2}"}
+
         return jsonify(result)
     else:
         abort(404)
@@ -62,10 +67,16 @@ def get_player_id(OG, mac_addr):
 def register_player():
     content = request.json
     if "OG" in content and "mac_address" in content:
-        player = Player(OG=content["OG"], mac_address=content["mac_address"])
-        db.session.add(player)
-        db.session.commit()
-        return {"result": "OK"}
+        OG = content["OG"]
+        mac_addr = content["mac_address"]
+        player = Player.query.filter_by(OG=OG, mac_address=mac_addr).first()
+        if player:
+            return {}
+        else:
+            player = Player(OG=OG, mac_address=mac_addr)
+            db.session.add(player)
+            db.session.commit()
+            return {"result": "OK"}
 
     abort(404)
 
@@ -85,9 +96,9 @@ def start_game():
     for player in players:
         if player.OG not in og_counter:
             og_counter[player.OG] = 0
-        player.participant_id = og_counter[player.OG]
+        player.participant_id = og_counter[player.OG] + 1
         og_counter[player.OG] += 1
-        result[player.mac_address] = (player.OG, player.participant_id)
+        result[player.mac_address] = f"OG {player.OG} ID {player.participant_id}"
 
     status = GameStatus.query.filter_by(name="started").first()
     status.value = "1"
