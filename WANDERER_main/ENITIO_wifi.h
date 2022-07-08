@@ -11,11 +11,12 @@
 #define EAP_ANONYMOUS_IDENTITY  ""
 #define EAP_IDENTITY  ""
 #define EAP_PASSWORD  ""
-#define HOME_WIFI_SSID "TRAN VAN VIET 1"
-#define HOME_WIFI_PASSWORD "viet2020"
+#define HOME_WIFI_SSID "CKL-LENOVO"
+#define HOME_WIFI_PASSWORD "87921Gt1"
 
 const char *ssid = "NTUSECURE";
 int wifi_reconnect_counter = 0;
+unsigned long last_disconnected_time = 0;
 
 struct MAC_ADDRESS {
   int n1;
@@ -109,17 +110,20 @@ class DBConnection {
         };
     
     public:
+        void startWiFiConnection() {
+            WiFi.begin(HOME_WIFI_SSID, HOME_WIFI_PASSWORD);
+//            WiFi.begin(ssid, WPA2_AUTH_PEAP, EAP_ANONYMOUS_IDENTITY, EAP_IDENTITY, EAP_PASSWORD);
+        }
         bool connectToWiFi() {
             // returns True if connected, False if timeout
-             WiFi.begin(HOME_WIFI_SSID, HOME_WIFI_PASSWORD);
-//            WiFi.begin(ssid, WPA2_AUTH_PEAP, EAP_ANONYMOUS_IDENTITY, EAP_IDENTITY, EAP_PASSWORD);
             Serial.print("Connecting to Wi-Fi");
+            startWiFiConnection();
             int counter = 0;
             while (WiFi.status() != WL_CONNECTED) {
                 Serial.print(".");
                 delay(500);
                 counter++;
-                if (counter >= 60) {
+                if (counter >= 20) {
                     // timeout
                     return false;
                 }
