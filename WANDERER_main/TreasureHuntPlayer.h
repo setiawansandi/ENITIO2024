@@ -180,6 +180,10 @@ class TreasureHuntPlayer
         En = 0;
         EEPROM.write(PLAYER_EN_add, En);
         permNoti = "    You Are Killed!     ";
+        if (infectedWithVirus) {
+            Player_Bluetooth.stopSpreadingVirus();
+        }
+        infectedWithVirus = 0;
         unsigned long currTime = millis();
         if (currTime - last_max_en_decay >= MAX_EN_DECAY_DURATION){
           MaxEn = max(MaxEn - 1, 1);
