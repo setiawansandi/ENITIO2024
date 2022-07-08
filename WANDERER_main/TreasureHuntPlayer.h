@@ -7,6 +7,7 @@
 #define EN_RECOVER_DURATION 10000
 #define MAX_EN_DECAY_DURATION 10000
 #define VIRUS_DECAY_DURATION 10000
+#define VIRUS_IMMUNITY_DURATION 10000
 
 int game_started_buffer = 0;
 
@@ -39,6 +40,7 @@ class TreasureHuntPlayer
     unsigned long last_max_en_decay = 0;
     unsigned long last_en_recover = 0;
     unsigned long last_hp_decay = 0;
+    unsigned long last_received_heal = 0;
 
     unsigned long start_receiving_feedback = 0;
 
@@ -180,10 +182,6 @@ class TreasureHuntPlayer
         En = 0;
         EEPROM.write(PLAYER_EN_add, En);
         permNoti = "    You Are Killed!     ";
-        if (infectedWithVirus) {
-            Player_Bluetooth.stopSpreadingVirus();
-        }
-        infectedWithVirus = 0;
         unsigned long currTime = millis();
         if (currTime - last_max_en_decay >= MAX_EN_DECAY_DURATION){
           MaxEn = max(MaxEn - 1, 1);
@@ -217,7 +215,7 @@ class TreasureHuntPlayer
         } else if (!_isGL){
             // currently not infected with virus AND is not healer
             // check if nearby devices are transmitting virus
-            if (Player_Bluetooth.isThereVirus) {
+            if (Player_Bluetooth.isThereVirus && (currTime - last_received_heal >= VIRUS_IMMUNITY_DURATION)) {
                 infectedWithVirus = true;
                 HP--;
                 EEPROM.write(PLAYER_HP_add, HP);
@@ -334,6 +332,7 @@ class TreasureHuntPlayer
             Player_Bluetooth.stopSpreadingVirus();
         }
         infectedWithVirus = 0;
+        last_received_heal = tempNoti_start;
         break;
       
       default:
