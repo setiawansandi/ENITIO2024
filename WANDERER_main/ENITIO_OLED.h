@@ -491,7 +491,7 @@ class TreasureHunt_OLED {
 
       display.setTextColor(SSD1306_WHITE);
       display.setCursor(0, 24);
-      display.println("   The game was not  ");
+      display.println("   The game has not  ");
       display.println("     started yet.    "); 
 
       display.setCursor(10, 56);
