@@ -65,6 +65,8 @@ void setup() {
       dbc.connectToWiFi();
       my_MAC_address = WiFi.macAddress();
 
+      GAME_CONSTANTS game_consts = dbc.getGameConstants();
+
       char* ptr; //start and end pointer for strtol
       
       my_MAC_address_arr[0] = strtol(my_MAC_address.c_str(), &ptr, HEX );

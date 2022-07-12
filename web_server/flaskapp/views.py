@@ -26,8 +26,17 @@ def set_treasure_as_collected(name):
                 db.session.commit()
 
                 # return MAC address to treasure to send confirmation message
-                mac_address = player.mac_address
-                return jsonify({"mac_address": mac_address})
+                OG_hex_str = "{0:x}".format(player_details["OG"])
+                participant_id_hex_str = "{0:x}".format(player_details["participant_id"])
+                result = {"mac_address_part5": "04",
+                          "mac_address_part4": "08",
+                          "mac_address_part3": "22",
+                          "mac_address_part2": "01",
+                          "mac_address_part1": f"{OG_hex_str: 0>2}",
+                          "mac_address_part0": f"{participant_id_hex_str: 0>2}",
+                          "mac_address": f"04:08:22:01:{OG_hex_str: 0>2}:{participant_id_hex_str: 0>2}"}
+
+                return jsonify(result)
 
     abort(404)
 
@@ -143,10 +152,11 @@ def get_all_treasure_status():
     result = dict()
     for treasure in treasures:
         collected_player = treasure.collected_by
+        result[treasure.name] = "TREASURE " if treasure.is_treasure else "VIRUS "
         if collected_player:
-            result[treasure.name] = collected_player.mac_address
+            result[treasure.name] += f"Collected by OG {collected_player.OG} ID {collected_player.participant_id}"
         else:
-            result[treasure.name] = "<empty>"
+            result[treasure.name] += "<available>"
 
     return jsonify(result)
 
@@ -184,5 +194,15 @@ def get_all_players():
     result = dict()
     for player in players:
         result[player.mac_address] = "OG " + str(player.OG) + " ID " + str(player.participant_id)
+
+    return jsonify(result)
+
+
+@app.route("/get_all_game_variables")
+def get_all_game_variables():
+    variables = GameStatus.query.all()
+    result = dict()
+    for var in variables:
+        result[var.name] = int(var.value)
 
     return jsonify(result)

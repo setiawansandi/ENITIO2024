@@ -9,10 +9,10 @@
 
 /**  WiFi Credentials **/
 #define EAP_ANONYMOUS_IDENTITY  ""
-#define EAP_IDENTITY  ""
+#define EAP_IDENTITY  "@student.main.ntu.edu.sg"
 #define EAP_PASSWORD  ""
-#define HOME_WIFI_SSID "CKL-LENOVO"
-#define HOME_WIFI_PASSWORD "87921Gt1"
+#define HOME_WIFI_SSID "dlink-A57E"
+#define HOME_WIFI_PASSWORD "37404160"
 
 const char *ssid = "NTUSECURE";
 int wifi_reconnect_counter = 0;
@@ -26,6 +26,21 @@ struct MAC_ADDRESS {
   int n5;
   int n6;
 } ;
+
+struct GAME_CONSTANTS {
+    int EN_RECOVER_DURATION;
+    int VIRUS_DECAY_DURATION;
+    int VIRUS_IMMUNITY_DURATION;
+    int VIRUS_INFECTION_PROBABILITY;  // integer between 0 and 100
+    int PARTICIPANT_MaxHP;
+    int GL_MaxHP;
+    int PARTICIPANT_MaxEn;
+    int GL_MaxEn;
+    int INITIAL_MANA;
+    int HEAL_MANA;
+    int MAX_ATTACK_MANA;
+    int MAX_COLLECT_MANA;
+};
 
 class DBConnection {
     private:
@@ -87,7 +102,30 @@ class DBConnection {
             Serial.println(mac_addr.n6);
 
             return mac_addr;
-        }
+        };
+
+        GAME_CONSTANTS retrieveGameConstantsFromJSONArray(String json_array) {
+            JSONVar json_obj = JSON.parse(json_array);
+            GAME_CONSTANTS game_const;
+            if (JSON.typeof(json_obj) == "undefined") {
+                Serial.println("Parsing input failed!");
+                return game_const;
+            }
+            game_const.EN_RECOVER_DURATION = JSON.stringify(json_obj["EN_RECOVER_DURATION"]).toInt();
+            game_const.VIRUS_DECAY_DURATION = JSON.stringify(json_obj["VIRUS_DECAY_DURATION"]).toInt();
+            game_const.VIRUS_IMMUNITY_DURATION = JSON.stringify(json_obj["VIRUS_IMMUNITY_DURATION"]).toInt();
+            game_const.VIRUS_INFECTION_PROBABILITY = JSON.stringify(json_obj["VIRUS_INFECTION_PROBABILITY"]).toInt();
+            game_const.PARTICIPANT_MaxHP = JSON.stringify(json_obj["PARTICIPANT_MaxHP"]).toInt();
+            game_const.GL_MaxHP = JSON.stringify(json_obj["GL_MaxHP"]).toInt();
+            game_const.PARTICIPANT_MaxEn = JSON.stringify(json_obj["PARTICIPANT_MaxEn"]).toInt();
+            game_const.GL_MaxEn = JSON.stringify(json_obj["GL_MaxEn"]).toInt();
+            game_const.INITIAL_MANA = JSON.stringify(json_obj["INITIAL_MANA"]).toInt();
+            game_const.HEAL_MANA = JSON.stringify(json_obj["HEAL_MANA"]).toInt();
+            game_const.MAX_ATTACK_MANA = JSON.stringify(json_obj["MAX_ATTACK_MANA"]).toInt();
+            game_const.MAX_COLLECT_MANA = JSON.stringify(json_obj["MAX_COLLECT_MANA"]).toInt();
+
+            return game_const;
+        };
         
         String POST_Request(const char* server, const char* payload) {
             if (WiFi.status() == WL_CONNECTED) {
@@ -152,6 +190,13 @@ class DBConnection {
             String url = DATABASE_URL + "player_id/" + String(OG) + "/" + mac_addr;
             String jsonArray = GET_Request(url.c_str());
             return retrieveParameterFromJSONArray("player_id", jsonArray).toInt();
+        };
+
+        GAME_CONSTANTS getGameConstants() {
+            String url = DATABASE_URL + "get_all_game_variables";
+            String jsonArray = GET_Request(url.c_str());
+            // Serial.println(jsonArray);
+            return retrieveGameConstantsFromJSONArray(jsonArray);
         };
         
         MAC_ADDRESS getDeviceMACAddress(int playerIdentifier) {
