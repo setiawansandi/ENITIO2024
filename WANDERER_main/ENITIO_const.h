@@ -28,3 +28,16 @@ const int PLAYER_MANA_add = 10;
 const int PLAYER_numKilled_add = 11;
 const int PLAYER_numL1Treasure_add = 12;
 const int PLAYER_numL2Treasure_add = 13;
+
+int EN_RECOVER_DURATION;
+int VIRUS_DECAY_DURATION;
+int VIRUS_IMMUNITY_DURATION;
+int VIRUS_INFECTION_PROBABILITY;  // integer between 0 and 100
+int PARTICIPANT_MaxHP;
+int GL_MaxHP;
+int PARTICIPANT_MaxEn;
+int GL_MaxEn;
+int INITIAL_MANA;
+int HEAL_MANA;
+int MAX_ATTACK_MANA;
+int MAX_COLLECT_MANA;

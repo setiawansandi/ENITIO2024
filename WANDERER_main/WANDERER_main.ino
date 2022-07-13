@@ -67,19 +67,32 @@ void setup() {
 
       GAME_CONSTANTS game_consts = dbc.getGameConstants();
 
-      char* ptr; //start and end pointer for strtol
+      EN_RECOVER_DURATION = game_consts.EN_RECOVER_DURATION;
+      VIRUS_DECAY_DURATION = game_consts.VIRUS_DECAY_DURATION;
+      VIRUS_IMMUNITY_DURATION = game_consts.VIRUS_IMMUNITY_DURATION;
+      VIRUS_INFECTION_PROBABILITY = game_consts.VIRUS_INFECTION_PROBABILITY;
+      PARTICIPANT_MaxHP = game_consts.PARTICIPANT_MaxHP;
+      GL_MaxHP = game_consts.GL_MaxHP;
+      PARTICIPANT_MaxEn = game_consts.PARTICIPANT_MaxEn;
+      GL_MaxEn = game_consts.GL_MaxEn;
+      INITIAL_MANA = game_consts.GL_MaxEn;
+      HEAL_MANA = game_consts.HEAL_MANA;
+      MAX_ATTACK_MANA = game_consts.MAX_ATTACK_MANA;
+      MAX_COLLECT_MANA = game_consts.MAX_COLLECT_MANA;
+
+      // char* ptr; //start and end pointer for strtol
       
-      my_MAC_address_arr[0] = strtol(my_MAC_address.c_str(), &ptr, HEX );
-      for( uint8_t i = 1; i < 6; i++ )
-      {
-        my_MAC_address_arr[i] = strtol(ptr+1, &ptr, HEX );
-      }
-      Serial.print(my_MAC_address_arr[0], HEX);
-      for( uint8_t i = 1; i < 6; i++)
-      {
-        Serial.print(':');
-        Serial.print(my_MAC_address_arr[i], HEX);
-      }
+      // my_MAC_address_arr[0] = strtol(my_MAC_address.c_str(), &ptr, HEX );
+      // for( uint8_t i = 1; i < 6; i++ )
+      // {
+      //   my_MAC_address_arr[i] = strtol(ptr+1, &ptr, HEX );
+      // }
+      // Serial.print(my_MAC_address_arr[0], HEX);
+      // for( uint8_t i = 1; i < 6; i++)
+      // {
+      //   Serial.print(':');
+      //   Serial.print(my_MAC_address_arr[i], HEX);
+      // }
 
       Serial.println(my_MAC_address);
       

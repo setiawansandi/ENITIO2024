@@ -10,11 +10,11 @@ class Profile{
         int currentRegisteringPage = 0;
     
     public:
-        void reset(){
-          OG_pointer = 0;
-          isGL_pointer = 0;
-          currentRegisteringPage = 0;
-        }
+        // void reset(){
+        //   OG_pointer = 0;
+        //   isGL_pointer = 0;
+        //   currentRegisteringPage = 0;
+        // }
     
         void handleJoystickRegistered(){
             joystick_pos joystick_pos = Player_joystick.read_Joystick();

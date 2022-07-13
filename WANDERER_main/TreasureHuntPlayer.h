@@ -4,10 +4,7 @@
 #define TEMP_NOTI_BLINKING 300
 #define FEEDBACK_WAIT 5000
 
-#define EN_RECOVER_DURATION 10000
-#define MAX_EN_DECAY_DURATION 10000
-#define VIRUS_DECAY_DURATION 10000
-#define VIRUS_IMMUNITY_DURATION 10000
+#define LUCKY_NOT_INFECTED_DURATION 5000 // [ms]
 
 int game_started_buffer = 0;
 
@@ -19,11 +16,11 @@ class TreasureHuntPlayer
     int ID; 
     int OG;
     bool _isGL;  
-    int HP = 12;
-    int MaxHP = 12;
-    int En = 5; // energy
-    int MaxEn = 5;
-    int MANA = 3;
+    int HP;
+    int MaxHP;
+    int En; // energy
+    int MaxEn;
+    int MANA;
 
     action_id action;
 
@@ -41,6 +38,7 @@ class TreasureHuntPlayer
     unsigned long last_en_recover = 0;
     unsigned long last_hp_decay = 0;
     unsigned long last_received_heal = 0;
+    unsigned long last_lucky_not_infected = 0;
 
     unsigned long start_receiving_feedback = 0;
 
@@ -55,35 +53,35 @@ class TreasureHuntPlayer
   public:
     bool gameStarted = 0;
 
-    void reset(){
-      HP = 12;
-      MaxHP = 12;
-      En = 5; // energy
-      MaxEn = 5;
-      MANA = 3;
+    // void reset(){
+    //   HP = 12;
+    //   MaxHP = 12;
+    //   En = 5; // energy
+    //   MaxEn = 5;
+    //   MANA = 3;
 
-      tempNoti = "";
-      permNoti = "";
+    //   tempNoti = "";
+    //   permNoti = "";
   
-      Nav_start = 0;
-      tempNoti_start = 0;
-      last_max_en_decay = 0;
-      last_en_recover = 0;
-      last_hp_decay = 0;
+    //   Nav_start = 0;
+    //   tempNoti_start = 0;
+    //   last_max_en_decay = 0;
+    //   last_en_recover = 0;
+    //   last_hp_decay = 0;
   
-      start_receiving_feedback = 0;
+    //   start_receiving_feedback = 0;
   
-      numKilled = 0;
-      numL1Treasure = 0;
-      numL2Treasure = 0;
+    //   numKilled = 0;
+    //   numL1Treasure = 0;
+    //   numL2Treasure = 0;
   
-      LastL1TreasureCollected = -1;
+    //   LastL1TreasureCollected = -1;
   
-      infectedWithVirus = 0;
+    //   infectedWithVirus = 0;
   
-      gameStarted = 0 ;
-      game_started_buffer = 0;
-    }
+    //   gameStarted = 0 ;
+    //   game_started_buffer = 0;
+    // }
 
     
     void setup_initial_state(int id, int og, bool isGL) {
@@ -99,6 +97,21 @@ class TreasureHuntPlayer
       Serial.println(WiFi.macAddress());
 
       if (EEPROM.read(PLAYER_enable_add) == 0){
+        if (!_isGL){
+          HP = PARTICIPANT_MaxHP;
+          En = PARTICIPANT_MaxEn;
+          MaxHP = PARTICIPANT_MaxHP;
+          MaxEn = PARTICIPANT_MaxEn;
+          MANA = INITIAL_MANA;
+        }
+        else {
+          HP = GL_MaxHP;
+          En = GL_MaxEn;
+          MaxHP = GL_MaxHP;
+          MaxEn = GL_MaxEn;
+          MANA = INITIAL_MANA;
+        }
+
         EEPROM.write(PLAYER_enable_add, 1);
         EEPROM.write(PLAYER_HP_add, HP);
         EEPROM.write(PLAYER_EN_add, En);
@@ -130,7 +143,29 @@ class TreasureHuntPlayer
         address_digits.digit2 = OG;
 
         command_digits.digit0 = action;
-        command_digits.digit1 = MANA;
+
+        int this_action_multiplier;
+
+        switch (action)
+        {
+        case attack:
+          this_action_multiplier = min(MANA, MAX_ATTACK_MANA);
+          break;
+
+        case collect:
+          this_action_multiplier = min(MANA, MAX_COLLECT_MANA);
+          break;
+
+        case heal:
+          this_action_multiplier = HEAL_MANA;
+          break;
+        
+        default:
+          this_action_multiplier = 0;
+          break;
+        }
+
+        command_digits.digit1 = this_action_multiplier;
 
         ir_signal send_signal;
         send_signal.address = address_digits;
@@ -183,10 +218,14 @@ class TreasureHuntPlayer
         EEPROM.write(PLAYER_EN_add, En);
         permNoti = "    You Are Killed!     ";
         unsigned long currTime = millis();
-        if (currTime - last_max_en_decay >= MAX_EN_DECAY_DURATION){
-          MaxEn = max(MaxEn - 1, 1);
-          EEPROM.write(PLAYER_MaxEn_add, MaxEn);
-          last_max_en_decay = currTime;
+        // if (currTime - last_max_en_decay >= MAX_EN_DECAY_DURATION){
+        //   MaxEn = max(MaxEn - 1, 1);
+        //   EEPROM.write(PLAYER_MaxEn_add, MaxEn);
+        //   last_max_en_decay = currTime;
+        // }
+        if (MANA > 1) {
+          MANA = 1;
+          EEPROM.write(PLAYER_MANA_add, MANA);
         }
       }
       else {
@@ -215,13 +254,20 @@ class TreasureHuntPlayer
         } else if (!_isGL){
             // currently not infected with virus AND is not healer
             // check if nearby devices are transmitting virus
-            if (Player_Bluetooth.isThereVirus && (currTime - last_received_heal >= VIRUS_IMMUNITY_DURATION)) {
-                infectedWithVirus = true;
-                HP--;
-                EEPROM.write(PLAYER_HP_add, HP);
-                last_hp_decay = currTime;
-                Player_Bluetooth.startSpreadingVirus();
-                permNoti = "    You Are Infected!   ";
+            if (Player_Bluetooth.isThereVirus && (currTime - last_received_heal >= VIRUS_IMMUNITY_DURATION) && (currTime - last_lucky_not_infected >= LUCKY_NOT_INFECTED_DURATION)) {
+                randomSeed(currTime);
+                virus_infection_num = random(100);
+                if (virus_infection_num < VIRUS_INFECTION_PROBABILITY){
+                  infectedWithVirus = true;
+                  HP--;
+                  EEPROM.write(PLAYER_HP_add, HP);
+                  last_hp_decay = currTime;
+                  Player_Bluetooth.startSpreadingVirus();
+                  permNoti = "    You Are Infected!   ";
+                }
+                else {
+                  last_lucky_not_infected = currTime;
+                }
             }
         }
       }
@@ -355,6 +401,8 @@ class TreasureHuntPlayer
               if (feedbackData.is_attackee_killed == true) {
                 tempNoti = " You killed a person ";
                 tempNoti_start = millis();
+                MANA++;
+                EEPROM.write(PLAYER_MANA_add, MANA);
               }
               else {
                 tempNoti = " Attack successfully ";
