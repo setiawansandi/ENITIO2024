@@ -159,7 +159,7 @@ class TreasureLevel2
       display.setTextColor(SSD1306_WHITE); // Draw white text
       display.println("Hold on!!");
       display.setCursor(0, 30);
-      display.println("The game has not been");
+      display.println("The game has not");
       display.println("started yet.");
       display.display();
     };
