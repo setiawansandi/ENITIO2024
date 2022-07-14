@@ -382,8 +382,108 @@ class TreasureHunt_OLED {
       display.display();
     }
 
-    void display_powerupPage(){
+    void display_powerupPage(int num_bonus6HP, 
+                            int num_bonus1MaxEn,
+                            int num_bonus1MANA,
+                            int num_fiveminx2EnRegen,
+                            int num_bomb,
+                            String noti,
+                            int PowerUpNav){
+
+      display.clearDisplay();
+      display.setTextSize(1); // Draw SIZE
+      if (noti.length() == 0)
+      {
+        display.setTextColor(SSD1306_BLACK, SSD1306_WHITE); // Draw 'inverse' text
+        display.setCursor(0, 0);
+        display.println(F("  Treasure Hunt Game ")); 
+      }
+      else 
+      {
+        display.setTextColor(SSD1306_WHITE); // Draw 'inverse' text
+        display.setCursor(0, 0);
+        display.println(noti); 
+      }
+
+      display.setCursor(0, 12);
+      display.setTextSize(1);      // Normal 1:1 pixel scale
+      display.setTextColor(SSD1306_WHITE); // Draw white text      
+
+      switch (PowerUpNav)
+      {
+      case bonus6HP:
+        display.println((" Give 6 HP instantly ")); 
+        display.setCursor(0, 36);
+        display.print(("You have "));    
+        display.print(num_bonus6HP);
+        display.println((" of this!"));   
+        display.setTextColor(SSD1306_BLACK, SSD1306_WHITE);
+        display.setCursor(0, 56);
+        display.println("    Press to use!    ");
+        break;
+
+      case bonus1MaxEn:
+        display.println(("  Bonus 1 Max Energy ")); 
+        display.setCursor(0, 36);
+        display.print(("You have "));    
+        display.print(num_bonus1MaxEn);
+        display.println((" of this!"));   
+        display.setTextColor(SSD1306_BLACK, SSD1306_WHITE);
+        display.setCursor(0, 56);
+        display.println("    Press to use!    ");
+        break;
+
+      case bonus1MANA:
+        display.println(("     Bonus 1 MANA    ")); 
+        display.setCursor(0, 36);
+        display.print(("You have "));    
+        display.print(num_bonus1MANA);
+        display.println((" of this!"));   
+        display.setTextColor(SSD1306_BLACK, SSD1306_WHITE);
+        display.setCursor(0, 56);
+        display.println("    Press to use!    ");
+        break;
+
+      case fiveminx2EnRegen:
+        display.println((" Double Energy Regen ")); 
+        display.setCursor(0, 22);
+        display.println(("       in 5 min      ")); 
+        display.setCursor(0, 36);
+        display.print(("You have "));    
+        display.print(num_fiveminx2EnRegen);
+        display.println((" of this!"));   
+        display.setTextColor(SSD1306_BLACK, SSD1306_WHITE);
+        display.setCursor(0, 56);
+        display.println("    Press to use!    ");
+        break;
+
+      case bomb:
+        display.println(("        Bomb!!       ")); 
+        display.setCursor(0, 22);
+        display.println(("  Damage surrounding ")); 
+        display.setCursor(0, 36);
+        display.print(("You have "));    
+        display.print(num_bomb);
+        display.println((" of this!"));   
+        display.setTextColor(SSD1306_BLACK, SSD1306_WHITE);
+        display.setCursor(0, 56);
+        display.println("    Press to use!    ");
+        break;
+
+      case 0:
+        display.println(("  Use Left and Right ")); 
+        display.setCursor(0, 22);
+        display.println(("      to Navigate    ")); 
+        display.setCursor(0, 32);
+        display.println(("through each power-up")); 
+        display.setTextColor(SSD1306_BLACK, SSD1306_WHITE);
+        display.setCursor(0, 56);
+        display.println("  Press to go back!  ");
       
+      default:
+        break;
+      }
+      display.display();
     }
 
     void display_infoPage(int OG, int ID, int MANA, int MaxEn, String noti, int pageNav)

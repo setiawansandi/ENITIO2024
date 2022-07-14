@@ -6,6 +6,8 @@
 
 #define LUCKY_NOT_INFECTED_DURATION 5000 // [ms]
 
+#define x2_En_Regen_bonus_duration 300000 // [ms]
+
 int game_started_buffer = 0;
 
 uint8_t newMACAddress[] = {4, 8, 22, 1, 255, 255};
@@ -39,6 +41,7 @@ class TreasureHuntPlayer
     unsigned long last_hp_decay = 0;
     unsigned long last_received_heal = 0;
     unsigned long last_lucky_not_infected = 0;
+    unsigned long start_x2_en_regen = 0;
 
     unsigned long start_receiving_feedback = 0;
 
@@ -46,9 +49,18 @@ class TreasureHuntPlayer
     int numL1Treasure = 0;
     int numL2Treasure = 0;
 
-    int LastL1TreasureCollected = -1;
-
     bool infectedWithVirus = 0;
+
+    int num_bonus6HP = 0;
+    int num_bonus1MaxEn = 0;
+    int num_bonus1MANA = 0;
+    int num_fiveminx2EnRegen = 0;
+    int num_bomb = 0;
+
+    bool is_x2EnRegen = false;
+
+    int PowerUpNav = 0;
+    bool choosingPowerUp = false;
 
   public:
     bool gameStarted = 0;
@@ -129,6 +141,11 @@ class TreasureHuntPlayer
         numKilled = EEPROM.read(PLAYER_numKilled_add);
         numL1Treasure = EEPROM.read(PLAYER_numL1Treasure_add);
         numL2Treasure = EEPROM.read(PLAYER_numL2Treasure_add);
+        num_bonus6HP = EEPROM.read(PLAYER_num_bonus6HP_add);
+        num_bonus1MaxEn = EEPROM.read(PLAYER_num_bonus1MaxEn_add);
+        num_bonus1MANA = EEPROM.read(PLAYER_num_bonus1MANA_add);
+        num_fiveminx2EnRegen = EEPROM.read(PLAYER_num_fiveminx2EnRegen_add);
+        num_bomb = EEPROM.read(PLAYER_num_bomb_add);
       }
     }
 
@@ -197,16 +214,8 @@ class TreasureHuntPlayer
            Serial.printf("%d %d %d %d %d %d %d %d \n", IRsignal_.address.digit3, IRsignal_.address.digit2, IRsignal_.address.digit1, IRsignal_.address.digit0, IRsignal_.command.digit3, IRsignal_.command.digit2, IRsignal_.command.digit1, IRsignal_.command.digit0);
   
            lastActionReceived = currTime;
-           if ((action_ == 4) && (OG_ == OG) && (ID_ == ID)) {
-            int TreasureID = IRsignal_.command.digit1 + (IRsignal_.command.digit2 << 4);
-            if (TreasureID != LastL1TreasureCollected) {
-              numL1Treasure++;
-              tempNoti = "Collected L1 Treasure";
-              LastL1TreasureCollected = TreasureID;
-              tempNoti_start = millis();
-            }
-           }
-           else if (((OG_ != OG) && (action_ == attack)) || ((action_ == heal) && (OG_ == OG) && (ID_ != ID)) || ((action_ == heal) && (OG_ != OG)))
+
+           if (((OG_ != OG) && (action_ == attack)) || ((action_ == heal) && (OG_ == OG) && (ID_ != ID)) || ((action_ == heal) && (OG_ != OG)))
                 handleAction(OG_, ID_, action_, MANA_);
            }
         }
@@ -236,7 +245,16 @@ class TreasureHuntPlayer
           last_en_recover = currTime;
         }
         else {
-          if (currTime - last_en_recover >= EN_RECOVER_DURATION){
+          int en_rcv = EN_RECOVER_DURATION;
+          if (is_x2EnRegen) {
+            if (currTime - start_x2_en_regen < x2_En_Regen_bonus_duration){
+              en_rcv *= 2;
+            }
+            else {
+              is_x2EnRegen = false;
+            }
+          }
+          if (currTime - last_en_recover >= en_rcv){
             En++ ;
             EEPROM.write(PLAYER_EN_add, En);
             last_en_recover = currTime;
@@ -256,7 +274,7 @@ class TreasureHuntPlayer
             // check if nearby devices are transmitting virus
             if (Player_Bluetooth.isThereVirus && (currTime - last_received_heal >= VIRUS_IMMUNITY_DURATION) && (currTime - last_lucky_not_infected >= LUCKY_NOT_INFECTED_DURATION)) {
                 randomSeed(currTime);
-                virus_infection_num = random(100);
+                int virus_infection_num = random(100);
                 if (virus_infection_num < VIRUS_INFECTION_PROBABILITY){
                   infectedWithVirus = true;
                   HP--;
@@ -309,29 +327,59 @@ class TreasureHuntPlayer
           break;
 
         case left:
-          lastPageNav--;
-          if (lastPageNav > 4) lastPageNav -= 5;
-          if (lastPageNav < 0) lastPageNav += 5;
-          Nav_start = millis();
+          if (!choosingPowerUp){
+            lastPageNav--;
+            if (lastPageNav > 4) lastPageNav -= 5;
+            if (lastPageNav < 0) lastPageNav += 5;
+            Nav_start = millis();
+          }
+          else {
+            PowerUpNav-- ;
+            if (PowerUpNav > 5) PowerUpNav -= 6;
+            if (PowerUpNav < 0) PowerUpNav += 6;
+          }
           Player_joystick.set_state();
           break;
-
+          
          case right:
-          lastPageNav++;
-          if (lastPageNav > 4) lastPageNav -= 5;
-          if (lastPageNav < 0) lastPageNav += 5;
-          Nav_start = millis();
+          if (!choosingPowerUp){
+            lastPageNav++;
+            if (lastPageNav > 4) lastPageNav -= 5;
+            if (lastPageNav < 0) lastPageNav += 5;
+            Nav_start = millis();
+          }
+          else {
+            PowerUpNav++ ;
+            if (PowerUpNav > 5) PowerUpNav -= 6;
+            if (PowerUpNav < 0) PowerUpNav += 6;
+          }
           Player_joystick.set_state();
           break;
           
         case button:
-          if (lastPageNav != currentPage)
-            currentPage = lastPageNav;
-          if (currentPage == exitPage) {
-            currentProcess = MainMenuProcess;
-            currentPage = mainPage; // reset current page
-            lastPageNav = currentPage;
-          } 
+          if (!choosingPowerUp){
+            if (lastPageNav != currentPage)
+              currentPage = lastPageNav;
+            if (currentPage == exitPage) {
+              currentProcess = MainMenuProcess;
+              currentPage = mainPage; // reset current page
+              lastPageNav = currentPage;
+            } 
+            if (currentPage == powerupPage){
+              choosingPowerUp = true;
+              lastPageNav = mainPage;
+            }
+          }
+          else {
+            if (PowerUpNav == 0){
+              currentPage = mainPage;
+              choosingPowerUp = false;
+            }
+            else{
+              handlePowerUp(PowerUpNav);
+            }
+          }
+
           Player_joystick.set_state();
           break;
 
@@ -350,6 +398,56 @@ class TreasureHuntPlayer
             unsigned long currTime = millis();
             if (currTime - Nav_start > NAV_WAIT) lastPageNav = currentPage;
           }
+      }
+    }
+
+    void handlePowerUp(int PowerUpNav){
+      switch (PowerUpNav)
+      {
+      case bonus6HP:
+        if (num_bonus6HP > 0){
+          num_bonus6HP -- ;
+          HP = min(HP + 6, MaxHP);
+          EEPROM.write(PLAYER_num_bonus6HP_add, num_bonus6HP);
+          EEPROM.write(PLAYER_HP_add, HP);
+        }
+        break;
+
+      case bonus1MaxEn:
+        if (num_bonus1MaxEn > 0){
+          num_bonus1MaxEn -- ;
+          MaxEn++;
+          EEPROM.write(PLAYER_num_bonus1MaxEn_add, num_bonus1MaxEn);
+          EEPROM.write(PLAYER_MaxEn_add, MaxEn);
+        }
+        break;
+
+      case bonus1MANA:
+        if (num_bonus1MANA > 0){
+          num_bonus1MANA -- ;
+          MANA++;
+          EEPROM.write(PLAYER_num_bonus1MANA_add, num_bonus1MANA);
+          EEPROM.write(PLAYER_MANA_add, MANA);
+        }
+        break; 
+
+      case fiveminx2EnRegen:
+        if (num_fiveminx2EnRegen > 0) {
+          num_fiveminx2EnRegen -- ;
+          start_x2_en_regen = millis();
+          is_x2EnRegen = true;
+          EEPROM.write(PLAYER_num_fiveminx2EnRegen_add, num_fiveminx2EnRegen);
+        }
+        break;
+
+      case bomb:
+        if (num_bomb > 0){
+          num_bomb -- ;
+          EEPROM.write(PLAYER_num_bomb_add, num_bomb);
+        }
+      
+      default:
+        break;
       }
     }
 
@@ -434,6 +532,43 @@ class TreasureHuntPlayer
                 Player_EspNOW.is_waiting_for_feedback = 0;
               }
               break;
+
+            case 2:
+              if ((feedbackData.attacker_OG == OG) && (feedbackData.attacker_ID == ID)){
+                switch (feedbackData.is_attackee_killed)
+                {
+                case bonus6HP:
+                  num_bonus6HP ++ ;
+                  tempNoti = "    PowerUp: +6 HP   ";
+                  break;
+
+                case bonus1MaxEn:
+                  num_bonus1MaxEn ++ ;
+                  tempNoti = "  PowerUp: +1 Max En ";
+                  break;
+
+                case bonus1MANA:
+                  num_bonus1MANA ++ ;
+                  tempNoti = "   PowerUp: +1 MANA  ";
+                  break;
+
+                case fiveminx2EnRegen:
+                  num_fiveminx2EnRegen ++ ;
+                  tempNoti = "PowerUp: x2 En Regen ";
+                  break;
+
+                case bomb:
+                  num_bomb ++ ;
+                  tempNoti = "  PowerUp: A Bomb!!  ";
+                  break;
+                
+                default:
+                  break;
+                }
+                tempNoti_start = millis();
+                EspNOW_received = 0;
+                Player_EspNOW.is_waiting_for_feedback = 0;
+              }
             
             default:
               break;
@@ -483,9 +618,16 @@ class TreasureHuntPlayer
 //        case achievementPage:
 //          TreasureHunt_OLED.display_achievementPage(numKilled, numL1Treasure, numL2Treasure, noti_to_display, lastPageNav);
 //          break;
-//        case powerupPage:
-//          TreasureHunt_OLED.display_powerupPage();
-//          break;
+        case powerupPage:
+          TreasureHunt_OLED.display_powerupPage(num_bonus6HP, 
+                                              num_bonus1MaxEn,
+                                              num_bonus1MANA,
+                                              num_fiveminx2EnRegen,
+                                              num_bomb,
+                                              noti_to_display,
+                                              PowerUpNav);
+          break;
+        
         default:
           lastPageNav = mainPage;
           currentPage = mainPage;

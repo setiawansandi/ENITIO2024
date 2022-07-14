@@ -28,6 +28,12 @@ const int PLAYER_MANA_add = 10;
 const int PLAYER_numKilled_add = 11;
 const int PLAYER_numL1Treasure_add = 12;
 const int PLAYER_numL2Treasure_add = 13;
+const int PLAYER_num_bonus6HP_add = 14;
+const int PLAYER_num_bonus1MaxEn_add = 15;
+const int PLAYER_num_bonus1MANA_add = 16;
+const int PLAYER_num_fiveminx2EnRegen_add = 17;
+const int PLAYER_num_bomb_add = 18;
+
 
 int EN_RECOVER_DURATION;
 int VIRUS_DECAY_DURATION;

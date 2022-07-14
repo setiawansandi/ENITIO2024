@@ -24,4 +24,12 @@ typedef enum {
     down = 5,
 } joystick_pos ; 
 
+typedef enum {
+    bonus6HP = 1,
+    bonus1MaxEn = 2,
+    bonus1MANA = 3,
+    fiveminx2EnRegen = 4,
+    bomb = 5,
+} power_up; 
+
 #endif

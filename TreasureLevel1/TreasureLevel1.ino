@@ -81,12 +81,21 @@ class TreasureLevel1
         }
       };
 
+    void feedback_collectL1(int OG_, int ID_){
+      unsigned long currTime = millis();
+      randomSeed(currTime);
+      int powerup_ID = random(1,6);
+      Player_EspNOW.send_data(2, OG_, ID_, ID, powerup_ID);
+    } ;
+
     void handle_Collected() {
       // inform the server here ...
       int player_identifier = OG_ * pow(16, 2) + ID_;
       String player_mac_address = dbc.setTreasureAsOpened("TREASURE" + String(ID), player_identifier);
       // this code to save the info of the OG collected the treasure
       Serial.print("Treasure opened by "); Serial.println(player_mac_address);
+
+      feedback_collectL1(OG_, ID_)
 
       EEPROM.write(ENABLE_add, 2);
       EEPROM.commit();
@@ -126,16 +135,12 @@ class TreasureLevel1
         display.setCursor(0, 0);
         display.println(F("   Level 1 Treasure  ")); 
 
-        display.setCursor(0, 16);
+        display.setCursor(0, 24);
         display.setTextSize(2);      // Normal 1:1 pixel scale
         display.setTextColor(SSD1306_WHITE); // Draw white text
-        display.print("HP ");
-        display.fillRect(0, 34, HP*hp_pxl_bar_width, 4, SSD1306_WHITE);
-
-        display.setCursor(110, 32);
-        display.setTextSize(1);      // Normal 1:1 pixel scale
-        display.println(HP);
-
+        display.println("   Collect this to   ");
+        display.println("   get a power-up!   ");
+      
         display.display();
       }
       else {
