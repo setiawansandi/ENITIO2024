@@ -364,7 +364,7 @@ class TreasureHuntPlayer
           Serial.printf("Attacked. Current HP: %d \n", HP);
           tempNoti = "       Attacked      ";
           tempNoti_start = millis();
-          feedback(OG_, ID_);
+          feedback_attack(OG_, ID_);
           Player_Buzzer.sound(NOTE_E3);
         }
         break;
@@ -386,9 +386,9 @@ class TreasureHuntPlayer
       }
     }
 
-    void feedback(int OG_, int ID_){
+    void feedback_attack(int OG_, int ID_){
       bool killed = (HP == 0);
-      Player_EspNOW.send_data(OG_, ID_, OG, killed);
+      Player_EspNOW.send_data(1, OG_, ID_, OG, killed);
     } ;
       
     void receiveFeedback(){
@@ -397,19 +397,46 @@ class TreasureHuntPlayer
         if (currTime - start_receiving_feedback <= FEEDBACK_WAIT){
           if (EspNOW_received == 1){
             feedback_message feedbackData = Player_EspNOW.get_feedback_received();
-            if ((feedbackData.attacker_OG == OG) && (feedbackData.attacker_ID == ID)){
-              if (feedbackData.is_attackee_killed == true) {
-                tempNoti = " You killed a person ";
-                tempNoti_start = millis();
-                MANA++;
-                EEPROM.write(PLAYER_MANA_add, MANA);
+            switch (feedbackData.attackee_type)
+            {
+            case 1:
+              if ((feedbackData.attacker_OG == OG) && (feedbackData.attacker_ID == ID)){
+                if (feedbackData.is_attackee_killed == true) {
+                  tempNoti = " You killed a person ";
+                  tempNoti_start = millis();
+                  MANA++;
+                  numKilled ++ ;
+                  EEPROM.write(PLAYER_MANA_add, MANA);
+                  EEPROM.write(PLAYER_numKilled_add, numKilled);
+                }
+                else {
+                  tempNoti = " Attack successfully ";
+                  tempNoti_start = millis();
+                }
+                EspNOW_received = 0;
+                Player_EspNOW.is_waiting_for_feedback = 0;
               }
-              else {
-                tempNoti = " Attack successfully ";
-                tempNoti_start = millis();
+              break;
+
+            case 3:
+              if ((feedbackData.attacker_OG == OG) && (feedbackData.attacker_ID == ID)){
+                if (feedbackData.is_attackee_killed == true) {
+                  tempNoti = " U Opened L2 Treasure";
+                  tempNoti_start = millis();
+                  numL2Treasure ++ ;
+                  EEPROM.write(PLAYER_numL2Treasure_add, numL2Treasure);
+                }
+                else {
+                  tempNoti = " L2 Treasure Damaged ";
+                  tempNoti_start = millis();
+                }
+                EspNOW_received = 0;
+                Player_EspNOW.is_waiting_for_feedback = 0;
               }
-              EspNOW_received = 0;
-              Player_EspNOW.is_waiting_for_feedback = 0;
+              break;
+            
+            default:
+              break;
             }
           }
         }
@@ -460,6 +487,7 @@ class TreasureHuntPlayer
 //          TreasureHunt_OLED.display_powerupPage();
 //          break;
         default:
+          lastPageNav = mainPage;
           currentPage = mainPage;
       }
     }

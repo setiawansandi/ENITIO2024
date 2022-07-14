@@ -96,4 +96,4 @@ class EspNOW {
     }
 };
 
-EspNOW Player_EspNOW;
+EspNOW TreasureLevel2_EspNOW;

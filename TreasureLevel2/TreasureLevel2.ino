@@ -5,7 +5,7 @@
 #include "ENITIO_ir.h"
 #include "ENITIO_enums.h"
 #include "ENITIO_bluetooth.h"
-#include "ENITIO_wifi.h"
+#include "ENITIO_EspNOW.h"
 
 #include <SPI.h>
 #include <Wire.h>
@@ -76,6 +76,11 @@ class TreasureLevel2
       TreasureLevel2_Bluetooth.initialise(id);
     }
 
+    void feedback_collectL2(int OG_, int ID_){
+      bool killed = (HP == 0);
+      Player_EspNOW.send_data(3, OG_, ID_, ID, killed);
+    } ;
+
     void receiveAction() {
       if (HP > 0) {
         unsigned long currTime = millis();
@@ -95,6 +100,7 @@ class TreasureLevel2
       
              if (action_ == collect) {
                HP = max(HP-En_, 0);
+               feedback_collectL2(OG_, ID_);
                EEPROM.write(HP_add, HP);
                EEPROM.commit(); 
                Serial.printf("Current HP: %d\n", HP);
