@@ -46,7 +46,7 @@ class EspNOW {
   
    void send_data(int attackee_type, int attacker_OG, int attacker_ID, int attackee_OG, bool is_attackee_killed){
             // Register peer
-      feedbackData.attackee_type = attackee_type
+      feedbackData.attackee_type = attackee_type;
       feedbackData.attacker_OG = attacker_OG;
       feedbackData.attacker_ID = attacker_ID;
       feedbackData.attackee_OG = attackee_OG;
@@ -96,4 +96,4 @@ class EspNOW {
     }
 };
 
-EspNOW TreasureLevel2_EspNOW;
+EspNOW TreasureLevel1_EspNOW;

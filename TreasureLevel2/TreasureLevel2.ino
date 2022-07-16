@@ -78,7 +78,7 @@ class TreasureLevel2
 
     void feedback_collectL2(int OG_, int ID_){
       bool killed = (HP == 0);
-      Player_EspNOW.send_data(3, OG_, ID_, ID, killed);
+      TreasureLevel2_EspNOW.send_data(3, OG_, ID_, ID, killed);
     } ;
 
     void receiveAction() {

@@ -4,7 +4,7 @@
 #include <EEPROM.h>
 #include "ENITIO_ir.h"
 #include "ENITIO_enums.h"
-#include "ENITIO_wifi.h"
+#include "ENITIO_ESPNOW.h"
 
 #include <SPI.h>
 #include <Wire.h>
@@ -85,7 +85,7 @@ class TreasureLevel1
       unsigned long currTime = millis();
       randomSeed(currTime);
       int powerup_ID = random(1,6);
-      Player_EspNOW.send_data(2, OG_, ID_, ID, powerup_ID);
+      TreasureLevel1_EspNOW.send_data(2, OG_, ID_, ID, powerup_ID);
     } ;
 
     void handle_Collected() {
@@ -95,7 +95,7 @@ class TreasureLevel1
       // this code to save the info of the OG collected the treasure
       Serial.print("Treasure opened by "); Serial.println(player_mac_address);
 
-      feedback_collectL1(OG_, ID_)
+      feedback_collectL1(OG_, ID_);
 
       EEPROM.write(ENABLE_add, 2);
       EEPROM.commit();
