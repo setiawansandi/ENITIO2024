@@ -5,7 +5,7 @@ typedef struct feedback_message {
   int attacker_OG;
   int attacker_ID; 
   int attackee_OG; // or Treasure ID
-  bool is_attackee_killed;
+  int is_attackee_killed;
 } feedback_message;
 
 int EspNOW_received = 0;
@@ -44,7 +44,7 @@ class EspNOW {
       broadcastAddress[5] = attacker_ID;
     }
   
-   void send_data(int attackee_type, int attacker_OG, int attacker_ID, int attackee_OG, bool is_attackee_killed){
+   void send_data(int attackee_type, int attacker_OG, int attacker_ID, int attackee_OG, int is_attackee_killed){
             // Register peer
       feedbackData.attackee_type = attackee_type;
       feedbackData.attacker_OG = attacker_OG;

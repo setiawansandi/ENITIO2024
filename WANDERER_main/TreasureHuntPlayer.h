@@ -248,7 +248,7 @@ class TreasureHuntPlayer
           int en_rcv = EN_RECOVER_DURATION;
           if (is_x2EnRegen) {
             if (currTime - start_x2_en_regen < x2_En_Regen_bonus_duration){
-              en_rcv *= 2;
+              en_rcv /= 2;
             }
             else {
               is_x2EnRegen = false;
@@ -535,6 +535,7 @@ class TreasureHuntPlayer
 
             case 2:
               if ((feedbackData.attacker_OG == OG) && (feedbackData.attacker_ID == ID)){
+                Serial.print("L1 Treausre Collected Power Up:"); Serial.println(feedbackData.is_attackee_killed);
                 switch (feedbackData.is_attackee_killed)
                 {
                 case bonus6HP:

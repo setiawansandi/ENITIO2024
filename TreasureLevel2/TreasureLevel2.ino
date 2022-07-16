@@ -294,6 +294,8 @@ void setup() {
     Serial.println("Reconnecting..");
     isWiFiConnected = dbc.connectToWiFi();
   }
+
+  TreasureLevel2_EspNOW.enable();
 }
 
 void loop() {

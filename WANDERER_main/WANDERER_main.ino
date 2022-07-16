@@ -75,24 +75,10 @@ void setup() {
       GL_MaxHP = game_consts.GL_MaxHP;
       PARTICIPANT_MaxEn = game_consts.PARTICIPANT_MaxEn;
       GL_MaxEn = game_consts.GL_MaxEn;
-      INITIAL_MANA = game_consts.GL_MaxEn;
+      INITIAL_MANA = game_consts.INITIAL_MANA;
       HEAL_MANA = game_consts.HEAL_MANA;
       MAX_ATTACK_MANA = game_consts.MAX_ATTACK_MANA;
       MAX_COLLECT_MANA = game_consts.MAX_COLLECT_MANA;
-
-      // char* ptr; //start and end pointer for strtol
-      
-      // my_MAC_address_arr[0] = strtol(my_MAC_address.c_str(), &ptr, HEX );
-      // for( uint8_t i = 1; i < 6; i++ )
-      // {
-      //   my_MAC_address_arr[i] = strtol(ptr+1, &ptr, HEX );
-      // }
-      // Serial.print(my_MAC_address_arr[0], HEX);
-      // for( uint8_t i = 1; i < 6; i++)
-      // {
-      //   Serial.print(':');
-      //   Serial.print(my_MAC_address_arr[i], HEX);
-      // }
 
       Serial.println(my_MAC_address);
       
@@ -127,11 +113,7 @@ void loop() {
   else if (currentProcess == FactoryResetProcess){
     StartUpDisplay();
     clearEEPROM();
-//    My_Profile.reset();
-//    PLAYER.reset();
-//    esp_wifi_set_mac(WIFI_IF_AP, &my_MAC_address_arr[0]);
     ESP.restart();
-    currentProcess = MainMenuProcess;
   }
   else {
     currentProcess = MainMenuProcess;

@@ -1,13 +1,13 @@
 void noTone(uint8_t pin)
 {
-//    ledcDetachPin(pin);
-//    ledcWrite(0, 0);
+    ledcDetachPin(pin);
+    ledcWrite(0, 0);
 }
 
 void tone(byte pin, int freq) {
-//  ledcSetup(0, 2000, 8); // setup beeper
-//  ledcAttachPin(pin, 0); // attach beeper
-//  ledcWriteTone(0, freq); // play tone
+  ledcSetup(0, 2000, 8); // setup beeper
+  ledcAttachPin(pin, 0); // attach beeper
+  ledcWriteTone(0, freq); // play tone
 }
 
 #define BUZZER_PIN 4

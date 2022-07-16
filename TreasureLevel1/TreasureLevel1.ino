@@ -63,7 +63,8 @@ class TreasureLevel1
     };
     
     void receiveAction() {
-      if (TreasureLevel1_IR.available()) {
+      int currStatus = EEPROM.read(ENABLE_add);
+      if (currStatus == 1 && TreasureLevel1_IR.available()) {
          ir_signal IRsignal_ = TreasureLevel1_IR.read();
 
          OG_ = IRsignal_.address.digit2;
@@ -128,7 +129,8 @@ class TreasureLevel1
     };
 
     void display_in_game(){
-      if(HP != 0) {
+      int currStatus = EEPROM.read(ENABLE_add);
+      if(currStatus == 1) {
         display.clearDisplay();\
         display.setTextSize(1); // Draw SIZE
         display.setTextColor(SSD1306_BLACK, SSD1306_WHITE); // Draw 'inverse' text
@@ -136,7 +138,7 @@ class TreasureLevel1
         display.println(F("   Level 1 Treasure  ")); 
 
         display.setCursor(0, 24);
-        display.setTextSize(2);      // Normal 1:1 pixel scale
+        display.setTextSize(1);      // Normal 1:1 pixel scale
         display.setTextColor(SSD1306_WHITE); // Draw white text
         display.println("   Collect this to   ");
         display.println("   get a power-up!   ");
@@ -215,6 +217,8 @@ void setup() {
     Serial.println("Reconnecting..");
     isWiFiConnected = dbc.connectToWiFi();
   }
+
+  TreasureLevel1_EspNOW.enable();
   
 }
 
