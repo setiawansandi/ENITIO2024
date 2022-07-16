@@ -26,15 +26,15 @@ def set_treasure_as_collected(name):
                 db.session.commit()
 
                 # return MAC address to treasure to send confirmation message
-                OG_hex_str = "{0:x}".format(player_details["OG"])
-                participant_id_hex_str = "{0:x}".format(player_details["participant_id"])
+                OG_hex_str = "{0:02x}".format(player_details["OG"])
+                participant_id_hex_str = "{0:02x}".format(player_details["participant_id"])
                 result = {"mac_address_part5": "04",
                           "mac_address_part4": "08",
                           "mac_address_part3": "22",
                           "mac_address_part2": "01",
-                          "mac_address_part1": f"{OG_hex_str: 0>2}",
-                          "mac_address_part0": f"{participant_id_hex_str: 0>2}",
-                          "mac_address": f"04:08:22:01:{OG_hex_str: 0>2}:{participant_id_hex_str: 0>2}"}
+                          "mac_address_part1": OG_hex_str,
+                          "mac_address_part0": participant_id_hex_str,
+                          "mac_address": "04:08:22:01:{}:{}".format(OG_hex_str, participant_id_hex_str)}
 
                 return jsonify(result)
 
