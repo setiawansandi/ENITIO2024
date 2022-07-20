@@ -79,10 +79,9 @@ void setup() {
       HEAL_MANA = game_consts.HEAL_MANA;
       MAX_ATTACK_MANA = game_consts.MAX_ATTACK_MANA;
       MAX_COLLECT_MANA = game_consts.MAX_COLLECT_MANA;
+      BOMB_HP_DEDUCTION = game_consts.BOMB_HP_DEDUCTION;
 
       Serial.println(my_MAC_address);
-      
-      Player_Bluetooth.initialise();
 
       xTaskCreatePinnedToCore(
                       backgroundTaskCode,   /* Task function. */
