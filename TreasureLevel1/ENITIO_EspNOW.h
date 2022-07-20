@@ -1,11 +1,12 @@
 #include "ENITIO_wifi.h"
 
 typedef struct feedback_message {
+  int msg_type = 1;
   int attackee_type; // 1 for player, 2 for Lvl 1 Treasure, 3 for Lvl 2 Treasure
   int attacker_OG;
   int attacker_ID; 
   int attackee_OG; // or Treasure ID
-  int is_attackee_killed; // or bonus ID
+  int is_attackee_killed;
 } feedback_message;
 
 int EspNOW_received = 0;
@@ -19,7 +20,6 @@ class EspNOW {
     
   public:
     int is_waiting_for_feedback = 0;
-    int is_feedbacking = 0;
     
     void enable() {
       // WiFi.mode(WIFI_STA);
@@ -38,10 +38,10 @@ class EspNOW {
 //      MAC_ADDRESS target_addr = dbc.getDeviceMACAddress(playerIdentifier);
       broadcastAddress[0] = 4;
       broadcastAddress[1] = 8;
-      broadcastAddress[2] = 22;
-      broadcastAddress[3] = 1;
-      broadcastAddress[4] = attacker_OG;
-      broadcastAddress[5] = attacker_ID;
+      broadcastAddress[2] = 1;
+      broadcastAddress[3] = attacker_OG;
+      broadcastAddress[4] = attacker_ID;
+      broadcastAddress[5] = 0;
     }
   
    void send_data(int attackee_type, int attacker_OG, int attacker_ID, int attackee_OG, int is_attackee_killed){

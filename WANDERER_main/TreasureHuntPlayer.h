@@ -10,7 +10,8 @@
 
 int game_started_buffer = 0;
 
-uint8_t newMACAddress[] = {4, 8, 22, 1, 255, 255};
+uint8_t newMACAddress_AP[] = {4, 8, 1, 255, 255, 0};
+uint8_t newMACAddress_STA[] = {4, 8, 1, 255, 255, 1};
 
 class TreasureHuntPlayer
 {
@@ -55,12 +56,17 @@ class TreasureHuntPlayer
     int num_bonus1MaxEn = 0;
     int num_bonus1MANA = 0;
     int num_fiveminx2EnRegen = 0;
-    int num_bomb = 0;
+    int num_bomb = 10;
 
     bool is_x2EnRegen = false;
 
     int PowerUpNav = 0;
     bool choosingPowerUp = false;
+
+    bool active_bomb = 0;
+
+    int temp_bomb_attacked = 0;
+    int temp_bomb_killed = 0;
 
   public:
     bool gameStarted = 0;
@@ -101,9 +107,15 @@ class TreasureHuntPlayer
       OG = og ;
       _isGL = isGL;
 
-      newMACAddress[4] = OG;
-      newMACAddress[5] = ID;
-      esp_wifi_set_mac(WIFI_IF_AP, &newMACAddress[0]);
+      newMACAddress_AP[3] = OG;
+      newMACAddress_AP[4] = ID;
+
+      newMACAddress_STA[3] = OG;
+      newMACAddress_STA[4] = ID;
+      
+      esp_wifi_set_mac(WIFI_IF_AP, &newMACAddress_AP[0]);
+      esp_wifi_set_mac(WIFI_IF_STA, &newMACAddress_STA[0]);
+      
 
       Serial.print("[NEW] ESP8266 Board MAC Address:  ");
       Serial.println(WiFi.macAddress());
@@ -190,7 +202,6 @@ class TreasureHuntPlayer
 
         Player_IR.send(send_signal, 1);
 
-        Player_EspNOW.is_waiting_for_feedback = 1;
         start_receiving_feedback = millis();
 
         En--;
@@ -395,14 +406,14 @@ class TreasureHuntPlayer
       else {
         action = do_nothing;
         if (lastPageNav != currentPage){
-            unsigned long currTime = millis();
-            if (currTime - Nav_start > NAV_WAIT) lastPageNav = currentPage;
-          }
+          unsigned long currTime = millis();
+          if (currTime - Nav_start > NAV_WAIT) lastPageNav = currentPage;
+        }
       }
     }
 
-    void handlePowerUp(int PowerUpNav){
-      switch (PowerUpNav)
+    void handlePowerUp(int powerup){
+      switch (powerup)
       {
       case bonus6HP:
         if (num_bonus6HP > 0){
@@ -443,12 +454,18 @@ class TreasureHuntPlayer
       case bomb:
         if (num_bomb > 0){
           num_bomb -- ;
+          Player_EspNOW.ScanForBombTarget();
+          Player_EspNOW.SendBombToAllTargets(OG, ID);
           EEPROM.write(PLAYER_num_bomb_add, num_bomb);
+          temp_bomb_attacked = 0;
+          temp_bomb_killed = 0;
+          active_bomb = true;
         }
       
       default:
         break;
       }
+      PowerUpNav = 0;
     }
 
     void handleAction(int OG_, int ID_, int action_, int MANA_){
@@ -486,99 +503,151 @@ class TreasureHuntPlayer
 
     void feedback_attack(int OG_, int ID_){
       bool killed = (HP == 0);
-      Player_EspNOW.send_data(1, OG_, ID_, OG, killed);
+      Player_EspNOW.send_data(1, 1, OG_, ID_, OG, killed);
     } ;
-      
-    void receiveFeedback(){
-      if (Player_EspNOW.is_waiting_for_feedback == 1) {
-        unsigned long currTime = millis();
-        if (currTime - start_receiving_feedback <= FEEDBACK_WAIT){
-          if (EspNOW_received == 1){
-            feedback_message feedbackData = Player_EspNOW.get_feedback_received();
-            switch (feedbackData.attackee_type)
-            {
-            case 1:
-              if ((feedbackData.attacker_OG == OG) && (feedbackData.attacker_ID == ID)){
-                if (feedbackData.is_attackee_killed == true) {
-                  tempNoti = " You killed a person ";
-                  tempNoti_start = millis();
-                  MANA++;
-                  numKilled ++ ;
-                  EEPROM.write(PLAYER_MANA_add, MANA);
-                  EEPROM.write(PLAYER_numKilled_add, numKilled);
-                }
-                else {
-                  tempNoti = " Attack successfully ";
-                  tempNoti_start = millis();
-                }
-                EspNOW_received = 0;
-                Player_EspNOW.is_waiting_for_feedback = 0;
-              }
-              break;
 
-            case 3:
-              if ((feedbackData.attacker_OG == OG) && (feedbackData.attacker_ID == ID)){
-                if (feedbackData.is_attackee_killed == true) {
-                  tempNoti = " U Opened L2 Treasure";
-                  tempNoti_start = millis();
-                  numL2Treasure ++ ;
-                  EEPROM.write(PLAYER_numL2Treasure_add, numL2Treasure);
-                }
-                else {
-                  tempNoti = " L2 Treasure Damaged ";
-                  tempNoti_start = millis();
-                }
-                EspNOW_received = 0;
-                Player_EspNOW.is_waiting_for_feedback = 0;
-              }
-              break;
+    void feedback_bomb(int OG_, int ID_){
+      bool killed = (HP == 0);
+      Player_EspNOW.send_data(1, 4, OG_, ID_, OG, killed);
+    }
 
-            case 2:
-              if ((feedbackData.attacker_OG == OG) && (feedbackData.attacker_ID == ID)){
-                Serial.print("L1 Treausre Collected Power Up:"); Serial.println(feedbackData.is_attackee_killed);
-                switch (feedbackData.is_attackee_killed)
-                {
-                case bonus6HP:
-                  num_bonus6HP ++ ;
-                  tempNoti = "    PowerUp: +6 HP   ";
-                  break;
-
-                case bonus1MaxEn:
-                  num_bonus1MaxEn ++ ;
-                  tempNoti = "  PowerUp: +1 Max En ";
-                  break;
-
-                case bonus1MANA:
-                  num_bonus1MANA ++ ;
-                  tempNoti = "   PowerUp: +1 MANA  ";
-                  break;
-
-                case fiveminx2EnRegen:
-                  num_fiveminx2EnRegen ++ ;
-                  tempNoti = "PowerUp: x2 En Regen ";
-                  break;
-
-                case bomb:
-                  num_bomb ++ ;
-                  tempNoti = "  PowerUp: A Bomb!!  ";
-                  break;
-                
-                default:
-                  break;
-                }
-                tempNoti_start = millis();
-                EspNOW_received = 0;
-                Player_EspNOW.is_waiting_for_feedback = 0;
-              }
-            
-            default:
-              break;
-            }
+    void handleFeedbackMsg(feedback_message feedbackData){
+      switch (feedbackData.attackee_type)
+      {
+      case 1:
+        if ((feedbackData.attacker_OG == OG) && (feedbackData.attacker_ID == ID)){
+          if (feedbackData.is_attackee_killed == true) {
+            tempNoti = " You killed a person ";
+            tempNoti_start = millis();
+            MANA++;
+            numKilled ++ ;
+            EEPROM.write(PLAYER_MANA_add, MANA);
+            EEPROM.write(PLAYER_numKilled_add, numKilled);
+          }
+          else {
+            tempNoti = " Attack successfully ";
+            tempNoti_start = millis();
           }
         }
-        else {
-          EspNOW_received = 0;
-          Player_EspNOW.is_waiting_for_feedback = 0;
+        break;
+
+      case 3:
+        if ((feedbackData.attacker_OG == OG) && (feedbackData.attacker_ID == ID)){
+          if (feedbackData.is_attackee_killed == true) {
+            tempNoti = " U Opened L2 Treasure";
+            tempNoti_start = millis();
+            numL2Treasure ++ ;
+            EEPROM.write(PLAYER_numL2Treasure_add, numL2Treasure);
+          }
+          else {
+            tempNoti = " L2 Treasure Damaged ";
+            tempNoti_start = millis();
+          }
+        }
+        break;
+
+      case 2:
+        if ((feedbackData.attacker_OG == OG) && (feedbackData.attacker_ID == ID)){
+          Serial.print("L1 Treasure Collected Power Up:"); Serial.println(feedbackData.is_attackee_killed);
+          switch (feedbackData.is_attackee_killed)
+          {
+          case bonus6HP:
+            num_bonus6HP ++ ;
+            tempNoti = "    PowerUp: +6 HP   ";
+            break;
+
+          case bonus1MaxEn:
+            num_bonus1MaxEn ++ ;
+            tempNoti = "  PowerUp: +1 Max En ";
+            break;
+
+          case bonus1MANA:
+            num_bonus1MANA ++ ;
+            tempNoti = "   PowerUp: +1 MANA  ";
+            break;
+
+          case fiveminx2EnRegen:
+            num_fiveminx2EnRegen ++ ;
+            tempNoti = "PowerUp: x2 En Regen ";
+            break;
+
+          case bomb:
+            num_bomb ++ ;
+            tempNoti = "  PowerUp: A Bomb!!  ";
+            break;
+          
+          default:
+            break;
+          }
+          tempNoti_start = millis();
+        }
+        break;
+      
+      case 4:
+        if ((feedbackData.attacker_OG == OG) && (feedbackData.attacker_ID == ID)){
+          if (feedbackData.is_attackee_killed == true) {
+            temp_bomb_killed += 1;
+            temp_bomb_attacked += 1;
+            MANA++;
+            numKilled ++ ;
+            EEPROM.write(PLAYER_MANA_add, MANA);
+            EEPROM.write(PLAYER_numKilled_add, numKilled);
+          }
+          else {
+            temp_bomb_attacked += 1;
+          }
+        }
+        break;
+      
+      default:
+        break;
+      }
+    }
+
+    void handleBombed(feedback_message feedbackData){
+      if (HP > 0) {
+        if (feedbackData.attacker_OG != OG){
+          HP = max(HP - BOMB_DAMAGE, 0);
+          tempNoti = "   You are Bombed!!  ";
+          Player_Buzzer.sound(NOTE_E3);
+          tempNoti_start = millis();
+          feedback_bomb(feedbackData.attacker_OG, feedbackData.attacker_ID);
+        }
+      }
+    }
+      
+    void receiveEspNOW(){
+      if (EspNOW_received >= 1){
+        int i;
+        for (i = 0; i < EspNOW_received; i++){
+          feedback_message feedbackData = Player_EspNOW.get_feedback_received();
+          switch (feedbackData.msg_type)
+          {
+          case 1:
+            handleFeedbackMsg(feedbackData);
+            break;
+
+          case 2:
+            handleBombed(feedbackData);
+            break;
+          
+          default:
+            break;
+          }
+          EspNOW_received -- ;
+        }
+        if ((temp_bomb_attacked == Player_EspNOW.num_bombed) && (active_bomb)) {
+          Serial.print("Bombed "); Serial.println(temp_bomb_attacked);
+          String num_attack_noti = String(" Bombed ");
+          num_attack_noti.concat(temp_bomb_attacked);
+          String num_killed_noti = String(" Killed ");
+          num_killed_noti.concat(temp_bomb_killed);
+          num_attack_noti += num_killed_noti;
+          tempNoti = num_attack_noti;
+          tempNoti_start = millis();
+          temp_bomb_attacked = 0;
+          temp_bomb_killed = 0;
+          active_bomb = false;
         }
       }
     } ; 
@@ -671,7 +740,7 @@ class TreasureHuntPlayer
         handleJoystickInGame();
         sendAction();
         receiveAction();
-        receiveFeedback();
+        receiveEspNOW();
         update_player_state();
         update_display();
         update_sound();
