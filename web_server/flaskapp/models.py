@@ -84,7 +84,8 @@ def populate_statuses():
         "MAX_ATTACK_MANA": 3,
         "HEAL_MANA": 10,
         "VIRUS_INFECTION_PROBABILITY": 40,
-        "BOMB_HP_DEDUCTION": 5
+        "BOMB_HP_DEDUCTION": 4,
+        "KILL_UPDATE_SERVER_INTERVAL": 5 * 60 * 1000
     }
     for status in statuses:
         s = GameStatus(status, str(statuses[status]))

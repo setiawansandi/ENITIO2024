@@ -43,6 +43,7 @@ class TreasureHuntPlayer
     unsigned long last_received_heal = 0;
     unsigned long last_lucky_not_infected = 0;
     unsigned long start_x2_en_regen = 0;
+    unsigned long last_update_kills_to_server = 0;
 
     unsigned long start_receiving_feedback = 0;
 
@@ -70,7 +71,7 @@ class TreasureHuntPlayer
 
   public:
     bool gameStarted = 0;
-
+    bool deviceReady = 0;
     // void reset(){
     //   HP = 12;
     //   MaxHP = 12;
@@ -716,7 +717,6 @@ class TreasureHuntPlayer
       // 0 mean game did not start
       // 1 mean in game
       // once the game has started then we dunnid to check anymore
-   
       if (!gameStarted) {
         gameStarted = game_started_buffer;
         if (gameStarted) {
@@ -727,6 +727,7 @@ class TreasureHuntPlayer
           Serial.println(id);
           setup_initial_state(id, og, isGL); // initialize Player
           Player_Bluetooth.initialise();
+          deviceReady = 1;
         }
         return gameStarted;
       } else return 1;
@@ -749,9 +750,13 @@ class TreasureHuntPlayer
   };
 
   void gameBackgroundProcess(){
-      if (!infectedWithVirus){
+      if (!infectedWithVirus && deviceReady == 1){
         Player_Bluetooth.scan();
-        delay(50);
+        unsigned long currTime = millis();
+        if (currTime - last_update_kills_to_server > KILL_UPDATE_SERVER_INTERVAL) {
+            dbc.sendNumberOfKills(OG, ID, numKilled);
+            last_update_kills_to_server = currTime;
+        } else delay(50);
       }
       else{
         delay(50);

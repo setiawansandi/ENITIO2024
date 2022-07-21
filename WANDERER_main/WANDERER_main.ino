@@ -80,6 +80,7 @@ void setup() {
       MAX_ATTACK_MANA = game_consts.MAX_ATTACK_MANA;
       MAX_COLLECT_MANA = game_consts.MAX_COLLECT_MANA;
       BOMB_HP_DEDUCTION = game_consts.BOMB_HP_DEDUCTION;
+      KILL_UPDATE_SERVER_INTERVAL = game_consts.KILL_UPDATE_SERVER_INTERVAL;
 
       Serial.println(my_MAC_address);
 

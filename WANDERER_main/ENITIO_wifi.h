@@ -11,8 +11,8 @@
 #define EAP_ANONYMOUS_IDENTITY  ""
 #define EAP_IDENTITY  "@student.main.ntu.edu.sg"
 #define EAP_PASSWORD  ""
-#define HOME_WIFI_SSID "TRAN VAN VIET 1"
-#define HOME_WIFI_PASSWORD "viet2020"
+#define HOME_WIFI_SSID "dlink-A57E"
+#define HOME_WIFI_PASSWORD "37404160"
 
 const char *ssid = "NTUSECURE";
 int wifi_reconnect_counter = 0;
@@ -41,6 +41,7 @@ struct GAME_CONSTANTS {
     int MAX_ATTACK_MANA;
     int MAX_COLLECT_MANA;
     int BOMB_HP_DEDUCTION;
+    int KILL_UPDATE_SERVER_INTERVAL;
 };
 
 class DBConnection {
@@ -125,6 +126,7 @@ class DBConnection {
             game_const.MAX_ATTACK_MANA = JSON.stringify(json_obj["MAX_ATTACK_MANA"]).toInt();
             game_const.MAX_COLLECT_MANA = JSON.stringify(json_obj["MAX_COLLECT_MANA"]).toInt();
             game_const.BOMB_HP_DEDUCTION = JSON.stringify(json_obj["BOMB_HP_DEDUCTION"]).toInt();
+            game_const.KILL_UPDATE_SERVER_INTERVAL = JSON.stringify(json_obj["KILL_UPDATE_SERVER_INTERVAL"]).toInt();
 
             return game_const;
         };
