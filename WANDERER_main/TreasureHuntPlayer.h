@@ -56,7 +56,7 @@ class TreasureHuntPlayer
     int num_bonus1MaxEn = 0;
     int num_bonus1MANA = 0;
     int num_fiveminx2EnRegen = 0;
-    int num_bomb = 10;
+    int num_bomb = 0;
 
     bool is_x2EnRegen = false;
 
