@@ -726,6 +726,7 @@ class TreasureHuntPlayer
           EEPROM.write(ID_add, id);
           Serial.println(id);
           setup_initial_state(id, og, isGL); // initialize Player
+          Player_Bluetooth.initialise();
         }
         return gameStarted;
       } else return 1;

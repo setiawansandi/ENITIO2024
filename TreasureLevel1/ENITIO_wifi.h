@@ -96,7 +96,7 @@ class DBConnection {
         };
 
         String setTreasureAsOpened(String treasureName, int playerIdentifier) {
-            String url = DATABASE_URL + "treasure/" + treasureName;
+            String url = DATABASE_URL + "treasure/1/" + treasureName;
             String httpRequestData = "{\"player_identifier\": " + String(playerIdentifier) + " }";
             String jsonArray = POST_Request(url.c_str(), httpRequestData.c_str());
             return retrieveParameterFromJSONArray("mac_address", jsonArray);

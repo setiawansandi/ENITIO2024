@@ -12,31 +12,53 @@ def retrieve_OG_participant_id_from_identifier(identifier):
     return dict(OG=OG, participant_id=participant_id)
 
 
-@app.route("/treasure/<name>", methods=["POST"])
-def set_treasure_as_collected(name):
+@app.route("/treasure/<int:level>/<name>", methods=["POST"])
+def set_treasure_as_collected(level, name):
     content = request.json
     if "player_identifier" in content:
         player_identifier = content["player_identifier"]
-        treasure = Treasure.query.filter_by(name=name).first()
-        if treasure:
+        if level == 2:
+            treasure = Level2Treasure.query.filter_by(name=name).first()
+            if treasure:
+                player_details = retrieve_OG_participant_id_from_identifier(player_identifier)
+                player = Player.query.filter_by(OG=player_details["OG"], participant_id=player_details["participant_id"]).first()
+                if player:
+                    treasure.collected_by = player
+                    db.session.commit()
+
+                    # return MAC address to treasure to send confirmation message
+                    OG_hex_str = "{0:02x}".format(player_details["OG"])
+                    participant_id_hex_str = "{0:02x}".format(player_details["participant_id"])
+                    result = {"mac_address_part5": "04",
+                              "mac_address_part4": "08",
+                              "mac_address_part3": "22",
+                              "mac_address_part2": "01",
+                              "mac_address_part1": OG_hex_str,
+                              "mac_address_part0": participant_id_hex_str,
+                              "mac_address": "04:08:22:01:{}:{}".format(OG_hex_str, participant_id_hex_str)}
+
+                    return jsonify(result)
+        elif level == 1:
+            treasure = Level1Treasure.query.filter_by(name=name).first()
             player_details = retrieve_OG_participant_id_from_identifier(player_identifier)
-            player = Player.query.filter_by(OG=player_details["OG"], participant_id=player_details["participant_id"]).first()
-            if player:
-                treasure.collected_by = player
-                db.session.commit()
+            player = Player.query.filter_by(OG=player_details["OG"],
+                                            participant_id=player_details["participant_id"]).first()
+            if player and treasure:
+                treasure.collected_players.append(player)
+            db.session.commit()
 
-                # return MAC address to treasure to send confirmation message
-                OG_hex_str = "{0:02x}".format(player_details["OG"])
-                participant_id_hex_str = "{0:02x}".format(player_details["participant_id"])
-                result = {"mac_address_part5": "04",
-                          "mac_address_part4": "08",
-                          "mac_address_part3": "22",
-                          "mac_address_part2": "01",
-                          "mac_address_part1": OG_hex_str,
-                          "mac_address_part0": participant_id_hex_str,
-                          "mac_address": "04:08:22:01:{}:{}".format(OG_hex_str, participant_id_hex_str)}
+            # return MAC address to treasure to send confirmation message
+            OG_hex_str = "{0:02x}".format(player_details["OG"])
+            participant_id_hex_str = "{0:02x}".format(player_details["participant_id"])
+            result = {"mac_address_part5": "04",
+                      "mac_address_part4": "08",
+                      "mac_address_part3": "22",
+                      "mac_address_part2": "01",
+                      "mac_address_part1": OG_hex_str,
+                      "mac_address_part0": participant_id_hex_str,
+                      "mac_address": "04:08:22:01:{}:{}".format(OG_hex_str, participant_id_hex_str)}
 
-                return jsonify(result)
+            return jsonify(result)
 
     abort(404)
 
@@ -126,29 +148,9 @@ def stop_game():
 
 
 # for testing purposes
-@app.route("/unset_treasure/<name>")
-def debug_uncollect_treasure(name):
-    treasure = Treasure.query.filter_by(name=name).first()
-    if treasure:
-        treasure.collected_by = None
-        db.session.commit()
-        return jsonify({"mac_address": "<empty>"})
-
-
-@app.route("/treasure_enquiry/<name>")
-def get_player_who_collected_treasure(name):
-    treasure = Treasure.query.filter_by(name=name).first()
-    if treasure:
-        collected_player = treasure.collected_by
-        if collected_player:
-            return jsonify({"mac_address": collected_player.mac_address})
-        else:
-            return jsonify({"mac_address": "<empty>"})
-
-
 @app.route("/treasure_enquiry_all")
 def get_all_treasure_status():
-    treasures = Treasure.query.all()
+    treasures = Level2Treasure.query.all()
     result = dict()
     for treasure in treasures:
         collected_player = treasure.collected_by
@@ -176,7 +178,7 @@ def unset_all_player_ids():
 
 @app.route("/delete_all_players")
 def delete_all_players():
-    treasures = Treasure.query.all()
+    treasures = Level2Treasure.query.all()
     for treasure in treasures:
         treasure.collected_by = None
 
@@ -206,3 +208,55 @@ def get_all_game_variables():
         result[var.name] = int(var.value)
 
     return jsonify(result)
+
+
+@app.route("/num_kills", methods=["POST"])
+def update_num_kills():
+    content = request.json
+    if "OG" in content and "ID" in content and "num_kills" in content:
+        OG = content["OG"]
+        ID = content["ID"]
+        num_kills = content["num_kills"]
+        player = Player.query.filter_by(OG=OG, ID=ID).first()
+        if player:
+            player.num_kills = int(num_kills)
+            db.session.commit()
+            return jsonify({"OG": int(OG), "ID": int(ID), "num_kills": int(num_kills)})
+
+    abort(404)
+
+
+@app.route("/score")
+def calculate_score():
+    OG_score = dict()
+    tally = dict()
+    for i in range(0, 4):
+        OG_score[i] = 0
+        tally[i] = dict()
+        for category in ("kills", "level1_treasure", "level2_treasure"):
+            tally[i][category] = 0
+
+    # calculate player kills
+    players = Player.query.all()
+    for player in players:
+        og = player.OG
+        kills = player.num_kills
+        OG_score[og] += (kills * 4)
+        tally[og]["kills"] += kills
+
+    level2_treasures = Level2Treasure.query.all()
+    for treasure in level2_treasures:
+        collected_player = treasure.collected_by
+        if collected_player:
+            og = collected_player.OG
+            OG_score[og] += 50
+            tally[og]["level2_treasure"] += 1
+
+    level1_treasures = Level1Treasure.query.all()
+    for treasure in level1_treasures:
+        for player in treasure.collected_players:
+            og = player.OG
+            OG_score[og] += 4
+            tally[og]["level1_treasure"] += 1
+
+    return jsonify({"tally": tally, "score": OG_score})

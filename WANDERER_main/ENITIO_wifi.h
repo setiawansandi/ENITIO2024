@@ -40,6 +40,7 @@ struct GAME_CONSTANTS {
     int HEAL_MANA;
     int MAX_ATTACK_MANA;
     int MAX_COLLECT_MANA;
+    int BOMB_HP_DEDUCTION;
 };
 
 class DBConnection {
@@ -123,6 +124,7 @@ class DBConnection {
             game_const.HEAL_MANA = JSON.stringify(json_obj["HEAL_MANA"]).toInt();
             game_const.MAX_ATTACK_MANA = JSON.stringify(json_obj["MAX_ATTACK_MANA"]).toInt();
             game_const.MAX_COLLECT_MANA = JSON.stringify(json_obj["MAX_COLLECT_MANA"]).toInt();
+            game_const.BOMB_HP_DEDUCTION = JSON.stringify(json_obj["BOMB_HP_DEDUCTION"]).toInt();
 
             return game_const;
         };
@@ -205,11 +207,13 @@ class DBConnection {
             return retrieveMACAddressFromJSONArray(jsonArray);
         };
 
-        MAC_ADDRESS setTreasureAsOpened(String treasureName, int playerIdentifier) {
-            String url = DATABASE_URL + "treasure/" + treasureName;
-            String httpRequestData = "{\"player_identifier\": " + String(playerIdentifier) + " }";
+        bool sendNumberOfKills(int OG, int ID, int kills) {
+            String url = DATABASE_URL + "num_kills";
+            String httpRequestData = "{\"OG\": " + String(OG) + ", \"ID\": " + String(ID) + ", \"num_kills\": \"" + String(kills) + "\" }";
+            Serial.println(httpRequestData);
             String jsonArray = POST_Request(url.c_str(), httpRequestData.c_str());
-            return retrieveMACAddressFromJSONArray(jsonArray);
+            Serial.println(jsonArray);
+            return jsonArray != "{}";
         };
 };
 
