@@ -607,7 +607,7 @@ class TreasureHuntPlayer
     void handleBombed(feedback_message feedbackData){
       if (HP > 0) {
         if (feedbackData.attacker_OG != OG){
-          HP = max(HP - BOMB_DAMAGE, 0);
+          HP = max(HP - BOMB_HP_DEDUCTION, 0);
           tempNoti = "   You are Bombed!!  ";
           Player_Buzzer.sound(NOTE_E3);
           tempNoti_start = millis();
