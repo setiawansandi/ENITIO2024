@@ -1,3 +1,5 @@
+#include <EEPROM.h>
+
 class MainMenu {
     private:
         int lastProcessNav = 0;
