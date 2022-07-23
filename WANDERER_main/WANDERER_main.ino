@@ -1,5 +1,3 @@
-#include <EEPROM.h>
-
 #include "ENITIO_enums.h"
 #include "ENITIO_const.h"
 #include "ENITIO_ir.h"
@@ -12,6 +10,7 @@
 #include "MainMenu.h"
 #include "Profile.h"
 #include "TreasureHuntPlayer.h"
+#include "Admin.h"
 
 TaskHandle_t backgroundTask;
 
@@ -29,14 +28,6 @@ void backgroundTaskCode(void * pvParameters){
       delay(50);
     }
   }
-};
-
-void clearEEPROM(){
-  int i;
-  for (i=0; i<EEPROM_SIZE; i++){
-    EEPROM.write(i,0);
-  }
-  EEPROM.commit();
 };
 
 void setup() {
@@ -110,10 +101,8 @@ void loop() {
   else if (currentProcess == ProfileProcess){
     My_Profile.ProfileLoop();
   }
-  else if (currentProcess == FactoryResetProcess){
-    StartUpDisplay();
-    clearEEPROM();
-    ESP.restart();
+  else if (currentProcess == AdminProcess){
+    My_Admin.AdminLoop();
   }
   else {
     currentProcess = MainMenuProcess;

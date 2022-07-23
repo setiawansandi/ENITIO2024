@@ -4,7 +4,7 @@
 #define TEMP_NOTI_BLINKING 300
 #define FEEDBACK_WAIT 5000
 
-#define LUCKY_NOT_INFECTED_DURATION 5000 // [ms]
+#define LUCKY_NOT_INFECTED_DURATION 20000 // [ms]
 
 #define x2_En_Regen_bonus_duration 300000 // [ms]
 
@@ -287,6 +287,8 @@ class TreasureHuntPlayer
             if (Player_Bluetooth.isThereVirus && (currTime - last_received_heal >= VIRUS_IMMUNITY_DURATION) && (currTime - last_lucky_not_infected >= LUCKY_NOT_INFECTED_DURATION)) {
                 randomSeed(currTime);
                 int virus_infection_num = random(100);
+                Serial.print("Virus infection prob number: ");
+                Serial.println(virus_infection_num);
                 if (virus_infection_num < VIRUS_INFECTION_PROBABILITY){
                   infectedWithVirus = true;
                   HP--;
@@ -294,6 +296,8 @@ class TreasureHuntPlayer
                   last_hp_decay = currTime;
                   Player_Bluetooth.startSpreadingVirus();
                   permNoti = "    You Are Infected!   ";
+                  Player_Buzzer.sound(NOTE_C4);
+                  tempNoti_start = millis();
                 }
                 else {
                   last_lucky_not_infected = currTime;
@@ -314,7 +318,11 @@ class TreasureHuntPlayer
           Player_joystick.set_state();
           break;
 
+        case idle:
+          break;
+
         default:
+          Player_joystick.set_state();
           break;
         }
       }

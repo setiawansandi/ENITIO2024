@@ -7,7 +7,7 @@ const int ProfileProcess = 1 ;
 const int TreasureHuntProcess = 2 ; 
 const int SnakeGameProcess = 3 ;
 const int MusicProcess = 4 ; 
-const int FactoryResetProcess = 5 ;
+const int AdminProcess = 5 ;
 const int CreditProcess = 6 ;
 
 #define NAV_WAIT 4000
@@ -47,5 +47,5 @@ int INITIAL_MANA;
 int HEAL_MANA;
 int MAX_ATTACK_MANA;
 int MAX_COLLECT_MANA;
-int BOMB_HP_DEDUCTION = 4 ;
+int BOMB_HP_DEDUCTION;
 int KILL_UPDATE_SERVER_INTERVAL;

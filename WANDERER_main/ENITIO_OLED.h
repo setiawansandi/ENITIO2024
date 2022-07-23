@@ -64,6 +64,10 @@ const unsigned char enitioLogo [] PROGMEM = {
   0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 
 };
 
+const int SetGLFunction = 0;
+const int FactoryResetFunction = 1;
+const int ExitFunction = 2;
+
 void StartUpDisplay(){
   display.clearDisplay();
   display.setTextSize(1); // Draw SIZE
@@ -76,6 +80,220 @@ void StartUpDisplay(){
   display.println("   Please wait ...   ");
   display.display();
 }
+
+class Admin_OLED{
+  private:
+
+  public:
+    void WrongPwdDisplay(){
+      display.clearDisplay();
+      display.setTextSize(1); // Draw SIZE
+  
+      display.setTextColor(SSD1306_WHITE); 
+      display.setCursor(0, 28);
+
+      display.println("    Wrong Password   ");
+      display.display();
+    }
+
+    void RejectRegisterGLDisplay() {
+      display.clearDisplay();
+      display.setTextSize(1); // Draw SIZE
+
+      display.setTextColor(SSD1306_WHITE); 
+      display.setCursor(0, 22);
+                      
+      display.println("Unable to Register GL");
+
+      display.setCursor(0, 34);
+      display.println("  after game started ");
+      display.display();
+    }
+
+    void ConfirmSettingGLDisplay(int isGL){
+      display.clearDisplay();
+      display.setTextSize(1); // Draw SIZE
+
+      display.setTextColor(SSD1306_WHITE); 
+      display.setCursor(0, 22);
+                      
+      display.println("    Registered as    ");
+
+      display.setCursor(0, 34);
+      if (isGL) display.println("     Group Leader    ");
+                                
+      else display.println("       Freshman      ");
+      display.display();
+    }
+
+    void display_EnteringPwd(int currentDigitIndex, int currentDigit, int enteringPwdNav, int *user_key_in_pwd){
+      display.clearDisplay();
+
+      display.setTextColor(SSD1306_BLACK, SSD1306_WHITE); // Draw 'inverse' text
+      display.setCursor(0, 0);
+      display.println(F("Please Enter Password")); 
+
+      int i;
+      for(i = 0; i < 6; i++){
+        display.setCursor(5+15*(i+1), 28);
+        if (currentDigitIndex < i){
+          display.setTextColor(SSD1306_WHITE);
+          display.print("*");
+        }
+        else if (currentDigitIndex == i){
+          display.setTextColor(SSD1306_BLACK, SSD1306_WHITE);
+          display.print(currentDigit);
+        }
+        else {
+          display.setTextColor(SSD1306_WHITE);
+          display.print(user_key_in_pwd[i]);
+        }
+      }
+
+      display.setCursor(0, 56);
+      switch (enteringPwdNav)
+      {
+      case 0:
+        display.setTextColor(SSD1306_WHITE);
+        display.print(" "); 
+        display.setTextColor(SSD1306_BLACK, SSD1306_WHITE);
+        display.print("Back to Main Menu"); 
+        display.setTextColor(SSD1306_WHITE);
+        display.print(" >"); 
+        break;
+      
+      case 1:
+        display.setTextColor(SSD1306_WHITE);
+        display.print(" <      Enter      > "); 
+        break;
+
+      case 2: 
+        display.setTextColor(SSD1306_WHITE);
+        display.print(" <          "); 
+        display.setTextColor(SSD1306_BLACK, SSD1306_WHITE);
+        display.print("Backspace"); 
+        break;
+
+      default:
+        break;
+      }
+
+      display.display();
+    }
+
+    void display_MainAdmin(int FunctionNav){
+      display.clearDisplay();
+      display.setTextColor(SSD1306_BLACK, SSD1306_WHITE); // Draw 'inverse' text
+      display.setCursor(0, 0);
+      display.println(F("        Admin        ")); 
+
+      display.setTextColor(SSD1306_WHITE);
+      display.setCursor(10, 12);
+      display.println("Register Role");
+      display.setCursor(10, 22);
+      display.println("Factory Reset");
+
+      display.setCursor(10, 42);
+      display.println("Back to Main Menu");
+
+      switch (FunctionNav)
+      {
+      case SetGLFunction:
+        display.setCursor(2, 12);
+        display.println(">");
+        break;
+      
+      case FactoryResetFunction:
+        display.setCursor(2, 22);
+        display.println(">");
+        break;
+
+      case ExitFunction:
+        display.setCursor(2, 42);
+        display.println(">");
+        break;
+
+      default:
+        break;
+      }
+
+      display.setCursor(14, 56);
+      display.setTextColor(SSD1306_BLACK, SSD1306_WHITE);
+      display.println("(Press to choose)"); 
+
+      display.display();
+    }
+
+    void display_ConfirmingReset(int ConfirmingResetNav){
+      display.clearDisplay();
+      display.setTextColor(SSD1306_BLACK, SSD1306_WHITE); // Draw 'inverse' text
+      display.setCursor(0, 0);
+      display.println(F(" Confirm to Reset?   ")); 
+      display.setTextColor(SSD1306_WHITE);
+      display.setCursor(10, 12);
+      display.println("NO");
+      display.setCursor(10, 22);
+      display.println("YES");
+
+      switch (ConfirmingResetNav)
+      {
+      case 0:
+        display.setCursor(2, 12);
+        display.println(">");
+        break;
+      
+      case 1:
+        display.setCursor(2, 22);
+        display.println(">");
+        break;
+
+      default:
+        break;
+      }
+
+      display.setCursor(14, 56);
+      display.setTextColor(SSD1306_BLACK, SSD1306_WHITE);
+      display.println("(Press to choose)"); 
+
+      display.display();
+    }
+
+    void display_SettingGL(int isGLNav){
+      display.clearDisplay();
+      display.setTextColor(SSD1306_BLACK, SSD1306_WHITE); // Draw 'inverse' text
+      display.setCursor(0, 0);
+      display.println(F(" Choose your Role... ")); 
+      display.setTextColor(SSD1306_WHITE);
+      display.setCursor(10, 12);
+      display.println("Freshman (default)");
+      display.setCursor(10, 22);
+      display.println("Group Leader");     
+
+      switch (isGLNav)
+      {
+      case 0:
+        display.setCursor(2, 12);
+        display.println(">");
+        break;
+      
+      case 1:
+        display.setCursor(2, 22);
+        display.println(">");
+        break;
+
+      default:
+        break;
+      }
+
+      display.setCursor(14, 56);
+      display.setTextColor(SSD1306_BLACK, SSD1306_WHITE);
+      display.println("(Press to choose)"); 
+
+      display.display();
+    }
+};
+
+Admin_OLED Admin_OLED;
 
 class MainMenu_OLED {
   private:
@@ -131,11 +349,11 @@ class MainMenu_OLED {
           display.print(F(" >"));
           break;
 
-        case FactoryResetProcess:
-          display.setCursor(15, 56);
+        case AdminProcess:
+          display.setCursor(40, 56);
           display.print(F("< "));
           display.setTextColor(SSD1306_BLACK, SSD1306_WHITE);
-          display.print(F("Factory Reset"));
+          display.print(F("Admin"));
           display.setTextColor(SSD1306_WHITE);
           display.print(F(" >"));
           break;
@@ -159,7 +377,7 @@ class Profile_OLED {
   private:
 
   public:
-    void display_CompleteProfilePage(int OG, int isGL, String name){
+    void display_CompleteProfilePage(int OG, int isGL){
       display.clearDisplay();
       display.setTextSize(1); // Draw SIZE
       display.setTextColor(SSD1306_BLACK, SSD1306_WHITE); // Draw 'inverse' text
@@ -168,8 +386,7 @@ class Profile_OLED {
 
       display.setTextColor(SSD1306_WHITE);
       display.setCursor(0, 12);
-      display.print("Name: ");
-      display.println(name);
+      display.println("ENITIO 2022");
 
       display.setCursor(0, 24);
 
@@ -242,37 +459,37 @@ class Profile_OLED {
       display.display();
     }
 
-    void display_isGLregisteringPage(int isGL_pointer){
-      display.clearDisplay();
-      // change text display here
-      display.setTextSize(1);
-      display.setTextColor(SSD1306_BLACK, SSD1306_WHITE);
+    // void display_isGLregisteringPage(int isGL_pointer){
+    //   display.clearDisplay();
+    //   // change text display here
+    //   display.setTextSize(1);
+    //   display.setTextColor(SSD1306_BLACK, SSD1306_WHITE);
 
-      display.setCursor(0,0);
-      // menu title
-      display.println(" Are you a GL?       ");
-      //---------------------------------
+    //   display.setCursor(0,0);
+    //   // menu title
+    //   display.println(" Are you a GL?       ");
+    //   //---------------------------------
 
-      display.setTextColor(SSD1306_WHITE);
+    //   display.setTextColor(SSD1306_WHITE);
 
-      display.setCursor(10, 12);
+    //   display.setCursor(10, 12);
       
-      display.println("NO");
+    //   display.println("NO");
 
-      display.setCursor(10, 22);
+    //   display.setCursor(10, 22);
       
-      display.println("YES");
+    //   display.println("YES");
       
-      // prints the cursor to highlight menu items
-      display.setCursor(2, (isGL_pointer * 10) + 12);
-      display.println(">");
+    //   // prints the cursor to highlight menu items
+    //   display.setCursor(2, (isGL_pointer * 10) + 12);
+    //   display.println(">");
 
-      display.setCursor(14, 56);
-      display.setTextColor(SSD1306_BLACK, SSD1306_WHITE);
-      display.println("(Press to choose)"); 
+    //   display.setCursor(14, 56);
+    //   display.setTextColor(SSD1306_BLACK, SSD1306_WHITE);
+    //   display.println("(Press to choose)"); 
 
-      display.display();
-    }
+    //   display.display();
+    // }
 };
 
 Profile_OLED Profile_OLED;
