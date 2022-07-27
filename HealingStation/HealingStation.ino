@@ -29,10 +29,13 @@ Adafruit_SSD1306 display(SCREEN_WIDTH, SCREEN_HEIGHT, &Wire, OLED_RESET);
 
 #define ENABLE_add 0  // 0 means Treasure has not been initialized, 1 means already initialized
 
-#define ACTION_RECV_WAIT 150 // [ms] 
+#define ACTION_RECV_WAIT 200 // [ms] 
 
 class HealingStation
 {
+  private:
+    unsigned long last_healing_request = 0;
+    
   public:
     
     int OG_, ID_, En_, action_; 
@@ -44,22 +47,27 @@ class HealingStation
     
     void receiveAction() {
       int currStatus = EEPROM.read(ENABLE_add);
+      unsigned long currTime = millis();
       if (currStatus == 1 && HealingStation_IR.available()) {
          ir_signal IRsignal_ = HealingStation_IR.read();
 
-         OG_ = IRsignal_.address.digit2;
-         ID_ = IRsignal_.address.digit0 + (IRsignal_.address.digit1 << 4);
-    
-         En_ = IRsignal_.command.digit1;
-         action_ = IRsignal_.command.digit0;
-    
-         Serial.printf("%d %d %d %d \n", action_, En_, ID_, OG_);
-  
-         if (action_ == collect) {
-             heal_player(OG_, ID_);
+         if (currTime - last_healing_request >= ACTION_RECV_WAIT){
+            Serial.println("Initiate Healing Request");
+             OG_ = IRsignal_.address.digit2;
+             ID_ = IRsignal_.address.digit0 + (IRsignal_.address.digit1 << 4);
+        
+             En_ = IRsignal_.command.digit1;
+             action_ = IRsignal_.command.digit0;
+        
+             Serial.printf("%d %d %d %d \n", action_, En_, ID_, OG_);
+      
+             if (action_ == collect) {
+                 heal_player(OG_, ID_);
+             }
+             last_healing_request = currTime;
          }
-        }
-      };
+      }
+    };
 
     void heal_player(int OG_, int ID_){
       HealingStation_EspNOW.send_data(5, OG_, ID_, 0, 0);  // 0 as no powerup ID and healing station has no ID

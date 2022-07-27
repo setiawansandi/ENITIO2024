@@ -27,7 +27,10 @@
 
 int id;
 
+<<<<<<< HEAD
 
+=======
+>>>>>>> kahleong
 // Declaration for an SSD1306 display connected to I2C (SDA, SCL pins)
 // The pins for I2C are defined by the Wire-library. 
 // On an arduino UNO:       A4(SDA), A5(SCL)
@@ -130,8 +133,6 @@ class TreasureLevel2
     int OG_, ID_, En_, action_; 
 
     void setup_initial_state(){
-      Serial.print("ID: ");
-      Serial.println(id);
       if (id > TREASURE_VIRUS_THRESHOLD) _isVirus = true;
       else _isVirus = false;
 
@@ -222,11 +223,12 @@ class TreasureLevel2
       
       // inform the server here ...
       int player_identifier = OG_ * pow(16, 2) + ID_;
+      Serial.print("TREASURE NAME:"); Serial.println(TreasureLevel2_Bluetooth.getTreasureName());
+      Serial.print("PLAYER IDENTIFIER:"); Serial.println(player_identifier);
       String player_mac_address = dbc.setTreasureAsOpened(TreasureLevel2_Bluetooth.getTreasureName(), player_identifier);
       // this code to save the info of the OG collected the treasure
       EEPROM.write(collectedOG_add, OG_); // save some sent variable to resend if required
       EEPROM.commit(); 
-      Serial.print("Treasure opened by "); Serial.println(player_mac_address);
       
       // broadcast virus here ...
       if (_isVirus) {

@@ -36,7 +36,7 @@ Adafruit_SSD1306 display(SCREEN_WIDTH, SCREEN_HEIGHT, &Wire, OLED_RESET);
 #define HP_add 2
 #define collectedOG_add 3
 
-#define ACTION_RECV_WAIT 2000 // [ms] 
+#define ACTION_RECV_WAIT 150 // [ms] 
 #define RECOVER_Period 10 // [s]
 
 class TreasureLevel1
@@ -87,7 +87,7 @@ class TreasureLevel1
 
     void feedback_collectL1(int OG_, int ID_){
       unsigned long currTime = millis();
-      randomSeed(currTime);
+      // randomSeed(currTime);
       int powerup_ID = random(1,6);
       TreasureLevel1_EspNOW.send_data(2, OG_, ID_, ID, powerup_ID);
     } ;
@@ -177,7 +177,7 @@ class TreasureLevel1
 
 };
 
-TreasureLevel1 Treasure(3);  // use OLED to input ID 
+TreasureLevel1 Treasure(6);  // use OLED to input ID 
 bool gameStarted = 0;
 
 void clearEEPROM(){

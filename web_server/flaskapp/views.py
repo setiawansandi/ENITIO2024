@@ -22,6 +22,7 @@ def set_treasure_as_collected(level, name):
             if treasure:
                 player_details = retrieve_OG_participant_id_from_identifier(player_identifier)
                 player = Player.query.filter_by(OG=player_details["OG"], participant_id=player_details["participant_id"]).first()
+                print(treasure.name, "collected by OG", player.OG, "ID", player.participant_id)
                 if player:
                     treasure.collected_by = player
                     db.session.commit()
