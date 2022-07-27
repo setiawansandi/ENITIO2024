@@ -72,7 +72,7 @@ def populate_statuses():
         "EN_RECOVER_DURATION": 5000,
         "MAX_EN_DECAY_DURATION": 10000,
         "VIRUS_DECAY_DURATION": 10000,
-        "VIRUS_IMMUNITY_DURATION": 10000,
+        "VIRUS_IMMUNITY_DURATION": 2 * 60 * 1000,
         "PARTICIPANT_MaxHP": 12,
         "GL_MaxHP": 20,
         "PARTICIPANT_MaxEn": 5,
@@ -90,18 +90,17 @@ def populate_statuses():
     for status in statuses:
         s = GameStatus(status, str(statuses[status]))
         db.session.add(s)
-
     db.session.commit()
 
 
 def populate_treasure():
-    for i in range(1, 6):
+    for i in range(1, 8):
         t = Level1Treasure("TREASURE" + str(i), "-")
         db.session.add(t)
-    for i in range(6, 9):
+    for i in range(8, 16):
         t = Level2Treasure("TREASURE" + str(i), "-", True, False)
         db.session.add(t)
-    for i in range(9, 11):
+    for i in range(16, 18):
         t = Level2Treasure("TREASURE" + str(i), "-", False, True)
         db.session.add(t)
     db.session.commit()

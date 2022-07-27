@@ -25,6 +25,8 @@
 #define G_ON 255
 #define B_ON 255
 
+int id;
+
 // Declaration for an SSD1306 display connected to I2C (SDA, SCL pins)
 // The pins for I2C are defined by the Wire-library. 
 // On an arduino UNO:       A4(SDA), A5(SCL)
@@ -98,7 +100,7 @@ void StartUpDisplay(){
 
 #define EEPROM_SIZE 20
 
-#define initialHP 50
+#define initialHP 10
 #define hp_pxl_bar_width 2 // [pxl/HP]
 
 #define ENABLE_add 0 // 0 means Treasure has not been initialized, 1 means already initialized
@@ -115,7 +117,6 @@ void StartUpDisplay(){
 class TreasureLevel2
 {
   private:
-    int ID;
     int HP;
     bool _isVirus;
 
@@ -127,9 +128,8 @@ class TreasureLevel2
     
     int OG_, ID_, En_, action_; 
 
-    void setup_initial_state(int id){
-      ID = id;
-      if (ID > TREASURE_VIRUS_THRESHOLD) _isVirus = true;
+    void setup_initial_state(){
+      if (id > TREASURE_VIRUS_THRESHOLD) _isVirus = true;
       else _isVirus = false;
 
       if (EEPROM.read(ENABLE_add) == 0){
@@ -159,7 +159,7 @@ class TreasureLevel2
 
     void feedback_collectL2(int OG_, int ID_){
       bool killed = (HP == 0);
-      TreasureLevel2_EspNOW.send_data(3, OG_, ID_, ID, killed);
+      TreasureLevel2_EspNOW.send_data(3, OG_, ID_, id, killed);
     } ;
 
     void receiveAction() {
@@ -219,11 +219,12 @@ class TreasureLevel2
       
       // inform the server here ...
       int player_identifier = OG_ * pow(16, 2) + ID_;
+      Serial.print("TREASURE NAME:"); Serial.println(TreasureLevel2_Bluetooth.getTreasureName());
+      Serial.print("PLAYER IDENTIFIER:"); Serial.println(player_identifier);
       String player_mac_address = dbc.setTreasureAsOpened(TreasureLevel2_Bluetooth.getTreasureName(), player_identifier);
       // this code to save the info of the OG collected the treasure
       EEPROM.write(collectedOG_add, OG_); // save some sent variable to resend if required
       EEPROM.commit(); 
-      Serial.print("Treasure opened by "); Serial.println(player_mac_address);
       
       // broadcast virus here ...
       if (_isVirus) {
@@ -320,7 +321,6 @@ class TreasureLevel2
 TreasureLevel2 Treasure;
 bool gameStarted = 0;
 bool setUpDone = 0;
-int id;
 
 int get_game_state(){
       // retrieve game state from server
@@ -332,7 +332,7 @@ int get_game_state(){
      gameStarted = dbc.hasGameStarted();
      if (gameStarted) {
         // start BLE functions
-        Treasure.setup_initial_state(id);
+        Treasure.setup_initial_state();
         TreasureLevel2_Bluetooth.startAdvertisingService(pAvailableService);
         setUpDone = 1;
      }

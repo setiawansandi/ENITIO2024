@@ -62,13 +62,19 @@ class PlayerBluetooth {
         };
 
         void startSpreadingVirus() {
+            Serial.println("Setting UUID");
             pAdvertising->addServiceUUID(pVirusService->getUUID());
+            Serial.println("Starting Service");
             pAdvertising->start();
+            Serial.println("Done");
         };
 
         void stopSpreadingVirus() {
+            Serial.println("Stopping Service");
             pAdvertising->stop();
+            Serial.println("Removing UUID");
             pAdvertising->removeServiceUUID(pVirusService->getUUID());
+            Serial.println("Done");
         };
 };
 
