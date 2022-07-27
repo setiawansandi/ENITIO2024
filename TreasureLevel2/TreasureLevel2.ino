@@ -25,6 +25,9 @@
 #define G_ON 255
 #define B_ON 255
 
+int id;
+
+
 // Declaration for an SSD1306 display connected to I2C (SDA, SCL pins)
 // The pins for I2C are defined by the Wire-library. 
 // On an arduino UNO:       A4(SDA), A5(SCL)
@@ -115,7 +118,6 @@ void StartUpDisplay(){
 class TreasureLevel2
 {
   private:
-    int ID;
     int HP;
     bool _isVirus;
 
@@ -127,10 +129,10 @@ class TreasureLevel2
     
     int OG_, ID_, En_, action_; 
 
-    void setup_initial_state(int id){
-      ID = id;
-      Serial.println(ID);
-      if (ID > TREASURE_VIRUS_THRESHOLD) _isVirus = true;
+    void setup_initial_state(){
+      Serial.print("ID: ");
+      Serial.println(id);
+      if (id > TREASURE_VIRUS_THRESHOLD) _isVirus = true;
       else _isVirus = false;
 
       if (EEPROM.read(ENABLE_add) == 0){
@@ -145,7 +147,7 @@ class TreasureLevel2
         }
       }
 
-      TreasureLevel2_Bluetooth.initialise(ID);
+      TreasureLevel2_Bluetooth.initialise(id);
       
       if (HP == 0) {
         TreasureLevel2_NeoPixel.off_FRONT();
@@ -160,7 +162,7 @@ class TreasureLevel2
 
     void feedback_collectL2(int OG_, int ID_){
       bool killed = (HP == 0);
-      TreasureLevel2_EspNOW.send_data(3, OG_, ID_, ID, killed);
+      TreasureLevel2_EspNOW.send_data(3, OG_, ID_, id, killed);
     } ;
 
     void receiveAction() {
@@ -321,7 +323,6 @@ class TreasureLevel2
 TreasureLevel2 Treasure;
 bool gameStarted = 0;
 bool setUpDone = 0;
-int id;
 
 int get_game_state(){
       // retrieve game state from server
@@ -333,7 +334,7 @@ int get_game_state(){
      gameStarted = dbc.hasGameStarted();
      if (gameStarted) {
         // start BLE functions
-        Treasure.setup_initial_state(id);
+        Treasure.setup_initial_state();
         TreasureLevel2_Bluetooth.startAdvertisingService(pAvailableService);
         setUpDone = 1;
      }

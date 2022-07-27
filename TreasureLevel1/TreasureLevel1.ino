@@ -80,6 +80,9 @@ class TreasureLevel1
           handle_Collected();
          }
         }
+      else if (currStatus == 2 && TreasureLevel1_IR.available()){
+        TreasureLevel1_IR.read();
+      }
       };
 
     void feedback_collectL1(int OG_, int ID_){
@@ -91,13 +94,11 @@ class TreasureLevel1
 
     void handle_Collected() {
       // inform the server here ...
+      feedback_collectL1(OG_, ID_);
       int player_identifier = OG_ * pow(16, 2) + ID_;
       String player_mac_address = dbc.setTreasureAsOpened("TREASURE" + String(ID), player_identifier);
       // this code to save the info of the OG collected the treasure
       Serial.print("Treasure opened by "); Serial.println(player_mac_address);
-
-      feedback_collectL1(OG_, ID_);
-
       EEPROM.write(ENABLE_add, 2);
       EEPROM.commit();
     };
@@ -219,7 +220,7 @@ void setup() {
   }
 
   TreasureLevel1_EspNOW.enable();
-  
+
 }
 
 void loop() {

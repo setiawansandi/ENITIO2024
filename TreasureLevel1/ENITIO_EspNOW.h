@@ -41,7 +41,7 @@ class EspNOW {
       broadcastAddress[2] = 1;
       broadcastAddress[3] = attacker_OG;
       broadcastAddress[4] = attacker_ID;
-      broadcastAddress[5] = 0;
+      broadcastAddress[5] = 1;
     }
   
    void send_data(int attackee_type, int attacker_OG, int attacker_ID, int attackee_OG, int is_attackee_killed){
