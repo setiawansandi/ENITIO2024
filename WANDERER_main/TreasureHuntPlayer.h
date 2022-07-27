@@ -289,7 +289,7 @@ class TreasureHuntPlayer
             // currently not infected with virus AND is not healer
             // check if nearby devices are transmitting virus
             if (Player_Bluetooth.isThereVirus && (currTime - last_received_heal >= VIRUS_IMMUNITY_DURATION) && (currTime - last_lucky_not_infected >= LUCKY_NOT_INFECTED_DURATION)) {
-                randomSeed(currTime);
+                // randomSeed(currTime);
                 int virus_infection_num = random(100);
                 Serial.print("Virus infection prob number: ");
                 Serial.println(virus_infection_num);
@@ -610,6 +610,19 @@ class TreasureHuntPlayer
             temp_bomb_attacked += 1;
           }
         }
+        break;
+
+      case 5:
+        // received a heal feedback
+        HP = min(HP + HEAL_MANA, MaxHP);
+        EEPROM.write(PLAYER_HP_add, HP);
+        tempNoti = "        Healed       ";
+        tempNoti_start = millis();
+        if (infectedWithVirus) {
+            Player_Bluetooth.stopSpreadingVirus();
+        }
+        infectedWithVirus = 0;
+        last_received_heal = tempNoti_start;
         break;
       
       default:

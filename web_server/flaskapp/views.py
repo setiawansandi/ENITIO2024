@@ -217,7 +217,7 @@ def update_num_kills():
         OG = content["OG"]
         ID = content["ID"]
         num_kills = content["num_kills"]
-        player = Player.query.filter_by(OG=OG, ID=ID).first()
+        player = Player.query.filter_by(OG=OG, participant_id=ID).first()
         if player:
             player.num_kills = int(num_kills)
             db.session.commit()

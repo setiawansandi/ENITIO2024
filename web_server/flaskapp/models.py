@@ -69,7 +69,7 @@ class GameStatus(db.Model):
 def populate_statuses():
     statuses = {
         "started": 1,
-        "EN_RECOVER_DURATION": 10000,
+        "EN_RECOVER_DURATION": 5000,
         "MAX_EN_DECAY_DURATION": 10000,
         "VIRUS_DECAY_DURATION": 10000,
         "VIRUS_IMMUNITY_DURATION": 10000,
@@ -83,7 +83,7 @@ def populate_statuses():
         "MAX_COLLECT_MANA": 10,
         "MAX_ATTACK_MANA": 3,
         "HEAL_MANA": 10,
-        "VIRUS_INFECTION_PROBABILITY": 40,
+        "VIRUS_INFECTION_PROBABILITY": 60,
         "BOMB_HP_DEDUCTION": 4,
         "KILL_UPDATE_SERVER_INTERVAL": 5 * 60 * 1000
     }

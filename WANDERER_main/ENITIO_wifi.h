@@ -9,8 +9,8 @@
 
 /**  WiFi Credentials **/
 #define EAP_ANONYMOUS_IDENTITY  ""
-#define EAP_IDENTITY  "@student.main.ntu.edu.sg"
-#define EAP_PASSWORD  ""
+#define EAP_IDENTITY  "chan0992@student.main.ntu.edu.sg"
+#define EAP_PASSWORD  "1234rewqASDF!"
 #define HOME_WIFI_SSID "TRAN VAN VIET 1"
 #define HOME_WIFI_PASSWORD "viet2020"
 
@@ -153,8 +153,8 @@ class DBConnection {
     
     public:
         void startWiFiConnection() {
-           WiFi.begin(HOME_WIFI_SSID, HOME_WIFI_PASSWORD);
-           // WiFi.begin(ssid, WPA2_AUTH_PEAP, EAP_ANONYMOUS_IDENTITY, EAP_IDENTITY, EAP_PASSWORD);
+           // WiFi.begin(HOME_WIFI_SSID, HOME_WIFI_PASSWORD);
+           WiFi.begin(ssid, WPA2_AUTH_PEAP, EAP_ANONYMOUS_IDENTITY, EAP_IDENTITY, EAP_PASSWORD);
         }
         bool connectToWiFi() {
             // returns True if connected, False if timeout
@@ -211,7 +211,7 @@ class DBConnection {
 
         bool sendNumberOfKills(int OG, int ID, int kills) {
             String url = DATABASE_URL + "num_kills";
-            String httpRequestData = "{\"OG\": " + String(OG) + ", \"ID\": " + String(ID) + ", \"num_kills\": \"" + String(kills) + "\" }";
+            String httpRequestData = "{\"OG\": " + String(OG) + ", \"ID\": " + String(ID) + ", \"num_kills\": " + String(kills) + "}";
             Serial.println(httpRequestData);
             String jsonArray = POST_Request(url.c_str(), httpRequestData.c_str());
             Serial.println(jsonArray);
