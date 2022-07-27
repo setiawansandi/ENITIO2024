@@ -2,7 +2,7 @@
 
 typedef struct esp_now_msg {
   int msg_type; // 1 for feedback msg, 2 for bomb msg
-  int attackee_type; // 1 for player, 2 for Lvl 1 Treasure, 3 for Lvl 2 Treasure, 4 for bomb
+  int attackee_type; // 1 for player, 2 for Lvl 1 Treasure, 3 for Lvl 2 Treasure, 4 for bomb, 5 for Healing Station
   int attacker_OG;
   int attacker_ID; 
   int attackee_OG; // or Treasure ID
@@ -50,7 +50,7 @@ class EspNOW {
       broadcastAddress[2] = 1;
       broadcastAddress[3] = attacker_OG;
       broadcastAddress[4] = attacker_ID;
-      broadcastAddress[5] = 0;
+      broadcastAddress[5] = 1;
     }
   
    void send_data(int msg_type, int attackee_type, int attacker_OG, int attacker_ID, int attackee_OG, int is_attackee_killed){

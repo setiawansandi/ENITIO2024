@@ -36,8 +36,8 @@ Adafruit_SSD1306 display(SCREEN_WIDTH, SCREEN_HEIGHT, &Wire, OLED_RESET);
 #define HP_add 2
 #define collectedOG_add 3
 
-#define ACTION_RECV_WAIT 150 // [ms] 
-#define RECOVER_Period 120 // [s]
+#define ACTION_RECV_WAIT 2000 // [ms] 
+#define RECOVER_Period 10 // [s]
 
 class TreasureLevel1
 {

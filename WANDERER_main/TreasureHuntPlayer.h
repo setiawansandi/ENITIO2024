@@ -244,6 +244,10 @@ class TreasureHuntPlayer
         //   EEPROM.write(PLAYER_MaxEn_add, MaxEn);
         //   last_max_en_decay = currTime;
         // }
+        if (infectedWithVirus) {
+            Player_Bluetooth.stopSpreadingVirus();
+            infectedWithVirus = 0;
+        }
         if (MANA > 1) {
           MANA = 1;
           EEPROM.write(PLAYER_MANA_add, MANA);

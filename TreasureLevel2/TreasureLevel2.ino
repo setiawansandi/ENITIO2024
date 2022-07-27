@@ -98,8 +98,8 @@ void StartUpDisplay(){
 
 #define EEPROM_SIZE 20
 
-#define initialHP 50
-#define hp_pxl_bar_width 2 // [pxl/HP]
+#define initialHP 10
+#define hp_pxl_bar_width 10 // [pxl/HP]
 
 #define ENABLE_add 0 // 0 means Treasure has not been initialized, 1 means already initialized
 #define ID_add 1
@@ -129,6 +129,7 @@ class TreasureLevel2
 
     void setup_initial_state(int id){
       ID = id;
+      Serial.println(ID);
       if (ID > TREASURE_VIRUS_THRESHOLD) _isVirus = true;
       else _isVirus = false;
 
@@ -144,7 +145,7 @@ class TreasureLevel2
         }
       }
 
-      TreasureLevel2_Bluetooth.initialise(id);
+      TreasureLevel2_Bluetooth.initialise(ID);
       
       if (HP == 0) {
         TreasureLevel2_NeoPixel.off_FRONT();

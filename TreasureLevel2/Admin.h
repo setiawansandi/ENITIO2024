@@ -431,7 +431,7 @@ class Admin {
 
                         case button:
                             id = currentIDnum;
-                            EEPROM.write(ID_add, currentIDnum);
+                            EEPROM.write(ID_add, id);
                             EEPROM.commit();
                             Admin_OLED.ConfirmSettingIDDisplay(currentIDnum);
                             currentIDnum = 0;
