@@ -19,6 +19,7 @@ typedef enum {
     attack = 1,
     collect = 2,
     heal = 3,
+    heal_request = 4
 } action_id ;
 
 typedef enum {

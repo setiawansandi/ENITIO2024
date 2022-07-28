@@ -36,7 +36,7 @@ Adafruit_SSD1306 display(SCREEN_WIDTH, SCREEN_HEIGHT, &Wire, OLED_RESET);
 #define HP_add 2
 #define collectedOG_add 3
 
-#define ACTION_RECV_WAIT 150 // [ms] 
+#define ACTION_RECV_WAIT 3000 // [ms] 
 #define RECOVER_Period 10 // [s]
 
 class TreasureLevel1
@@ -46,11 +46,11 @@ class TreasureLevel1
     int HP;
 
     unsigned long lastOpenedTime = 0;
-    // unsigned long lastActionReceived = 0;
+     unsigned long lastActionReceived = 0;
 
   public:
     
-    int OG_, ID_, En_, action_; 
+    int OG_, ID_, En_, MANA_, action_; 
 
     TreasureLevel1(int id){
       ID = id;
@@ -64,31 +64,40 @@ class TreasureLevel1
     
     void receiveAction() {
       int currStatus = EEPROM.read(ENABLE_add);
-      if (currStatus == 1 && TreasureLevel1_IR.available()) {
+      if (TreasureLevel1_IR.available()) {
          ir_signal IRsignal_ = TreasureLevel1_IR.read();
+         unsigned long currTime = millis();
 
-         OG_ = IRsignal_.address.digit2;
+         if ((currStatus == 1) && (currTime - lastActionReceived > ACTION_RECV_WAIT)){
+          OG_ = IRsignal_.address.digit2;
          ID_ = IRsignal_.address.digit0 + (IRsignal_.address.digit1 << 4);
-    
-         En_ = IRsignal_.command.digit1;
-         action_ = IRsignal_.command.digit0;
-    
-         Serial.printf("%d %d %d %d \n", action_, En_, ID_, OG_);
+
   
-         if (action_ == collect) {
-          lastOpenedTime = millis();
-          handle_Collected();
+           MANA_ = IRsignal_.command.digit1;
+           action_ = IRsignal_.command.digit0;
+           lastActionReceived = currTime;
+      
+           Serial.printf("%d %d %d %d \n", action_, MANA_, ID_, OG_);
+    
+           if (action_ == collect) {
+            lastOpenedTime = millis();
+            handle_Collected();
+           }
+          }
          }
-        }
-      else if (currStatus == 2 && TreasureLevel1_IR.available()){
-        TreasureLevel1_IR.read();
-      }
       };
 
     void feedback_collectL1(int OG_, int ID_){
       unsigned long currTime = millis();
       // randomSeed(currTime);
       int powerup_ID = random(1,6);
+
+      // TreasureLevel1_EspNOW.last_send_status = false;
+
+      // while(!TreasureLevel1_EspNOW.last_send_status){
+      //   TreasureLevel1_EspNOW.send_data(2, OG_, ID_, ID, powerup_ID);
+      // }
+
       TreasureLevel1_EspNOW.send_data(2, OG_, ID_, ID, powerup_ID);
     } ;
 
@@ -212,14 +221,13 @@ void setup() {
         Serial.println(F("SSD1306 allocation failed"));
         for(;;); // Don't proceed, loop forever
       }
-  
+
+  TreasureLevel1_EspNOW.enable();
   bool isWiFiConnected = dbc.connectToWiFi();
   while (!isWiFiConnected) {
     Serial.println("Reconnecting..");
     isWiFiConnected = dbc.connectToWiFi();
   }
-
-  TreasureLevel1_EspNOW.enable();
 
 }
 

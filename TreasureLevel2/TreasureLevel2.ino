@@ -27,10 +27,6 @@
 
 int id;
 
-<<<<<<< HEAD
-
-=======
->>>>>>> kahleong
 // Declaration for an SSD1306 display connected to I2C (SDA, SCL pins)
 // The pins for I2C are defined by the Wire-library. 
 // On an arduino UNO:       A4(SDA), A5(SCL)
@@ -130,7 +126,7 @@ class TreasureLevel2
 
   public:
     
-    int OG_, ID_, En_, action_; 
+    int OG_, ID_, En_, MANA_, action_; 
 
     void setup_initial_state(){
       if (id > TREASURE_VIRUS_THRESHOLD) _isVirus = true;
@@ -175,16 +171,16 @@ class TreasureLevel2
            if (currTime - lastActionReceived > ACTION_RECV_WAIT) {
              OG_ = IRsignal_.address.digit2;
              ID_ = IRsignal_.address.digit0 + (IRsignal_.address.digit1 << 4);
-        
-             En_ = IRsignal_.command.digit1;
+
+             MANA_ = IRsignal_.command.digit1;
              action_ = IRsignal_.command.digit0;
         
-             Serial.printf("%d %d %d %d %d\n", action_, En_, ID_, OG_, HP);
+             Serial.printf("%d %d %d %d %d\n", action_, MANA_, ID_, OG_, HP);
 
              lastActionReceived = currTime;
       
              if (action_ == collect) {
-               HP = max(HP-En_, 0);
+               HP = max(HP-MANA_, 0);
                feedback_collectL2(OG_, ID_);
                EEPROM.write(HP_add, HP);
                EEPROM.commit(); 
@@ -218,6 +214,8 @@ class TreasureLevel2
     }
 
     void handle_Collected() {
+      TreasureLevel2_NeoPixel.off_FRONT();
+      TreasureLevel2_NeoPixel.off_TOP();
       // no need to feedback everytime the player collecting the Treasure. Only feedback to the server and to the player when the treasure is fully collected, ie. HP == 0
       TreasureLevel2_Bluetooth.stopAdvertisingService(pAvailableService);
       
@@ -238,8 +236,6 @@ class TreasureLevel2
         TreasureLevel2_Bluetooth.stopAdvertisingService(pVirusService);
         Serial.println("Box Shutting down...");
       }
-
-      
     }
 
     void display_not_playing_yet(){
@@ -411,13 +407,15 @@ void setup() {
     id = EEPROM.read(ID_add);
   }
 
+  TreasureLevel2_EspNOW.enable();
+
   bool isWiFiConnected = dbc.connectToWiFi();
   while (!isWiFiConnected) {
     Serial.println("Reconnecting..");
     isWiFiConnected = dbc.connectToWiFi();
   }
 
-  TreasureLevel2_EspNOW.enable();
+  
   xTaskCreatePinnedToCore(
                       backgroundTaskCode,   /* Task function. */
                       "backgroundTask",     /* name of task. */

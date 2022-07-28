@@ -30,7 +30,7 @@ class EspNOW {
       }
       Serial.println("OK");
       esp_now_register_send_cb(OnDataSent);
-      esp_now_register_recv_cb(OnDataRecv);
+      // esp_now_register_recv_cb(OnDataRecv);
     }
 
     void getDeviceMACAddress(int attacker_OG, int attacker_ID){

@@ -165,7 +165,7 @@ class TreasureHuntPlayer
     void sendAction() {
       // format of the IR signal (16-bit hexadecimal, i.e. 4 digits)
       // address: 0x0<OG><ID - 2 bit>  (ID is 2 bits as there maybe more than 16 people in one OG)
-      // command: 0x00<En><Action>
+      // command: 0x00<MANA><Action>
       if ((action != do_nothing) && (En > 0)) {
         uint16_hex_digits address_digits, command_digits;
 
@@ -208,10 +208,26 @@ class TreasureHuntPlayer
         En--;
         EEPROM.write(PLAYER_EN_add, En);
       }
+      else if ((action == collect) && (En == 0)){
+        uint16_hex_digits address_digits, command_digits;
+
+        address_digits.digit0 = ID;
+        address_digits.digit2 = OG;
+
+        command_digits.digit0 = heal_request;
+        
+        ir_signal send_signal;
+        send_signal.address = address_digits;
+        send_signal.command = command_digits;
+
+        Player_IR.send(send_signal, 1);
+
+        start_receiving_feedback = millis();
+      }
     };
 
     void receiveAction() {
-      int OG_, ID_, MANA_, action_, _isL1Treasure; // underscore denotes details of IR signal sender
+      int OG_, ID_, En_, MANA_, action_; // underscore denotes details of IR signal sender
       unsigned long currTime = millis();
       if (Player_IR.available()) {
          ir_signal IRsignal_ = Player_IR.read();
@@ -219,15 +235,16 @@ class TreasureHuntPlayer
          if (currTime - lastActionReceived > ACTION_RECV_WAIT) {
            OG_ = IRsignal_.address.digit2;
            ID_ = IRsignal_.address.digit0 + (IRsignal_.address.digit1 << 4);
-    
+
            MANA_ = IRsignal_.command.digit1;
            action_ = IRsignal_.command.digit0;
+
     
            Serial.printf("%d %d %d %d %d %d %d %d \n", IRsignal_.address.digit3, IRsignal_.address.digit2, IRsignal_.address.digit1, IRsignal_.address.digit0, IRsignal_.command.digit3, IRsignal_.command.digit2, IRsignal_.command.digit1, IRsignal_.command.digit0);
   
            lastActionReceived = currTime;
 
-           if (((OG_ != OG) && (action_ == attack)) || ((action_ == heal) && (OG_ == OG) && (ID_ != ID)) || ((action_ == heal) && (OG_ != OG)))
+           if (((OG_ != OG) && (action_ == attack)) || ((action_ == heal) && (OG_ == OG) && (ID_ != ID)) || ((action_ == heal) && (OG_ != OG))) 
                 handleAction(OG_, ID_, action_, MANA_);
            }
         }
@@ -614,7 +631,8 @@ class TreasureHuntPlayer
 
       case 5:
         // received a heal feedback
-        HP = min(HP + HEAL_MANA, MaxHP);
+        if(HP != 0) En++;
+        HP = MaxHP;
         EEPROM.write(PLAYER_HP_add, HP);
         tempNoti = "        Healed       ";
         tempNoti_start = millis();

@@ -61,7 +61,7 @@ class HealingStation
         
              Serial.printf("%d %d %d %d \n", action_, En_, ID_, OG_);
       
-             if (action_ == collect) {
+             if ((action_ == collect) || (action_ == heal_request)) {
                  heal_player(OG_, ID_);
              }
              last_healing_request = currTime;
@@ -147,6 +147,8 @@ void setup() {
         Serial.println(F("SSD1306 allocation failed"));
         for(;;); // Don't proceed, loop forever
       }
+
+  HealingStation_EspNOW.enable();
   
   bool isWiFiConnected = dbc.connectToWiFi();
   while (!isWiFiConnected) {
@@ -154,8 +156,6 @@ void setup() {
     isWiFiConnected = dbc.connectToWiFi();
   }
 
-  HealingStation_EspNOW.enable();
-  
 }
 
 void loop() {
