@@ -221,7 +221,7 @@ class TreasureLevel2
       int player_identifier = OG_ * pow(16, 2) + ID_;
       Serial.print("TREASURE NAME:"); Serial.println(TreasureLevel2_Bluetooth.getTreasureName());
       Serial.print("PLAYER IDENTIFIER:"); Serial.println(player_identifier);
-      String player_mac_address = dbc.setTreasureAsOpened(TreasureLevel2_Bluetooth.getTreasureName(), player_identifier);
+      String player_mac_address = dbc.setTreasureAsOpened(TreasureLevel2_Bluetooth.getTreasureName(), OG_, ID_);
       // this code to save the info of the OG collected the treasure
       EEPROM.write(collectedOG_add, OG_); // save some sent variable to resend if required
       EEPROM.commit(); 

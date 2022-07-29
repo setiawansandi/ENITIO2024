@@ -92,7 +92,7 @@ class TreasureLevel1
     void handle_Collected() {
       // inform the server here ...
       int player_identifier = OG_ * pow(16, 2) + ID_;
-      String player_mac_address = dbc.setTreasureAsOpened("TREASURE" + String(ID), player_identifier);
+      String player_mac_address = dbc.setTreasureAsOpened("TREASURE" + String(ID), OG_, ID_);
       // this code to save the info of the OG collected the treasure
       Serial.print("Treasure opened by "); Serial.println(player_mac_address);
 
@@ -107,6 +107,7 @@ class TreasureLevel1
         int currStatus = EEPROM.read(ENABLE_add);
         unsigned int currTime = millis();
         if (currStatus == 2 && currTime - lastOpenedTime > RECOVER_Period * 1000) {
+            Serial.println("Reopening Treasure..");
             EEPROM.write(ENABLE_add, 1);
             HP = initialHP;
         }

@@ -95,10 +95,9 @@ class DBConnection {
             return retrieveParameterFromJSONArray("mac_address", jsonArray);
         };
 
-        String setTreasureAsOpened(String treasureName, int playerIdentifier) {
-            String url = DATABASE_URL + "treasure/2/" + treasureName;
-            String httpRequestData = "{\"player_identifier\": " + String(playerIdentifier) + " }";
-            String jsonArray = POST_Request(url.c_str(), httpRequestData.c_str());
+        String setTreasureAsOpened(String treasureName, int og, int participant_id) {
+            String url = DATABASE_URL + "treasure/2/" + treasureName + "/" + String(og) + "/" + String(participant_id);
+            String jsonArray = GET_Request(url.c_str());
             return retrieveParameterFromJSONArray("mac_address", jsonArray);
         };
 };
