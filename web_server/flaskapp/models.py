@@ -1,28 +1,26 @@
 from flaskapp import db, bcrypt
 
 
-player_treasure = db.Table('player_treasure',
-                           db.Column('player_id', db.Integer, db.ForeignKey('player.id', ondelete='CASCADE')),
-                           db.Column('level1_treasure_id', db.Integer, db.ForeignKey('level1_treasure.id', ondelete='CASCADE'))
-                           )
-
-
 class Player(db.Model):
     id = db.Column(db.Integer, primary_key=True, autoincrement=True, nullable=False)
     OG = db.Column(db.Integer, nullable=False)
     participant_id = db.Column(db.Integer)  # in place of name, sequential number inside OG
     mac_address = db.Column(db.Text)
     num_kills = db.Column(db.Integer)
+    num_level1_treasures_wanderer = db.Column(db.Integer)
+    num_level2_treasures_wanderer = db.Column(db.Integer)
 
     treasure = db.relationship('Level2Treasure', back_populates='collected_by')
 
-    level1_treasures = db.relationship('Level1Treasure', secondary=player_treasure, back_populates='collected_players')
+    level1_treasures = db.relationship('Level1TreasureCollectors')
 
     def __init__(self, OG, mac_address):
         self.OG = OG
         self.mac_address = mac_address
         self.participant_id = None
         self.num_kills = 0
+        self.num_level1_treasures_wanderer = 0
+        self.num_level2_treasures_wanderer = 0
 
 
 class Level2Treasure(db.Model):
@@ -49,11 +47,25 @@ class Level1Treasure(db.Model):
     name = db.Column(db.Text, nullable=False)
     location = db.Column(db.Text)
 
-    collected_players = db.relationship('Player', secondary=player_treasure, back_populates="level1_treasures")
+    collected_players = db.relationship('Level1TreasureCollectors')
 
     def __init__(self, name, location):
         self.name = name
         self.location = location
+
+
+class Level1TreasureCollectors(db.Model):
+    __tablename__ = 'player_treasure'
+    id = db.Column(db.Integer, primary_key=True, autoincrement=True, nullable=False)
+    level1_treasure_id = db.Column(db.Integer, db.ForeignKey('level1_treasure.id', ondelete='CASCADE'))
+    player_id = db.Column(db.Integer, db.ForeignKey('player.id', ondelete='CASCADE'))
+
+    treasure = db.relationship(Level1Treasure)
+    player = db.relationship(Player)
+
+    def __init__(self, player, treasure):
+        self.treasure = treasure
+        self.player = player
 
 
 class GameStatus(db.Model):

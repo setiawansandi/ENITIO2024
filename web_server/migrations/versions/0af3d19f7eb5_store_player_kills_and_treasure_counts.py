@@ -34,12 +34,6 @@ def upgrade():
     sa.ForeignKeyConstraint(['collected_by_id'], ['player.id'], ),
     sa.PrimaryKeyConstraint('id')
     )
-    op.create_table('player_treasure',
-    sa.Column('player_id', sa.Integer(), nullable=True),
-    sa.Column('level1_treasure_id', sa.Integer(), nullable=True),
-    sa.ForeignKeyConstraint(['level1_treasure_id'], ['level1_treasure.id'], ondelete='CASCADE'),
-    sa.ForeignKeyConstraint(['player_id'], ['player.id'], ondelete='CASCADE')
-    )
     op.drop_table('treasure')
     op.add_column('player', sa.Column('num_kills', sa.Integer(), nullable=True))
     # ### end Alembic commands ###
