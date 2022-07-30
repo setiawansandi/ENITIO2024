@@ -46,7 +46,6 @@ class DBConnection {
         String POST_Request(const char* server, const char* payload) {
             if (WiFi.status() == WL_CONNECTED) {
                 HTTPClient http;
-
                 Serial.println("check1");
                 http.begin(server);
                 http.addHeader("Content-Type", "application/json");
@@ -97,10 +96,9 @@ class DBConnection {
             return retrieveParameterFromJSONArray("mac_address", jsonArray);
         };
 
-        String setTreasureAsOpened(String treasureName, int playerIdentifier) {
-            String url = DATABASE_URL + "treasure/1/" + treasureName;
-            String httpRequestData = "{\"player_identifier\": " + String(playerIdentifier) + " }";
-            String jsonArray = POST_Request(url.c_str(), httpRequestData.c_str());
+        String setTreasureAsOpened(String treasureName, int og, int participant_id) {
+            String url = DATABASE_URL + "treasure/1/" + treasureName + "/" + String(og) + "/" + String(participant_id);
+            String jsonArray = GET_Request(url.c_str());
             return retrieveParameterFromJSONArray("mac_address", jsonArray);
         };
 };
