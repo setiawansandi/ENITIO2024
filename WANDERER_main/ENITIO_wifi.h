@@ -11,8 +11,8 @@
 #define EAP_ANONYMOUS_IDENTITY  ""
 #define EAP_IDENTITY  "chan0992@student.main.ntu.edu.sg"
 #define EAP_PASSWORD  "1234rewqASDF!"
-#define HOME_WIFI_SSID "TRAN VAN VIET 1"
-#define HOME_WIFI_PASSWORD "viet2020"
+#define HOME_WIFI_SSID "dlink-A57E"
+#define HOME_WIFI_PASSWORD "37404160"
 
 const char *ssid = "NTUSECURE";
 int wifi_reconnect_counter = 0;
@@ -209,9 +209,11 @@ class DBConnection {
             return retrieveMACAddressFromJSONArray(jsonArray);
         };
 
-        bool sendNumberOfKills(int OG, int ID, int kills) {
-            String url = DATABASE_URL + "num_kills";
-            String httpRequestData = "{\"OG\": " + String(OG) + ", \"ID\": " + String(ID) + ", \"num_kills\": " + String(kills) + "}";
+        bool sendGameStatistics(int OG, int ID, int kills, int num_level1_treasure, int num_level2_treasure) {
+            String url = DATABASE_URL + "player_score";
+            String httpRequestData = "{\"OG\": " + String(OG) + ", \"ID\": " + String(ID) + ", \"num_kills\": " + String(kills);
+            httpRequestData = httpRequestData + ", \"level1\": " + String(num_level1_treasure) + ", \"level2\": " + String(num_level2_treasure);
+            httpRequestData = httpRequestData + "}";
             Serial.println(httpRequestData);
             String jsonArray = POST_Request(url.c_str(), httpRequestData.c_str());
             Serial.println(jsonArray);

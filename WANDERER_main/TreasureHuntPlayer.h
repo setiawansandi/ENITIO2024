@@ -558,6 +558,7 @@ class TreasureHuntPlayer
       case 2:
         if ((feedbackData.attacker_OG == OG) && (feedbackData.attacker_ID == ID)){
           Serial.print("L1 Treasure Collected Power Up:"); Serial.println(feedbackData.is_attackee_killed);
+          numL1Treasure++;
           switch (feedbackData.is_attackee_killed)
           {
           case bonus6HP:
@@ -775,7 +776,7 @@ class TreasureHuntPlayer
         Player_Bluetooth.scan();
         unsigned long currTime = millis();
         if (currTime - last_update_kills_to_server > KILL_UPDATE_SERVER_INTERVAL) {
-            dbc.sendNumberOfKills(OG, ID, numKilled);
+            dbc.sendGameStatistics(OG, ID, numKilled, numL1Treasure, numL2Treasure);
             last_update_kills_to_server = currTime;
         } else delay(50);
       }
