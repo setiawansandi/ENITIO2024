@@ -2,6 +2,7 @@ class Profile{
     private:
         int OG_pointer = 0;
         int OG;
+        bool registerStatus = false;
         // int isGL_pointer = 0;
         // int isGL;
         // int currentRegisteringPage = 0;
@@ -41,7 +42,9 @@ class Profile{
                 case button:
                     Player_joystick.set_state();
                     OG = OG_pointer;
-                    dbc.registerWanderer(OG, my_MAC_address); 
+                    while (!registerStatus){
+                        registerStatus = dbc.registerWanderer(OG, my_MAC_address); 
+                    }
                     EEPROM.write(OG_add, OG);
                     EEPROM.write(PROFILE_enable_add, 1);
                     if (EEPROM.read(isGL_add) != 1) EEPROM.write(isGL_add, 0);

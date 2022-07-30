@@ -18,8 +18,10 @@ class EspNOW {
     esp_now_peer_info_t peerInfo;
     uint8_t broadcastAddress[6];
     
+    
   public:
     int is_waiting_for_feedback = 0;
+    // bool last_send_status = true;
     
     void enable() {
       // WiFi.mode(WIFI_STA);
@@ -30,7 +32,7 @@ class EspNOW {
       }
       Serial.println("OK");
       esp_now_register_send_cb(OnDataSent);
-      esp_now_register_recv_cb(OnDataRecv);
+      // esp_now_register_recv_cb(OnDataRecv);
     }
 
     void getDeviceMACAddress(int attacker_OG, int attacker_ID){
@@ -41,7 +43,7 @@ class EspNOW {
       broadcastAddress[2] = 1;
       broadcastAddress[3] = attacker_OG;
       broadcastAddress[4] = attacker_ID;
-      broadcastAddress[5] = 0;
+      broadcastAddress[5] = 1;
     }
   
    void send_data(int attackee_type, int attacker_OG, int attacker_ID, int attackee_OG, int is_attackee_killed){
@@ -81,14 +83,15 @@ class EspNOW {
       esp_now_deinit();
     } 
 
-    static void OnDataRecv(const uint8_t * mac, const uint8_t *incomingData, int len) {
-      memcpy(&EspNOW_recvData, incomingData, sizeof(EspNOW_recvData));
-      EspNOW_received = 1;
-    }
+    // static void OnDataRecv(const uint8_t * mac, const uint8_t *incomingData, int len) {
+    //   memcpy(&EspNOW_recvData, incomingData, sizeof(EspNOW_recvData));
+    //   EspNOW_received = 1;
+    // }
 
     static void OnDataSent(const uint8_t *mac_addr, esp_now_send_status_t status) {
       Serial.print("\r\nLast Packet Send Status:\t");
       Serial.println(status == ESP_NOW_SEND_SUCCESS ? "Delivery Success" : "Delivery Fail");
+      // last_send_status = (status == ESP_NOW_SEND_SUCCESS);
     }
 
     feedback_message get_feedback_received(){

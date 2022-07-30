@@ -2,7 +2,7 @@
 
 typedef struct esp_now_msg {
   int msg_type; // 1 for feedback msg, 2 for bomb msg
-  int attackee_type; // 1 for player, 2 for Lvl 1 Treasure, 3 for Lvl 2 Treasure, 4 for bomb
+  int attackee_type; // 1 for player, 2 for Lvl 1 Treasure, 3 for Lvl 2 Treasure, 4 for bomb, 5 for Healing Station
   int attacker_OG;
   int attacker_ID; 
   int attackee_OG; // or Treasure ID
@@ -177,6 +177,7 @@ class EspNOW {
         else {
           Serial.println("Error sending the data");
         }
+        delay(80);
       }
       for (i = 0; i < target_count; i++){
         esp_now_del_peer(bomb_targets[i].peer_addr);

@@ -8,10 +8,10 @@
 
 /**  WiFi Credentials **/
 #define EAP_ANONYMOUS_IDENTITY  ""
-#define EAP_IDENTITY  "@student.main.ntu.edu.sg"
-#define EAP_PASSWORD  ""
-#define HOME_WIFI_SSID "TRAN VAN VIET 1"
-#define HOME_WIFI_PASSWORD "viet2020"
+#define EAP_IDENTITY  "quan005@student.main.ntu.edu.sg"
+#define EAP_PASSWORD  "P1&S1bTV!30121976"
+#define HOME_WIFI_SSID "TP-Link_E45E"
+#define HOME_WIFI_PASSWORD "63824377"
 const char *ssid = "NTUSECURE";
 int wifi_reconnect_counter = 0;
 
@@ -46,8 +46,10 @@ class DBConnection {
         String POST_Request(const char* server, const char* payload) {
             if (WiFi.status() == WL_CONNECTED) {
                 HTTPClient http;
+                Serial.println("check1");
                 http.begin(server);
                 http.addHeader("Content-Type", "application/json");
+                Serial.println("check2");
                 int httpResponseCode = http.POST(payload);
                 String responsePayload = "{}";
                 if (httpResponseCode > 0) {
@@ -65,8 +67,8 @@ class DBConnection {
     public:
         bool connectToWiFi() {
             // returns True if connected, False if timeout
-            WiFi.begin(HOME_WIFI_SSID, HOME_WIFI_PASSWORD);
-            // WiFi.begin(ssid, WPA2_AUTH_PEAP, EAP_ANONYMOUS_IDENTITY, EAP_IDENTITY, EAP_PASSWORD);
+//           WiFi.begin(HOME_WIFI_SSID, HOME_WIFI_PASSWORD);
+              WiFi.begin(ssid, WPA2_AUTH_PEAP, EAP_ANONYMOUS_IDENTITY, EAP_IDENTITY, EAP_PASSWORD);
             Serial.print("Connecting to Wi-Fi");
             int counter = 0;
             while (WiFi.status() != WL_CONNECTED) {
