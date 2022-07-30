@@ -7,6 +7,8 @@ class Player(db.Model):
     participant_id = db.Column(db.Integer)  # in place of name, sequential number inside OG
     mac_address = db.Column(db.Text)
     num_kills = db.Column(db.Integer)
+    num_level1_treasures_wanderer = db.Column(db.Integer)
+    num_level2_treasures_wanderer = db.Column(db.Integer)
 
     treasure = db.relationship('Level2Treasure', back_populates='collected_by')
 
@@ -17,6 +19,8 @@ class Player(db.Model):
         self.mac_address = mac_address
         self.participant_id = None
         self.num_kills = 0
+        self.num_level1_treasures_wanderer = 0
+        self.num_level2_treasures_wanderer = 0
 
 
 class Level2Treasure(db.Model):

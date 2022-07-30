@@ -171,8 +171,20 @@ def start_game():
         if player.OG not in og_counter:
             og_counter[player.OG] = 0
         player.participant_id = og_counter[player.OG] + 1
+        player.num_kills = 0
+        player.num_level1_treasures_wanderer = 0
+        player.num_level2_treasures_wanderer = 0
         og_counter[player.OG] += 1
         result[player.mac_address] = f"OG {player.OG} ID {player.participant_id}"
+
+    # RESET EVERYTHING
+    level1_treasure_collection_logs = Level1TreasureCollectors.query.all()
+    for collection_log in level1_treasure_collection_logs:
+        db.session.delete(collection_log)
+
+    level2_treasures = Level2Treasure.query.all()
+    for treasure in level2_treasures:
+        treasure.collected_by = None
 
     status = GameStatus.query.filter_by(name="started").first()
     status.value = "1"
@@ -257,18 +269,23 @@ def get_all_game_variables():
     return jsonify(result)
 
 
-@app.route("/num_kills", methods=["POST"])
-def update_num_kills():
+@app.route("/player_score", methods=["POST"])
+def update_player_score():
     content = request.json
-    if "OG" in content and "ID" in content and "num_kills" in content:
+    if "OG" in content and "ID" in content and "num_kills" in content and "level1" in content and "level2" in content:
         OG = content["OG"]
         ID = content["ID"]
         num_kills = content["num_kills"]
+        num_level1_treasures = content["level1"]
+        num_level2_treasures = content["level2"]
         player = Player.query.filter_by(OG=OG, participant_id=ID).first()
         if player:
             player.num_kills = int(num_kills)
+            player.num_level1_treasures_wanderer = num_level1_treasures
+            player.num_level2_treasures_wanderer = num_level2_treasures
             db.session.commit()
-            return jsonify({"OG": int(OG), "ID": int(ID), "num_kills": int(num_kills)})
+            return jsonify({"OG": int(OG), "ID": int(ID), "num_kills": int(num_kills),
+                            "level1": num_level1_treasures, "level2": num_level2_treasures})
 
     abort(404)
 
@@ -305,5 +322,34 @@ def calculate_score():
         og = player.OG
         OG_score[og] += 4
         tally[og]["level1_treasure"] += 1
+
+    return jsonify({"tally": tally, "score": OG_score})
+
+
+@app.route("/score_player_side")
+def calculate_score_from_player_side_stats():
+    OG_score = dict()
+    tally = dict()
+    for i in range(0, 4):
+        OG_score[i] = 0
+        tally[i] = dict()
+        for category in ("kills", "level1_treasure", "level2_treasure"):
+            tally[i][category] = 0
+
+    # calculate player kills
+    players = Player.query.all()
+    for player in players:
+        og = player.OG
+        kills = player.num_kills
+        level1_treasure = player.num_level1_treasures_wanderer
+        level2_treasure = player.num_level2_treasures_wanderer
+        OG_score[og] += (kills * 4)
+        tally[og]["kills"] += kills
+
+        OG_score[og] += (level1_treasure * 4)
+        tally[og]["level1_treasure"] += level1_treasure
+
+        OG_score[og] += (level2_treasure * 50)
+        tally[og]["level2_treasure"] += level2_treasure
 
     return jsonify({"tally": tally, "score": OG_score})
