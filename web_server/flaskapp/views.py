@@ -16,10 +16,11 @@ def retrieve_OG_participant_id_from_identifier(identifier):
 def set_treasure_as_collected(level, name, OG, participant_id):
     player = Player.query.filter_by(OG=OG, participant_id=participant_id).first()
     if player:
+        treasure = None
         if level == 2:
             treasure = Level2Treasure.query.filter_by(name=name).first()
             if treasure:
-                print(treasure.name, "collected by OG", player.OG, "ID", player.participant_id)
+                print(treasure.name, "collected by OG", player.OG, "ID", player.participant_id, "- GET")
                 treasure.collected_by = player
                 db.session.commit()
                 print("Committed")
@@ -27,24 +28,27 @@ def set_treasure_as_collected(level, name, OG, participant_id):
         elif level == 1:
             treasure = Level1Treasure.query.filter_by(name=name).first()
             if treasure:
-                print("Uploading Treasure Level 1 Collection ({}) by Player OG {} ID {}".format(treasure.name, player.OG, player.participant_id))
+                print("Uploading Treasure Level 1 Collection ({}) by Player OG {} ID {} - GET".format(treasure.name, player.OG, player.participant_id))
                 # treasure.collected_players.append(player)
                 collection_row = Level1TreasureCollectors(player, treasure)
                 db.session.add(collection_row)
-            db.session.commit()
-            print("Committed")
+                db.session.commit()
+                print("Committed")
 
         # return MAC address to treasure to send confirmation message
-        OG_hex_str = "{0:02x}".format(OG)
-        participant_id_hex_str = "{0:02x}".format(participant_id)
-        result = {"mac_address_part5": "04",
-                  "mac_address_part4": "08",
-                  "mac_address_part3": "01",
-                  "mac_address_part2": OG_hex_str,
-                  "mac_address_part1": participant_id_hex_str,
-                  "mac_address_part0": "01",
-                  "mac_address": "04:08:01:{}:{}:01".format(OG_hex_str, participant_id_hex_str)}
-        return jsonify(result)
+        if treasure is not None:
+            OG_hex_str = "{0:02x}".format(OG)
+            participant_id_hex_str = "{0:02x}".format(participant_id)
+            mac_address_str = "04:08:01:{}:{}:01".format(OG_hex_str, participant_id_hex_str)
+            result = {"mac_address_part5": "04",
+                      "mac_address_part4": "08",
+                      "mac_address_part3": "01",
+                      "mac_address_part2": OG_hex_str,
+                      "mac_address_part1": participant_id_hex_str,
+                      "mac_address_part0": "01",
+                      "mac_address": mac_address_str}
+            print("Returning Request to", mac_address_str)
+            return jsonify(result)
 
     abort(404)
 
@@ -59,7 +63,7 @@ def set_treasure_as_collected_post(level, name):
             if treasure:
                 player_details = retrieve_OG_participant_id_from_identifier(player_identifier)
                 player = Player.query.filter_by(OG=player_details["OG"], participant_id=player_details["participant_id"]).first()
-                print(treasure.name, "collected by OG", player.OG, "ID", player.participant_id)
+                print(treasure.name, "collected by OG", player.OG, "ID", player.participant_id, "- POST")
                 if player:
                     treasure.collected_by = player
                     db.session.commit()
@@ -83,25 +87,25 @@ def set_treasure_as_collected_post(level, name):
             player = Player.query.filter_by(OG=player_details["OG"],
                                             participant_id=player_details["participant_id"]).first()
             if player and treasure:
-                print("Uploading Treasure Level 1 Collection ({}) by Player OG {} ID {}".format(treasure.name, player.OG, player.participant_id))
+                print("Uploading Treasure Level 1 Collection ({}) by Player OG {} ID {} - POST".format(treasure.name, player.OG, player.participant_id))
                 # treasure.collected_players.append(player)
                 collection_row = Level1TreasureCollectors(player, treasure)
                 db.session.add(collection_row)
                 db.session.commit()
                 print("Committed")
 
-            # return MAC address to treasure to send confirmation message
-            OG_hex_str = "{0:02x}".format(player_details["OG"])
-            participant_id_hex_str = "{0:02x}".format(player_details["participant_id"])
-            result = {"mac_address_part5": "04",
-                      "mac_address_part4": "08",
-                      "mac_address_part3": "01",
-                      "mac_address_part2": OG_hex_str,
-                      "mac_address_part1": participant_id_hex_str,
-                      "mac_address_part0": "01",
-                      "mac_address": "04:08:01:{}:{}:01".format(OG_hex_str, participant_id_hex_str)}
+                # return MAC address to treasure to send confirmation message
+                OG_hex_str = "{0:02x}".format(player_details["OG"])
+                participant_id_hex_str = "{0:02x}".format(player_details["participant_id"])
+                result = {"mac_address_part5": "04",
+                          "mac_address_part4": "08",
+                          "mac_address_part3": "01",
+                          "mac_address_part2": OG_hex_str,
+                          "mac_address_part1": participant_id_hex_str,
+                          "mac_address_part0": "01",
+                          "mac_address": "04:08:01:{}:{}:01".format(OG_hex_str, participant_id_hex_str)}
 
-            return jsonify(result)
+                return jsonify(result)
 
     abort(404)
 
