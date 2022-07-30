@@ -5,6 +5,7 @@
 #include "ENITIO_ir.h"
 #include "ENITIO_enums.h"
 #include "ENITIO_ESPNOW.h"
+#include "ENITIO_NeoPixel.h"
 
 #include <SPI.h>
 #include <Wire.h>
@@ -30,6 +31,10 @@ Adafruit_SSD1306 display(SCREEN_WIDTH, SCREEN_HEIGHT, &Wire, OLED_RESET);
 #define ENABLE_add 0  // 0 means Treasure has not been initialized, 1 means already initialized
 
 #define ACTION_RECV_WAIT 200 // [ms] 
+
+#define R_ON 255
+#define G_ON 0
+#define B_ON 0
 
 class HealingStation
 {
@@ -129,11 +134,18 @@ int get_game_state(){
    if (!gameStarted) {
      gameStarted = dbc.hasGameStarted();
      Serial.print("Game Status: "); Serial.println(gameStarted);
+     if(gameStarted){
+      HealingStation_NeoPixel.displayRGB_FRONT(R_ON, B_ON, G_ON);
+     HealingStation_NeoPixel.displayRGB_TOP(R_ON, B_ON, G_ON);
+     }
      return gameStarted;
    } else return 1;
 }
 
 void setup() {
+  HealingStation_NeoPixel.initialize();
+  HealingStation_NeoPixel.off_FRONT();
+  HealingStation_NeoPixel.off_TOP();
   Serial.begin(115200);
   HealingStation_IR.enable();
   EEPROM.begin(EEPROM_SIZE);

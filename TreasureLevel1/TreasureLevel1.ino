@@ -5,6 +5,7 @@
 #include "ENITIO_ir.h"
 #include "ENITIO_enums.h"
 #include "ENITIO_ESPNOW.h"
+#include "ENITIO_NeoPixel.h"
 
 #include <SPI.h>
 #include <Wire.h>
@@ -37,7 +38,11 @@ Adafruit_SSD1306 display(SCREEN_WIDTH, SCREEN_HEIGHT, &Wire, OLED_RESET);
 #define collectedOG_add 3
 
 #define ACTION_RECV_WAIT 3000 // [ms] 
-#define RECOVER_Period 10 // [s]
+#define RECOVER_Period 20 // [s]
+
+#define R_ON 0
+#define G_ON 0
+#define B_ON 255
 
 class TreasureLevel1
 {
@@ -102,7 +107,10 @@ class TreasureLevel1
     } ;
 
     void handle_Collected() {
+      interim_collected_display();
       // inform the server here ...
+      TreasureLevel1_NeoPixel.off_FRONT();
+      TreasureLevel1_NeoPixel.off_TOP();
       feedback_collectL1(OG_, ID_);
       int player_identifier = OG_ * pow(16, 2) + ID_;
       String player_mac_address = dbc.setTreasureAsOpened("TREASURE" + String(ID), OG_, ID_);
@@ -120,6 +128,8 @@ class TreasureLevel1
             Serial.println("Reopening Treasure..");
             EEPROM.write(ENABLE_add, 1);
             HP = initialHP;
+            TreasureLevel1_NeoPixel.displayRGB_FRONT(R_ON, G_ON, B_ON);
+            TreasureLevel1_NeoPixel.displayRGB_TOP(R_ON, G_ON, B_ON);
         }
     };
 
@@ -138,6 +148,19 @@ class TreasureLevel1
       display.println("started yet.");
       display.display();
     };
+
+    void interim_collected_display(){
+      display.clearDisplay();
+      display.setTextSize(1); // Draw SIZE
+      display.setTextColor(SSD1306_BLACK, SSD1306_WHITE); // Draw 'inverse' text
+      display.setCursor(0, 0);
+      display.println(F("   Level 1 Treasure  ")); 
+          
+      display.setCursor(0, 16);
+      display.setTextColor(SSD1306_WHITE); // Draw white text
+      display.println("    Please wait ...   ");
+      display.display();
+    }
 
     void display_in_game(){
       int currStatus = EEPROM.read(ENABLE_add);
@@ -205,12 +228,20 @@ int get_game_state(){
    
    if (!gameStarted) {
      gameStarted = dbc.hasGameStarted();
+     if(gameStarted){
+      TreasureLevel1_NeoPixel.displayRGB_FRONT(R_ON, G_ON, B_ON);
+      TreasureLevel1_NeoPixel.displayRGB_TOP(R_ON, G_ON, B_ON);
+     }
      return gameStarted;
    } else return 1;
 }
 
 void setup() {
   Serial.begin(115200);
+  TreasureLevel1_NeoPixel.initialize();
+  TreasureLevel1_NeoPixel.off_FRONT();
+  TreasureLevel1_NeoPixel.off_TOP();
+
   TreasureLevel1_IR.enable();
   EEPROM.begin(EEPROM_SIZE);
   clearEEPROM();

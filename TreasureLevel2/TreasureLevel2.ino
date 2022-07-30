@@ -214,6 +214,7 @@ class TreasureLevel2
     }
 
     void handle_Collected() {
+      interim_collected_display();
       TreasureLevel2_NeoPixel.off_FRONT();
       TreasureLevel2_NeoPixel.off_TOP();
       // no need to feedback everytime the player collecting the Treasure. Only feedback to the server and to the player when the treasure is fully collected, ie. HP == 0
@@ -253,6 +254,27 @@ class TreasureLevel2
       display.println("started yet.");
       display.display();
     };
+
+    void interim_collected_display(){
+      display.clearDisplay();\
+      display.setTextSize(1); // Draw SIZE
+      display.setTextColor(SSD1306_BLACK, SSD1306_WHITE); // Draw 'inverse' text
+      display.setCursor(0, 0);
+      display.println(F("   Level 2 Treasure  ")); 
+
+      display.setCursor(0, 16);
+      display.setTextSize(2);      // Normal 1:1 pixel scale
+      display.setTextColor(SSD1306_WHITE); // Draw white text
+      display.print("HP ");
+
+      display.setCursor(110, 32);
+      display.setTextSize(1);      // Normal 1:1 pixel scale
+      display.println(HP);
+
+      display.setCursor(0, 48);
+      display.print("Please wait ...");
+      display.display();
+    }
     
     void display_in_game(){
       if(HP != 0) {

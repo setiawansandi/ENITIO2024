@@ -730,9 +730,9 @@ class TreasureHuntPlayer
         case infoPage:
           TreasureHunt_OLED.display_infoPage(OG, ID, MANA, MaxEn, noti_to_display, lastPageNav);
           break;
-//        case achievementPage:
-//          TreasureHunt_OLED.display_achievementPage(numKilled, numL1Treasure, numL2Treasure, noti_to_display, lastPageNav);
-//          break;
+       case achievementPage:
+         TreasureHunt_OLED.display_achievementPage(numKilled, numL1Treasure, numL2Treasure, noti_to_display, lastPageNav);
+         break;
         case powerupPage:
           TreasureHunt_OLED.display_powerupPage(num_bonus6HP, 
                                               num_bonus1MaxEn,
