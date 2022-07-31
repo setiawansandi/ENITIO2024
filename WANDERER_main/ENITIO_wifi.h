@@ -11,12 +11,13 @@
 #define EAP_ANONYMOUS_IDENTITY  ""
 #define EAP_IDENTITY  "quan005@student.main.ntu.edu.sg"
 #define EAP_PASSWORD  "P1&S1bTV!30121976"
-#define HOME_WIFI_SSID "TP-Link_E45E"
-#define HOME_WIFI_PASSWORD "63824377"
+#define HOME_WIFI_SSID "dlink-A57E"
+#define HOME_WIFI_PASSWORD "37404160"
 
 const char *ssid = "NTUSECURE";
 int wifi_reconnect_counter = 0;
 unsigned long last_disconnected_time = 0;
+int HTTP_TIMEOUT = 30 * 1000;
 
 struct MAC_ADDRESS {
   int n1;
@@ -42,6 +43,7 @@ struct GAME_CONSTANTS {
     int MAX_COLLECT_MANA;
     int BOMB_HP_DEDUCTION;
     int KILL_UPDATE_SERVER_INTERVAL;
+    int HTTP_TIMEOUT;
 };
 
 class DBConnection {
@@ -49,12 +51,14 @@ class DBConnection {
         String DATABASE_URL = "https://kahleong.pythonanywhere.com/";
         String GET_Request(const char* server) {
             HTTPClient http;
+            http.setTimeout(HTTP_TIMEOUT);
             http.begin(server);
             int httpResponseCode = http.GET();
         
             String payload = "{}";
         
             if (httpResponseCode > 0) {
+                Serial.print("HTTP Response code: "); Serial.println(httpResponseCode);
                 payload = http.getString();
             } else {
                 Serial.print("Error code: "); Serial.println(httpResponseCode);
@@ -127,6 +131,7 @@ class DBConnection {
             game_const.MAX_COLLECT_MANA = JSON.stringify(json_obj["MAX_COLLECT_MANA"]).toInt();
             game_const.BOMB_HP_DEDUCTION = JSON.stringify(json_obj["BOMB_HP_DEDUCTION"]).toInt();
             game_const.KILL_UPDATE_SERVER_INTERVAL = JSON.stringify(json_obj["KILL_UPDATE_SERVER_INTERVAL"]).toInt();
+            game_const.HTTP_TIMEOUT = JSON.stringify(json_obj["HTTP_TIMEOUT"]).toInt();
 
             return game_const;
         };
@@ -134,7 +139,7 @@ class DBConnection {
         String POST_Request(const char* server, const char* payload) {
             if (WiFi.status() == WL_CONNECTED) {
                 HTTPClient http;
-        
+                http.setTimeout(HTTP_TIMEOUT);
                 http.begin(server);
                 http.addHeader("Content-Type", "application/json");
                 int httpResponseCode = http.POST(payload);

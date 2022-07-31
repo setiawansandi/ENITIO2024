@@ -14,10 +14,6 @@
 #include <Adafruit_GFX.h>
 #include <Adafruit_SSD1306.h>
 
-#define NUM_L2TREASURES 20
-#define TREASURE_VIRUS_THRESHOLD 15 // from 1 to 15 are Treasure, 16 to 20 are Virus
-
-
 #define SCREEN_WIDTH 128 // OLED display width, in pixels
 #define SCREEN_HEIGHT 64 // OLED display height, in pixels
 
@@ -100,7 +96,6 @@ void StartUpDisplay(){
 
 #define EEPROM_SIZE 20
 
-#define initialHP 10
 #define hp_pxl_bar_width 10 // [pxl/HP]
 
 #define ENABLE_add 0 // 0 means Treasure has not been initialized, 1 means already initialized
@@ -108,11 +103,15 @@ void StartUpDisplay(){
 #define HP_add 2
 #define collectedOG_add 3
 
-#define ACTION_RECV_WAIT 150 // [ms] 
-#define RECOVER_Period 20 // [s]
-#define INFECTION_time 10 // [s]
 
 #define DOUBLE_CLICK_LENGTH 1500 // [ms]
+
+int TREASURE_LEVEL2_INITIAL_HP;
+int NUM_L2TREASURES;
+int TREASURE_VIRUS_THRESHOLD;
+int TREASURE_LEVEL2_ACTION_RECV_WAIT;
+int TREASURE_LEVEL2_RECOVER_PERIOD;
+int TREASURE_LEVEL2_VIRUS_INFECTION_TIME;
 
 class TreasureLevel2
 {
@@ -134,9 +133,9 @@ class TreasureLevel2
 
       if (EEPROM.read(ENABLE_add) == 0){
       EEPROM.write(ENABLE_add, 1);
-      EEPROM.write(HP_add, initialHP);
+      EEPROM.write(HP_add, TREASURE_LEVEL2_INITIAL_HP);
       EEPROM.commit(); 
-      HP = initialHP;}
+      HP = TREASURE_LEVEL2_INITIAL_HP;}
       else{
         HP = EEPROM.read(HP_add);
         if (HP == 0) {
@@ -168,7 +167,7 @@ class TreasureLevel2
         if (TreasureLevel2_IR.available()) {
            ir_signal IRsignal_ = TreasureLevel2_IR.read();
 
-           if (currTime - lastActionReceived > ACTION_RECV_WAIT) {
+           if (currTime - lastActionReceived > TREASURE_LEVEL2_ACTION_RECV_WAIT) {
              OG_ = IRsignal_.address.digit2;
              ID_ = IRsignal_.address.digit0 + (IRsignal_.address.digit1 << 4);
 
@@ -195,12 +194,12 @@ class TreasureLevel2
     }
 
     void recover(){
-      if (HP == initialHP) {
+      if (HP == TREASURE_LEVEL2_INITIAL_HP) {
         lastRecoveredTime = millis();
       }
       else if (HP > 0){
         unsigned long currTime = millis();
-        timeleftToRecover = max(int(RECOVER_Period * 1000 - (currTime - lastRecoveredTime)), 0);
+        timeleftToRecover = max(int(TREASURE_LEVEL2_RECOVER_PERIOD - (currTime - lastRecoveredTime)), 0);
         if (timeleftToRecover == 0){
           HP++;
           lastRecoveredTime = currTime;
@@ -233,7 +232,7 @@ class TreasureLevel2
       if (_isVirus) {
         Serial.println("Broadcasting Virus...");
         TreasureLevel2_Bluetooth.startAdvertisingService(pVirusService);
-        delay(INFECTION_time * 1000);
+        delay(TREASURE_LEVEL2_VIRUS_INFECTION_TIME);
         TreasureLevel2_Bluetooth.stopAdvertisingService(pVirusService);
         Serial.println("Box Shutting down...");
       }
@@ -437,6 +436,14 @@ void setup() {
     isWiFiConnected = dbc.connectToWiFi();
   }
 
+  GAME_CONSTANTS game_consts = dbc.getGameConstants();
+  HTTP_TIMEOUT = game_consts.HTTP_TIMEOUT;
+  TREASURE_LEVEL2_INITIAL_HP = game_consts.TREASURE_LEVEL2_INITIAL_HP;
+  NUM_L2TREASURES = game_consts.NUM_L2TREASURES;
+  TREASURE_LEVEL2_ACTION_RECV_WAIT = game_consts.TREASURE_LEVEL2_ACTION_RECV_WAIT;
+  TREASURE_LEVEL2_RECOVER_PERIOD = game_consts.TREASURE_LEVEL2_RECOVER_PERIOD;
+  TREASURE_LEVEL2_VIRUS_INFECTION_TIME = game_consts.TREASURE_LEVEL2_VIRUS_INFECTION_TIME;
+  TREASURE_VIRUS_THRESHOLD = game_consts.TREASURE_VIRUS_THRESHOLD;
   
   xTaskCreatePinnedToCore(
                       backgroundTaskCode,   /* Task function. */

@@ -14,6 +14,7 @@ def retrieve_OG_participant_id_from_identifier(identifier):
 
 @app.route("/treasure/<int:level>/<name>/<int:OG>/<int:participant_id>", methods=["GET"])
 def set_treasure_as_collected(level, name, OG, participant_id):
+    print("Received Treasure Collection Request - {} (Level {}) by OG {} ID {}".format(name, level, OG, participant_id))
     player = Player.query.filter_by(OG=OG, participant_id=participant_id).first()
     if player:
         treasure = None
@@ -50,6 +51,7 @@ def set_treasure_as_collected(level, name, OG, participant_id):
             print("Returning Request to", mac_address_str)
             return jsonify(result)
 
+    print("Aborting Request...")
     abort(404)
 
 
@@ -276,6 +278,7 @@ def get_all_game_variables():
 @app.route("/player_score", methods=["POST"])
 def update_player_score():
     content = request.json
+    print("UPDATE SCORE:", content)
     if "OG" in content and "ID" in content and "num_kills" in content and "level1" in content and "level2" in content:
         OG = content["OG"]
         ID = content["ID"]

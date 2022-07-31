@@ -28,7 +28,6 @@ Adafruit_SSD1306 display(SCREEN_WIDTH, SCREEN_HEIGHT, &Wire, OLED_RESET);
 
 #define EEPROM_SIZE 10
 
-#define initialHP 1
 #define hp_pxl_bar_width 100 // [pxl/HP]
 
 #define ENABLE_add 0  // 0 means Treasure has not been initialized, 1 means already initialized
@@ -37,12 +36,14 @@ Adafruit_SSD1306 display(SCREEN_WIDTH, SCREEN_HEIGHT, &Wire, OLED_RESET);
 #define HP_add 2
 #define collectedOG_add 3
 
-#define ACTION_RECV_WAIT 3000 // [ms] 
-#define RECOVER_Period 20 // [s]
-
 #define R_ON 0
 #define G_ON 0
 #define B_ON 255
+
+// Constants
+int TREASURE_LEVEL1_INITIAL_HP;
+int TREASURE_LEVEL1_ACTION_RECV_WAIT;
+int TREASURE_LEVEL1_RECOVER_DURATION;
 
 class TreasureLevel1
 {
@@ -64,7 +65,7 @@ class TreasureLevel1
     void init_treasure(){
       EEPROM.write(ENABLE_add, 1);
       EEPROM.commit();
-      HP = initialHP;
+      HP = TREASURE_LEVEL1_INITIAL_HP;
     };
     
     void receiveAction() {
@@ -73,7 +74,7 @@ class TreasureLevel1
          ir_signal IRsignal_ = TreasureLevel1_IR.read();
          unsigned long currTime = millis();
 
-         if ((currStatus == 1) && (currTime - lastActionReceived > ACTION_RECV_WAIT)){
+         if ((currStatus == 1) && (currTime - lastActionReceived > TREASURE_LEVEL1_ACTION_RECV_WAIT)){
           OG_ = IRsignal_.address.digit2;
          ID_ = IRsignal_.address.digit0 + (IRsignal_.address.digit1 << 4);
 
@@ -113,9 +114,9 @@ class TreasureLevel1
       TreasureLevel1_NeoPixel.off_TOP();
       feedback_collectL1(OG_, ID_);
       int player_identifier = OG_ * pow(16, 2) + ID_;
+      Serial.printf("TREASURE%d opened by OG %d ID %d\n", ID, OG_, ID_);
       String player_mac_address = dbc.setTreasureAsOpened("TREASURE" + String(ID), OG_, ID_);
       // this code to save the info of the OG collected the treasure
-      Serial.print("Treasure opened by "); Serial.println(player_mac_address);
       EEPROM.write(ENABLE_add, 2);
       EEPROM.commit();
     };
@@ -124,10 +125,10 @@ class TreasureLevel1
         // Level1Treasures can recover after a fixed amt of time
         int currStatus = EEPROM.read(ENABLE_add);
         unsigned int currTime = millis();
-        if (currStatus == 2 && currTime - lastOpenedTime > RECOVER_Period * 1000) {
+        if (currStatus == 2 && currTime - lastOpenedTime > TREASURE_LEVEL1_RECOVER_DURATION) {
             Serial.println("Reopening Treasure..");
             EEPROM.write(ENABLE_add, 1);
-            HP = initialHP;
+            HP = TREASURE_LEVEL1_INITIAL_HP;
             TreasureLevel1_NeoPixel.displayRGB_FRONT(R_ON, G_ON, B_ON);
             TreasureLevel1_NeoPixel.displayRGB_TOP(R_ON, G_ON, B_ON);
         }
@@ -261,6 +262,12 @@ void setup() {
     isWiFiConnected = dbc.connectToWiFi();
   }
 
+  GAME_CONSTANTS game_consts = dbc.getGameConstants();
+  HTTP_TIMEOUT = game_consts.HTTP_TIMEOUT;
+  TREASURE_LEVEL1_INITIAL_HP = game_consts.TREASURE_LEVEL1_INITIAL_HP;
+  TREASURE_LEVEL1_ACTION_RECV_WAIT = game_consts.TREASURE_LEVEL1_ACTION_RECV_WAIT;
+  TREASURE_LEVEL1_RECOVER_DURATION = game_consts.TREASURE_LEVEL1_RECOVER_DURATION;
+  
 }
 
 void loop() {
