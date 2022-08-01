@@ -11,6 +11,7 @@ typedef struct feedback_message {
 
 int EspNOW_received = 0;
 feedback_message EspNOW_recvData;
+bool last_send_status = true;
 
 class EspNOW {
   private:
@@ -21,7 +22,6 @@ class EspNOW {
     
   public:
     int is_waiting_for_feedback = 0;
-    // bool last_send_status = true;
     
     void enable() {
       // WiFi.mode(WIFI_STA);
@@ -47,7 +47,7 @@ class EspNOW {
     }
   
    void send_data(int attackee_type, int attacker_OG, int attacker_ID, int attackee_OG, int is_attackee_killed){
-            // Register peer
+      // Register peer
       feedbackData.attackee_type = attackee_type;
       feedbackData.attacker_OG = attacker_OG;
       feedbackData.attacker_ID = attacker_ID;
@@ -57,7 +57,7 @@ class EspNOW {
       getDeviceMACAddress(attacker_OG, attacker_ID);
       
       memcpy(peerInfo.peer_addr, broadcastAddress, 6);
-      peerInfo.channel = 0;  
+      peerInfo.channel = 1;  
       peerInfo.encrypt = false;
         
       // Add peer     
@@ -91,7 +91,8 @@ class EspNOW {
     static void OnDataSent(const uint8_t *mac_addr, esp_now_send_status_t status) {
       Serial.print("\r\nLast Packet Send Status:\t");
       Serial.println(status == ESP_NOW_SEND_SUCCESS ? "Delivery Success" : "Delivery Fail");
-      // last_send_status = (status == ESP_NOW_SEND_SUCCESS);
+      
+       last_send_status = (status == ESP_NOW_SEND_SUCCESS);
     }
 
     feedback_message get_feedback_received(){

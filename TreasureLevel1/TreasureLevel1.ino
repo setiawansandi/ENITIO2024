@@ -98,13 +98,14 @@ class TreasureLevel1
       // randomSeed(currTime);
       int powerup_ID = random(1,6);
 
-      // TreasureLevel1_EspNOW.last_send_status = false;
+       TreasureLevel1_EspNOW.send_data(2, OG_, ID_, ID, powerup_ID);
 
-      // while(!TreasureLevel1_EspNOW.last_send_status){
-      //   TreasureLevel1_EspNOW.send_data(2, OG_, ID_, ID, powerup_ID);
-      // }
+//       while(!last_send_status){
+//         delay(200);
+//         TreasureLevel1_EspNOW.send_data(2, OG_, ID_, ID, powerup_ID);
+//       }
 
-      TreasureLevel1_EspNOW.send_data(2, OG_, ID_, ID, powerup_ID);
+//      TreasureLevel1_EspNOW.send_data(2, OG_, ID_, ID, powerup_ID);
     } ;
 
     void handle_Collected() {
@@ -112,7 +113,9 @@ class TreasureLevel1
       // inform the server here ...
       TreasureLevel1_NeoPixel.off_FRONT();
       TreasureLevel1_NeoPixel.off_TOP();
+
       feedback_collectL1(OG_, ID_);
+      
       int player_identifier = OG_ * pow(16, 2) + ID_;
       Serial.printf("TREASURE%d opened by OG %d ID %d\n", ID, OG_, ID_);
       String player_mac_address = dbc.setTreasureAsOpened("TREASURE" + String(ID), OG_, ID_);
@@ -211,7 +214,7 @@ class TreasureLevel1
 
 };
 
-TreasureLevel1 Treasure(6);  // use OLED to input ID 
+TreasureLevel1 Treasure(8);  // use OLED to input ID 
 bool gameStarted = 0;
 
 void clearEEPROM(){
