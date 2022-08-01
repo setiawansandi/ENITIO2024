@@ -74,6 +74,7 @@ class HealingStation
               if ((action_ == collect) || (action_ == heal_request)) {
                   heal_player(OG_, ID_);
                   HP--;
+                  Serial.print(HP); Serial.println(" Before Station Closes");
                   if (HP == 0) {
                       Serial.println("Closing Healing Station");
                       HealingStation_NeoPixel.off_FRONT();
@@ -177,6 +178,7 @@ int get_game_state(){
      if(gameStarted) {
        HealingStation_NeoPixel.displayRGB_FRONT(R_ON, B_ON, G_ON);
        HealingStation_NeoPixel.displayRGB_TOP(R_ON, B_ON, G_ON);
+       healing_station.init_treasure();
      }
      return gameStarted;
    } else return 1;
@@ -190,10 +192,6 @@ void setup() {
   HealingStation_IR.enable();
   EEPROM.begin(EEPROM_SIZE);
   clearEEPROM();
-
-  if (EEPROM.read(ENABLE_add) == 0) {
-    healing_station.init_treasure();
-  }
 
   if(!display.begin(SSD1306_SWITCHCAPVCC, SCREEN_ADDRESS)) {
         Serial.println(F("SSD1306 allocation failed"));
@@ -213,6 +211,7 @@ void setup() {
   HEALING_STATION_INITIAL_HP = game_consts.HEALING_STATION_INITIAL_HP;
   HEALING_STATION_ACTION_RECV_WAIT = game_consts.HEALING_STATION_ACTION_RECV_WAIT;
   HEALING_STATION_RECOVER_DURATION = game_consts.HEALING_STATION_RECOVER_DURATION;
+  
 }
 
 void loop() {
@@ -227,6 +226,7 @@ void loop() {
   switch (get_game_state()){
     case 0:
       healing_station.display_not_playing_yet();
+      delay(10000);
       break;
     case 1:
       healing_station.receiveAction();

@@ -211,7 +211,7 @@ class TreasureLevel1
 
 };
 
-TreasureLevel1 Treasure(6);  // use OLED to input ID 
+TreasureLevel1 Treasure(9);  // use OLED to input ID 
 bool gameStarted = 0;
 
 void clearEEPROM(){
@@ -282,6 +282,7 @@ void loop() {
   switch (get_game_state()){
     case 0:
       Treasure.display_not_playing_yet();
+      delay(10000);
       break;
     case 1:
       Treasure.receiveAction();

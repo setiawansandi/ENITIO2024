@@ -341,6 +341,7 @@ class TreasureLevel2
 
 TreasureLevel2 Treasure;
 bool gameStarted = 0;
+unsigned long last_check_gameStarted = 0;
 bool setUpDone = 0;
 
 int get_game_state(){
@@ -348,9 +349,12 @@ int get_game_state(){
       // 0 mean game did not start
       // 1 mean in game
       // once the game has started then we dunnid to check anymore
-   
+   unsigned long currTime = millis();
    if (!gameStarted) {
-     gameStarted = dbc.hasGameStarted();
+     if ((currTime - last_check_gameStarted) >= 10000) {
+        gameStarted = dbc.hasGameStarted();
+        last_check_gameStarted = currTime;
+     }
      if (gameStarted) {
         // start BLE functions
         Treasure.setup_initial_state();
