@@ -42,7 +42,9 @@ class Profile{
                 case button:
                     Player_joystick.set_state();
                     OG = OG_pointer;
+                    registerStatus = dbc.registerWanderer(OG, my_MAC_address); 
                     while (!registerStatus){
+                        delay(5000);
                         registerStatus = dbc.registerWanderer(OG, my_MAC_address); 
                     }
                     EEPROM.write(OG_add, OG);

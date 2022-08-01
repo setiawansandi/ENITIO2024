@@ -42,6 +42,7 @@ class EspNOW {
       Serial.println("OK");
       esp_now_register_send_cb(OnDataSent);
       esp_now_register_recv_cb(OnDataRecv);
+      Serial.print(WiFi.channel());
     }
 
     void getDeviceMACAddress(int attacker_OG, int attacker_ID){
@@ -65,7 +66,7 @@ class EspNOW {
       getDeviceMACAddress(attacker_OG, attacker_ID);
       
       memcpy(peerInfo.peer_addr, broadcastAddress, 6);
-      peerInfo.channel = 0;  
+      peerInfo.channel = 1;  
       peerInfo.encrypt = false;
         
       // Add peer     
@@ -135,7 +136,7 @@ class EspNOW {
               for (int ii = 0; ii < 6; ++ii ) {
                 bomb_targets[target_count].peer_addr[ii] = (uint8_t) mac[ii];
               }
-              bomb_targets[target_count].channel = 0; // pick a channel
+              bomb_targets[target_count].channel = 1; // pick a channel
               bomb_targets[target_count].encrypt = 0; // no encryption
               target_count++;
             }
