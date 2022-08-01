@@ -30,16 +30,20 @@ Adafruit_SSD1306 display(SCREEN_WIDTH, SCREEN_HEIGHT, &Wire, OLED_RESET);
 
 #define ENABLE_add 0  // 0 means Treasure has not been initialized, 1 means already initialized
 
-#define ACTION_RECV_WAIT 200 // [ms] 
-
 #define R_ON 255
 #define G_ON 0
 #define B_ON 0
 
+int HEALING_STATION_INITIAL_HP;
+int HEALING_STATION_ACTION_RECV_WAIT;
+int HEALING_STATION_RECOVER_DURATION;
+
 class HealingStation
 {
   private:
+    int HP;
     unsigned long last_healing_request = 0;
+    unsigned long timeleftToRecover = 0;
     
   public:
     
@@ -48,29 +52,48 @@ class HealingStation
     void init_treasure(){
       EEPROM.write(ENABLE_add, 1);
       EEPROM.commit();
+      HP = HEALING_STATION_INITIAL_HP;
     };
     
     void receiveAction() {
       int currStatus = EEPROM.read(ENABLE_add);
       unsigned long currTime = millis();
       if (currStatus == 1 && HealingStation_IR.available()) {
-         ir_signal IRsignal_ = HealingStation_IR.read();
+          ir_signal IRsignal_ = HealingStation_IR.read();
 
-         if (currTime - last_healing_request >= ACTION_RECV_WAIT){
-            Serial.println("Initiate Healing Request");
-             OG_ = IRsignal_.address.digit2;
-             ID_ = IRsignal_.address.digit0 + (IRsignal_.address.digit1 << 4);
+          if (currTime - last_healing_request >= HEALING_STATION_ACTION_RECV_WAIT){
+              Serial.println("Initiate Healing Request");
+              OG_ = IRsignal_.address.digit2;
+              ID_ = IRsignal_.address.digit0 + (IRsignal_.address.digit1 << 4);
         
-             En_ = IRsignal_.command.digit1;
-             action_ = IRsignal_.command.digit0;
+              En_ = IRsignal_.command.digit1;
+              action_ = IRsignal_.command.digit0;
         
-             Serial.printf("%d %d %d %d \n", action_, En_, ID_, OG_);
+              Serial.printf("%d %d %d %d \n", action_, En_, ID_, OG_);
       
-             if ((action_ == collect) || (action_ == heal_request)) {
-                 heal_player(OG_, ID_);
-             }
-             last_healing_request = currTime;
-         }
+              if ((action_ == collect) || (action_ == heal_request)) {
+                  heal_player(OG_, ID_);
+                  HP--;
+                  if (HP == 0) {
+                      Serial.println("Closing Healing Station");
+                      HealingStation_NeoPixel.off_FRONT();
+                      HealingStation_NeoPixel.off_TOP();
+                      EEPROM.write(ENABLE_add, 2);
+                      EEPROM.commit();
+                  }
+              }
+              last_healing_request = currTime;
+          }
+      } else if (currStatus == 2) {
+          timeleftToRecover = max(int(HEALING_STATION_RECOVER_DURATION - (currTime - last_healing_request)), 0);
+          if (timeleftToRecover == 0) {
+            Serial.println("Reopening Healing Station");
+            HP = HEALING_STATION_INITIAL_HP;
+            EEPROM.write(ENABLE_add, 1);
+            EEPROM.commit();
+            HealingStation_NeoPixel.displayRGB_FRONT(R_ON, B_ON, G_ON);
+            HealingStation_NeoPixel.displayRGB_TOP(R_ON, B_ON, G_ON);
+          }
       }
     };
 
@@ -113,6 +136,23 @@ class HealingStation
       }
     };
 
+    void display_no_hp(){
+      display.clearDisplay();
+      display.setTextSize(1); // Draw SIZE
+      display.setTextColor(SSD1306_BLACK, SSD1306_WHITE); // Draw 'inverse' text
+      display.setCursor(0, 0);
+      display.println(F("   Healing Station  ")); 
+          
+      display.setCursor(0, 24);
+      display.setTextColor(SSD1306_WHITE); // Draw white text              |  
+      display.println("     Out of HP      ");
+
+      display.setCursor(0, 40);
+      display.print("Come back in: ");
+      display.println(int(timeleftToRecover/1000.0)+1);
+      display.display();
+    };
+
 };
 
 HealingStation healing_station;
@@ -134,9 +174,9 @@ int get_game_state(){
    if (!gameStarted) {
      gameStarted = dbc.hasGameStarted();
      Serial.print("Game Status: "); Serial.println(gameStarted);
-     if(gameStarted){
-      HealingStation_NeoPixel.displayRGB_FRONT(R_ON, B_ON, G_ON);
-     HealingStation_NeoPixel.displayRGB_TOP(R_ON, B_ON, G_ON);
+     if(gameStarted) {
+       HealingStation_NeoPixel.displayRGB_FRONT(R_ON, B_ON, G_ON);
+       HealingStation_NeoPixel.displayRGB_TOP(R_ON, B_ON, G_ON);
      }
      return gameStarted;
    } else return 1;
@@ -168,6 +208,11 @@ void setup() {
     isWiFiConnected = dbc.connectToWiFi();
   }
 
+  GAME_CONSTANTS game_consts = dbc.getGameConstants();
+  HTTP_TIMEOUT = game_consts.HTTP_TIMEOUT;
+  HEALING_STATION_INITIAL_HP = game_consts.HEALING_STATION_INITIAL_HP;
+  HEALING_STATION_ACTION_RECV_WAIT = game_consts.HEALING_STATION_ACTION_RECV_WAIT;
+  HEALING_STATION_RECOVER_DURATION = game_consts.HEALING_STATION_RECOVER_DURATION;
 }
 
 void loop() {

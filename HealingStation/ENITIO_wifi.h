@@ -10,22 +10,32 @@
 #define EAP_ANONYMOUS_IDENTITY  ""
 #define EAP_IDENTITY  "@student.main.ntu.edu.sg"
 #define EAP_PASSWORD  ""
-#define HOME_WIFI_SSID "TP-Link_E45E"
-#define HOME_WIFI_PASSWORD "63824377"
+#define HOME_WIFI_SSID "dlink-A57E"
+#define HOME_WIFI_PASSWORD "37404160"
 const char *ssid = "NTUSECURE";
 int wifi_reconnect_counter = 0;
+int HTTP_TIMEOUT = 30 * 1000;
+
+struct GAME_CONSTANTS {
+    int HEALING_STATION_INITIAL_HP;
+    int HEALING_STATION_ACTION_RECV_WAIT;
+    int HEALING_STATION_RECOVER_DURATION;
+    int HTTP_TIMEOUT;
+};
 
 class DBConnection {
     private:
         String DATABASE_URL = "https://kahleong.pythonanywhere.com/";
         String GET_Request(const char* server) {
             HTTPClient http;
+            http.setTimeout(HTTP_TIMEOUT);
             http.begin(server);
             int httpResponseCode = http.GET();
         
             String payload = "{}";
         
             if (httpResponseCode > 0) {
+                Serial.print("HTTP Response code: "); Serial.println(httpResponseCode);
                 payload = http.getString();
             } else {
                 Serial.print("Error code: "); Serial.println(httpResponseCode);
@@ -46,7 +56,7 @@ class DBConnection {
         String POST_Request(const char* server, const char* payload) {
             if (WiFi.status() == WL_CONNECTED) {
                 HTTPClient http;
-        
+                http.setTimeout(HTTP_TIMEOUT);
                 http.begin(server);
                 http.addHeader("Content-Type", "application/json");
                 int httpResponseCode = http.POST(payload);
@@ -61,6 +71,20 @@ class DBConnection {
                 http.end();
                 return responsePayload;
             }
+        };
+
+        GAME_CONSTANTS retrieveGameConstantsFromJSONArray(String json_array) {
+            JSONVar json_obj = JSON.parse(json_array);
+            GAME_CONSTANTS game_const;
+            if (JSON.typeof(json_obj) == "undefined") {
+                Serial.println("Parsing input failed!");
+                return game_const;
+            }
+            game_const.HEALING_STATION_INITIAL_HP = JSON.stringify(json_obj["HEALING_STATION_INITIAL_HP"]).toInt();
+            game_const.HEALING_STATION_ACTION_RECV_WAIT = JSON.stringify(json_obj["HEALING_STATION_ACTION_RECV_WAIT"]).toInt();
+            game_const.HEALING_STATION_RECOVER_DURATION = JSON.stringify(json_obj["HEALING_STATION_RECOVER_DURATION"]).toInt();
+            game_const.HTTP_TIMEOUT = JSON.stringify(json_obj["HTTP_TIMEOUT"]).toInt();
+            return game_const;
         };
     
     public:
@@ -88,6 +112,13 @@ class DBConnection {
             String jsonArray = GET_Request(url.c_str());
             return retrieveParameterFromJSONArray("has_game_started", jsonArray).toInt();
         }
+
+        GAME_CONSTANTS getGameConstants() {
+            String url = DATABASE_URL + "get_all_game_variables";
+            String jsonArray = GET_Request(url.c_str());
+            // Serial.println(jsonArray);
+            return retrieveGameConstantsFromJSONArray(jsonArray);
+        };
 };
 
 DBConnection dbc;

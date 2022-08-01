@@ -80,7 +80,7 @@ class GameStatus(db.Model):
 
 def populate_statuses():
     statuses = {
-        "started": 1,
+        "started": 0,
         "EN_RECOVER_DURATION": 5000,
         "MAX_EN_DECAY_DURATION": 10000,
         "VIRUS_DECAY_DURATION": 10000,
@@ -97,8 +97,27 @@ def populate_statuses():
         "HEAL_MANA": 10,
         "VIRUS_INFECTION_PROBABILITY": 60,
         "BOMB_HP_DEDUCTION": 4,
-        "KILL_UPDATE_SERVER_INTERVAL": 5 * 60 * 1000
+        "KILL_UPDATE_SERVER_INTERVAL": 5 * 60 * 1000,
+        "TREASURE_LEVEL1_INITIAL_HP": 1,
+        "TREASURE_LEVEL1_ACTION_RECV_WAIT": 3000,
+        "TREASURE_LEVEL1_RECOVER_DURATION": 20 * 1000,
+        "HEALING_STATION_INITIAL_HP": 20,
+        "HEALING_STATION_ACTION_RECV_WAIT": 200,
+        "HEALING_STATION_RECOVER_DURATION": 20 * 1000,
+        "HTTP_TIMEOUT": 10 * 1000,
+        "TREASURE_LEVEL2_INITIAL_HP": 10,
+        "NUM_L2TREASURES": 20,
+        "TREASURE_VIRUS_THRESHOLD": 15,
+        "TREASURE_LEVEL2_ACTION_RECV_WAIT": 150,
+        "TREASURE_LEVEL2_RECOVER_PERIOD": 20 * 1000,
+        "TREASURE_LEVEL2_VIRUS_INFECTION_TIME": 10 * 1000,
     }
+    # Reset table
+    all_statuses = GameStatus.query.all()
+    for status in all_statuses:
+        db.session.delete(status)
+    db.session.commit()
+
     for status in statuses:
         s = GameStatus(status, str(statuses[status]))
         db.session.add(s)

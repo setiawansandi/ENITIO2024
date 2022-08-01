@@ -57,7 +57,7 @@ void setup() {
       my_MAC_address = WiFi.macAddress();
 
       GAME_CONSTANTS game_consts = dbc.getGameConstants();
-
+      HTTP_TIMEOUT = game_consts.HTTP_TIMEOUT;
       EN_RECOVER_DURATION = game_consts.EN_RECOVER_DURATION;
       VIRUS_DECAY_DURATION = game_consts.VIRUS_DECAY_DURATION;
       VIRUS_IMMUNITY_DURATION = game_consts.VIRUS_IMMUNITY_DURATION;
