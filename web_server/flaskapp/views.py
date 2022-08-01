@@ -192,6 +192,13 @@ def start_game():
     for treasure in level2_treasures:
         treasure.collected_by = None
 
+    level1_treasures = Level1Treasure.query.all()
+    for treasure in level1_treasures:
+        treasure.num_alatar_collected = 0
+        treasure.num_drachen_collected = 0
+        treasure.num_eva_collected = 0
+        treasure.num_invicta_collected = 0
+
     status = GameStatus.query.filter_by(name="started").first()
     status.value = "1"
     db.session.commit()
@@ -293,6 +300,29 @@ def update_player_score():
             db.session.commit()
             return jsonify({"OG": int(OG), "ID": int(ID), "num_kills": int(num_kills),
                             "level1": num_level1_treasures, "level2": num_level2_treasures})
+
+    abort(404)
+
+
+@app.route("/treasure_score", methods=["POST"])
+def update_level1_treasure_score():
+    content = request.json
+    print("UPDATE SCORE:", content)
+    if "name" in content and "alatar" in content and "drachen" in content and "eva" in content and "invicta" in content:
+        name = content["name"].strip()
+        alatar = int(content["alatar"].strip())
+        drachen = int(content["drachen"].strip())
+        eva = int(content["eva"].strip())
+        invicta = int(content["invicta"].strip())
+
+        treasure = Level1Treasure.query.filter_by(name=name).first()
+        if treasure:
+            treasure.num_alatar_collected = alatar
+            treasure.num_drachen_collected = drachen
+            treasure.num_eva_collected = eva
+            treasure.num_invicta_collected = invicta
+            db.session.commit()
+            return jsonify({"name": name, "alatar": alatar, "drachen": drachen, "eva": eva, "invicta": invicta})
 
     abort(404)
 

@@ -46,12 +46,20 @@ class Level1Treasure(db.Model):
     id = db.Column(db.Integer, primary_key=True, autoincrement=True, nullable=False)
     name = db.Column(db.Text, nullable=False)
     location = db.Column(db.Text)
+    num_alatar_collected = db.Column(db.Integer)
+    num_drachen_collected = db.Column(db.Integer)
+    num_eva_collected = db.Column(db.Integer)
+    num_invicta_collected = db.Column(db.Integer)
 
     collected_players = db.relationship('Level1TreasureCollectors')
 
     def __init__(self, name, location):
         self.name = name
         self.location = location
+        self.num_alatar_collected = 0
+        self.num_drachen_collected = 0
+        self.num_eva_collected = 0
+        self.num_invicta_collected = 0
 
 
 class Level1TreasureCollectors(db.Model):
