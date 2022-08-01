@@ -104,10 +104,10 @@ def populate_statuses():
         "HEALING_STATION_INITIAL_HP": 20,
         "HEALING_STATION_ACTION_RECV_WAIT": 200,
         "HEALING_STATION_RECOVER_DURATION": 20 * 1000,
-        "HTTP_TIMEOUT": 10 * 1000,
+        "HTTP_TIMEOUT": 30 * 1000,
         "TREASURE_LEVEL2_INITIAL_HP": 10,
         "NUM_L2TREASURES": 20,
-        "TREASURE_VIRUS_THRESHOLD": 15,
+        "TREASURE_VIRUS_THRESHOLD": 5,
         "TREASURE_LEVEL2_ACTION_RECV_WAIT": 150,
         "TREASURE_LEVEL2_RECOVER_PERIOD": 20 * 1000,
         "TREASURE_LEVEL2_VIRUS_INFECTION_TIME": 10 * 1000,
@@ -125,13 +125,32 @@ def populate_statuses():
 
 
 def populate_treasure():
-    for i in range(1, 8):
-        t = Level1Treasure("TREASURE" + str(i), "-")
-        db.session.add(t)
-    for i in range(8, 16):
-        t = Level2Treasure("TREASURE" + str(i), "-", True, False)
-        db.session.add(t)
-    for i in range(16, 18):
-        t = Level2Treasure("TREASURE" + str(i), "-", False, True)
-        db.session.add(t)
+    # delete all existing treasure and collection records
+    level1_collection_logs = Level1TreasureCollectors.query.all()
+    for collection_log in level1_collection_logs:
+        db.session.delete(collection_log)
+
+    level1_treasures = Level1Treasure.query.all()
+    for t in level1_treasures:
+        db.session.delete(t)
+
+    level2_treasures = Level2Treasure.query.all()
+    for t in level2_treasures:
+        db.session.delete(t)
+
+    with open("instance/treasure_locations.csv") as f:
+        content = f.readlines()[1:]  # remove header row
+        for row in content:
+            if row:
+                row = row.strip()  # remove \n at the end
+                treasure_id, level, location, is_treasure, is_virus = row.split(",")
+                level = int(level.strip())
+                is_treasure = is_treasure.strip() == "1"
+                is_virus = is_virus.strip() == "1"
+                treasure_name = "TREASURE" + treasure_id
+                if level == 1:
+                    t = Level1Treasure(treasure_name, location)
+                elif level == 2:
+                    t = Level2Treasure(treasure_name, location, is_treasure, is_virus)
+                db.session.add(t)
     db.session.commit()
