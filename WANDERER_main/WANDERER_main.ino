@@ -1,5 +1,3 @@
-#include <EEPROM.h>
-
 #include "ENITIO_enums.h"
 #include "ENITIO_const.h"
 #include "ENITIO_ir.h"
@@ -12,6 +10,7 @@
 #include "MainMenu.h"
 #include "Profile.h"
 #include "TreasureHuntPlayer.h"
+#include "Admin.h"
 
 TaskHandle_t backgroundTask;
 
@@ -29,14 +28,6 @@ void backgroundTaskCode(void * pvParameters){
       delay(50);
     }
   }
-};
-
-void clearEEPROM(){
-  int i;
-  for (i=0; i<EEPROM_SIZE; i++){
-    EEPROM.write(i,0);
-  }
-  EEPROM.commit();
 };
 
 void setup() {
@@ -66,7 +57,7 @@ void setup() {
       my_MAC_address = WiFi.macAddress();
 
       GAME_CONSTANTS game_consts = dbc.getGameConstants();
-
+      HTTP_TIMEOUT = game_consts.HTTP_TIMEOUT;
       EN_RECOVER_DURATION = game_consts.EN_RECOVER_DURATION;
       VIRUS_DECAY_DURATION = game_consts.VIRUS_DECAY_DURATION;
       VIRUS_IMMUNITY_DURATION = game_consts.VIRUS_IMMUNITY_DURATION;
@@ -96,7 +87,7 @@ void setup() {
 
 void loop() {
   // First check if ESP is connected to WiFi
-  if ((WiFi.status() != WL_CONNECTED) && (millis() - last_disconnected_time > 10000)) {
+  if ((WiFi.status() != WL_CONNECTED) && (millis() - last_disconnected_time > 2000)) {
     Serial.println("Lost WiFi Connection.. attempting to reconnect");
     dbc.startWiFiConnection();
     last_disconnected_time = millis();
@@ -110,10 +101,8 @@ void loop() {
   else if (currentProcess == ProfileProcess){
     My_Profile.ProfileLoop();
   }
-  else if (currentProcess == FactoryResetProcess){
-    StartUpDisplay();
-    clearEEPROM();
-    ESP.restart();
+  else if (currentProcess == AdminProcess){
+    My_Admin.AdminLoop();
   }
   else {
     currentProcess = MainMenuProcess;

@@ -10,19 +10,16 @@
 #define EAP_ANONYMOUS_IDENTITY  ""
 #define EAP_IDENTITY  "quan005@student.main.ntu.edu.sg"
 #define EAP_PASSWORD  "P1&S1bTV!30121976"
-#define HOME_WIFI_SSID "FreeWaffles"
-#define HOME_WIFI_PASSWORD "SponsoredByCKL00"
+#define HOME_WIFI_SSID "dlink-A57E"
+#define HOME_WIFI_PASSWORD "37404160"
 const char *ssid = "NTUSECURE";
 int wifi_reconnect_counter = 0;
 int HTTP_TIMEOUT = 30 * 1000;
 
 struct GAME_CONSTANTS {
-    int TREASURE_LEVEL2_INITIAL_HP;
-    int NUM_L2TREASURES;
-    int TREASURE_VIRUS_THRESHOLD;
-    int TREASURE_LEVEL2_ACTION_RECV_WAIT;
-    int TREASURE_LEVEL2_RECOVER_PERIOD;
-    int TREASURE_LEVEL2_VIRUS_INFECTION_TIME;
+    int HEALING_STATION_INITIAL_HP;
+    int HEALING_STATION_ACTION_RECV_WAIT;
+    int HEALING_STATION_RECOVER_DURATION;
     int HTTP_TIMEOUT;
 };
 
@@ -83,13 +80,10 @@ class DBConnection {
                 Serial.println("Parsing input failed!");
                 return game_const;
             }
-            game_const.TREASURE_LEVEL2_INITIAL_HP = JSON.stringify(json_obj["TREASURE_LEVEL2_INITIAL_HP"]).toInt();
-            game_const.NUM_L2TREASURES = JSON.stringify(json_obj["NUM_L2TREASURES"]).toInt();
-            game_const.TREASURE_VIRUS_THRESHOLD = JSON.stringify(json_obj["TREASURE_VIRUS_THRESHOLD"]).toInt();
+            game_const.HEALING_STATION_INITIAL_HP = JSON.stringify(json_obj["HEALING_STATION_INITIAL_HP"]).toInt();
+            game_const.HEALING_STATION_ACTION_RECV_WAIT = JSON.stringify(json_obj["HEALING_STATION_ACTION_RECV_WAIT"]).toInt();
+            game_const.HEALING_STATION_RECOVER_DURATION = JSON.stringify(json_obj["HEALING_STATION_RECOVER_DURATION"]).toInt();
             game_const.HTTP_TIMEOUT = JSON.stringify(json_obj["HTTP_TIMEOUT"]).toInt();
-            game_const.TREASURE_LEVEL2_ACTION_RECV_WAIT = JSON.stringify(json_obj["TREASURE_LEVEL2_ACTION_RECV_WAIT"]).toInt();
-            game_const.TREASURE_LEVEL2_RECOVER_PERIOD = JSON.stringify(json_obj["TREASURE_LEVEL2_RECOVER_PERIOD"]).toInt();
-            game_const.TREASURE_LEVEL2_VIRUS_INFECTION_TIME = JSON.stringify(json_obj["TREASURE_LEVEL2_VIRUS_INFECTION_TIME"]).toInt();
             return game_const;
         };
     
@@ -118,19 +112,7 @@ class DBConnection {
             String jsonArray = GET_Request(url.c_str());
             return retrieveParameterFromJSONArray("has_game_started", jsonArray).toInt();
         }
-        
-        String getDeviceMACAddress(int playerIdentifier) {
-            String url = DATABASE_URL + "player/" + String(playerIdentifier);
-            String jsonArray = GET_Request(url.c_str());
-            return retrieveParameterFromJSONArray("mac_address", jsonArray);
-        };
 
-        String setTreasureAsOpened(String treasureName, int og, int participant_id) {
-            String url = DATABASE_URL + "treasure/2/" + treasureName + "/" + String(og) + "/" + String(participant_id);
-            String jsonArray = GET_Request(url.c_str());
-            return retrieveParameterFromJSONArray("mac_address", jsonArray);
-        };
-        
         GAME_CONSTANTS getGameConstants() {
             String url = DATABASE_URL + "get_all_game_variables";
             String jsonArray = GET_Request(url.c_str());

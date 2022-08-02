@@ -1,6 +1,8 @@
 {
     "files.associations": {
         "limits": "cpp",
-        "utility": "cpp"
+        "utility": "cpp",
+        "initializer_list": "cpp",
+        "xutility": "cpp"
     }
 }

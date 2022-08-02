@@ -9,14 +9,15 @@
 
 /**  WiFi Credentials **/
 #define EAP_ANONYMOUS_IDENTITY  ""
-#define EAP_IDENTITY  "@student.main.ntu.edu.sg"
-#define EAP_PASSWORD  ""
-#define HOME_WIFI_SSID "dlink-A57E"
-#define HOME_WIFI_PASSWORD "37404160"
+#define EAP_IDENTITY  "quan005@student.main.ntu.edu.sg"
+#define EAP_PASSWORD  "P1&S1bTV!30121976"
+#define HOME_WIFI_SSID "FreeWaffles"
+#define HOME_WIFI_PASSWORD "SponsoredByCKL00"
 
 const char *ssid = "NTUSECURE";
 int wifi_reconnect_counter = 0;
 unsigned long last_disconnected_time = 0;
+int HTTP_TIMEOUT = 30 * 1000;
 
 struct MAC_ADDRESS {
   int n1;
@@ -42,19 +43,22 @@ struct GAME_CONSTANTS {
     int MAX_COLLECT_MANA;
     int BOMB_HP_DEDUCTION;
     int KILL_UPDATE_SERVER_INTERVAL;
+    int HTTP_TIMEOUT;
 };
 
 class DBConnection {
     private:
-        String DATABASE_URL = "https://kahleong.pythonanywhere.com/";
+        String DATABASE_URL = "http://enitiotreasurehunt.link/";
         String GET_Request(const char* server) {
             HTTPClient http;
+            http.setTimeout(HTTP_TIMEOUT);
             http.begin(server);
             int httpResponseCode = http.GET();
         
             String payload = "{}";
         
             if (httpResponseCode > 0) {
+                Serial.print("HTTP Response code: "); Serial.println(httpResponseCode);
                 payload = http.getString();
             } else {
                 Serial.print("Error code: "); Serial.println(httpResponseCode);
@@ -127,6 +131,7 @@ class DBConnection {
             game_const.MAX_COLLECT_MANA = JSON.stringify(json_obj["MAX_COLLECT_MANA"]).toInt();
             game_const.BOMB_HP_DEDUCTION = JSON.stringify(json_obj["BOMB_HP_DEDUCTION"]).toInt();
             game_const.KILL_UPDATE_SERVER_INTERVAL = JSON.stringify(json_obj["KILL_UPDATE_SERVER_INTERVAL"]).toInt();
+            game_const.HTTP_TIMEOUT = JSON.stringify(json_obj["HTTP_TIMEOUT"]).toInt();
 
             return game_const;
         };
@@ -134,7 +139,7 @@ class DBConnection {
         String POST_Request(const char* server, const char* payload) {
             if (WiFi.status() == WL_CONNECTED) {
                 HTTPClient http;
-        
+                http.setTimeout(HTTP_TIMEOUT);
                 http.begin(server);
                 http.addHeader("Content-Type", "application/json");
                 int httpResponseCode = http.POST(payload);
@@ -153,8 +158,8 @@ class DBConnection {
     
     public:
         void startWiFiConnection() {
-           WiFi.begin(HOME_WIFI_SSID, HOME_WIFI_PASSWORD);
-           // WiFi.begin(ssid, WPA2_AUTH_PEAP, EAP_ANONYMOUS_IDENTITY, EAP_IDENTITY, EAP_PASSWORD);
+            // WiFi.begin(HOME_WIFI_SSID, HOME_WIFI_PASSWORD);
+            WiFi.begin(ssid, WPA2_AUTH_PEAP, EAP_ANONYMOUS_IDENTITY, EAP_IDENTITY, EAP_PASSWORD);
         }
         bool connectToWiFi() {
             // returns True if connected, False if timeout
@@ -209,9 +214,11 @@ class DBConnection {
             return retrieveMACAddressFromJSONArray(jsonArray);
         };
 
-        bool sendNumberOfKills(int OG, int ID, int kills) {
-            String url = DATABASE_URL + "num_kills";
-            String httpRequestData = "{\"OG\": " + String(OG) + ", \"ID\": " + String(ID) + ", \"num_kills\": \"" + String(kills) + "\" }";
+        bool sendGameStatistics(int OG, int ID, int kills, int num_level1_treasure, int num_level2_treasure) {
+            String url = DATABASE_URL + "player_score";
+            String httpRequestData = "{\"OG\": " + String(OG) + ", \"ID\": " + String(ID) + ", \"num_kills\": " + String(kills);
+            httpRequestData = httpRequestData + ", \"level1\": " + String(num_level1_treasure) + ", \"level2\": " + String(num_level2_treasure);
+            httpRequestData = httpRequestData + "}";
             Serial.println(httpRequestData);
             String jsonArray = POST_Request(url.c_str(), httpRequestData.c_str());
             Serial.println(jsonArray);

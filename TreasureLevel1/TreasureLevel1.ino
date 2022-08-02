@@ -5,6 +5,8 @@
 #include "ENITIO_ir.h"
 #include "ENITIO_enums.h"
 #include "ENITIO_ESPNOW.h"
+#include "ENITIO_NeoPixel.h"
+#include "ENITIO_joystick.h"
 
 #include <SPI.h>
 #include <Wire.h>
@@ -25,80 +27,222 @@
 #define SCREEN_ADDRESS 0x3C ///< See datasheet for Address; 0x3D for 128x64, 0x3C for 128x32
 Adafruit_SSD1306 display(SCREEN_WIDTH, SCREEN_HEIGHT, &Wire, OLED_RESET);
 
-#define EEPROM_SIZE 10
+#define EEPROM_SIZE 20
 
-#define initialHP 1
+#define ID_BOUND 50
+
 #define hp_pxl_bar_width 100 // [pxl/HP]
 
 #define ENABLE_add 0  // 0 means Treasure has not been initialized, 1 means already initialized
-
 #define ID_add 1
 #define HP_add 2
-#define collectedOG_add 3
+#define ALATAR_add 3
+#define DRACHEN_add 4
+#define EVA_add 5
+#define INVICTA_add 6
 
-#define ACTION_RECV_WAIT 150 // [ms] 
-#define RECOVER_Period 120 // [s]
+#define R_ON 0
+#define G_ON 0
+#define B_ON 255
+
+#define DOUBLE_CLICK_LENGTH 1000 // [ms]
+
+bool AdminFunction = false;
+int ID;
+
+const unsigned char enitioLogo [] PROGMEM = { 
+  0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x06, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 
+  0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x0e, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 
+  0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x0e, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 
+  0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x0e, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 
+  0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x0e, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 
+  0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x0e, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 
+  0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x0e, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 
+  0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x0f, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 
+  0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x0f, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 
+  0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 
+  0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0xff, 0xff, 0xff, 0xf0, 0x00, 0x00, 0x00, 0x00, 
+  0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x06, 0x00, 0x1f, 0x80, 0x0c, 0x00, 0x00, 0x00, 0x00, 
+  0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x1f, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 
+  0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x40, 0x01, 0x9f, 0x18, 0x00, 0x00, 0x00, 0x00, 0x00, 
+  0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x60, 0x07, 0x9f, 0x0f, 0x00, 0x00, 0x00, 0x00, 0x00, 
+  0x01, 0xfc, 0x7f, 0xff, 0xf8, 0x00, 0x00, 0x78, 0x1f, 0x9f, 0x0f, 0x80, 0x07, 0x8f, 0x80, 0x00, 
+  0x01, 0xfc, 0x7f, 0xff, 0xc0, 0x00, 0x00, 0x7c, 0x1f, 0x9f, 0x0f, 0x80, 0x7f, 0x8f, 0xf0, 0x00, 
+  0x01, 0xfc, 0x7f, 0xff, 0x07, 0xf8, 0x00, 0x7c, 0x1f, 0x9f, 0x0f, 0x81, 0xff, 0x8f, 0xfc, 0x00, 
+  0x01, 0xfc, 0x00, 0x00, 0x01, 0xfe, 0x00, 0x7c, 0x1f, 0x9f, 0x0f, 0x83, 0xfe, 0x07, 0xfe, 0x00, 
+  0x01, 0xfc, 0x40, 0x00, 0x00, 0x7f, 0x80, 0x7c, 0x1f, 0x9f, 0x0f, 0x87, 0xf8, 0x00, 0xff, 0x00, 
+  0x01, 0xfc, 0x7f, 0xf8, 0x04, 0x1f, 0xe0, 0x7c, 0x1f, 0x9f, 0x0f, 0x87, 0xf0, 0x00, 0x7f, 0x00, 
+  0x01, 0xfc, 0x7f, 0xf8, 0x07, 0x07, 0xf8, 0x3c, 0x1f, 0x9f, 0x0f, 0x87, 0xf0, 0x00, 0x3f, 0x00, 
+  0x01, 0xfc, 0x7f, 0xf8, 0x07, 0xc1, 0xfe, 0x0c, 0x1f, 0x9f, 0x0f, 0x87, 0xf0, 0x00, 0x7f, 0x00, 
+  0x01, 0xfc, 0x00, 0x00, 0x07, 0xe0, 0x7f, 0x80, 0x1f, 0x9f, 0x0f, 0x83, 0xfc, 0x01, 0xfe, 0x00, 
+  0x01, 0xfc, 0x7f, 0xff, 0xc7, 0xe0, 0x1f, 0xe0, 0x1f, 0x9f, 0x0f, 0x81, 0xff, 0x8f, 0xfc, 0x00, 
+  0x01, 0xfc, 0x7f, 0xff, 0xc7, 0xe0, 0x07, 0xf8, 0x1f, 0x9f, 0x0f, 0x80, 0x7f, 0x8f, 0xf8, 0x00, 
+  0x01, 0xf8, 0x7f, 0xff, 0xc7, 0xe0, 0x01, 0xfc, 0x1f, 0x9f, 0x0f, 0x80, 0x1f, 0x8f, 0xc0, 0x00, 
+  0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x1f, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 
+  0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x1f, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 
+  0x00, 0x1f, 0xc0, 0x30, 0x30, 0x07, 0xc0, 0x1c, 0x08, 0x1f, 0x02, 0x06, 0x03, 0x83, 0x80, 0x00, 
+  0x00, 0x70, 0x60, 0x70, 0x30, 0x1c, 0x78, 0x1f, 0x0c, 0x1f, 0x0e, 0x06, 0x03, 0xef, 0x80, 0x00, 
+  0x00, 0x60, 0x30, 0x70, 0x30, 0x38, 0x18, 0x1d, 0xcc, 0x1f, 0x0e, 0x06, 0x03, 0x3d, 0x80, 0x00, 
+  0x00, 0x38, 0xe0, 0x38, 0x70, 0x3f, 0xf8, 0x18, 0x7c, 0x1f, 0x07, 0x0e, 0x03, 0x01, 0x80, 0x00, 
+  0x00, 0x1f, 0xc0, 0x1f, 0xc0, 0x30, 0x10, 0x08, 0x1c, 0x1f, 0x03, 0xf8, 0x01, 0x01, 0x80, 0x00, 
+  0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x1f, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 
+  0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x1f, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 
+  0x00, 0x1f, 0xc0, 0xf8, 0x18, 0x70, 0xff, 0x83, 0xfc, 0x1f, 0x02, 0x3f, 0xe1, 0xff, 0x00, 0x00, 
+  0x00, 0x60, 0x03, 0x0c, 0x1f, 0xf0, 0xc0, 0x06, 0x00, 0x1f, 0x00, 0x00, 0x60, 0x03, 0x00, 0x00, 
+  0x00, 0x67, 0xc3, 0xfe, 0x1b, 0x30, 0xfe, 0x03, 0xf8, 0x1f, 0x00, 0x1f, 0xc0, 0xfe, 0x00, 0x00, 
+  0x00, 0x3f, 0xc3, 0x04, 0x18, 0x30, 0xff, 0x87, 0xf8, 0x0f, 0x00, 0x1f, 0xf1, 0xff, 0x00, 0x00, 
+  0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x0e, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 
+  0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x0e, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 
+  0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x06, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 
+  0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 
+};
+
+// Constants
+int TREASURE_LEVEL1_INITIAL_HP;
+int TREASURE_LEVEL1_ACTION_RECV_WAIT;
+int TREASURE_LEVEL1_RECOVER_DURATION;
+
+void StartUpDisplay(){
+  display.clearDisplay();
+  display.setTextSize(1); // Draw SIZE
+
+  display.setTextColor(SSD1306_WHITE); 
+
+  display.drawBitmap(0, 4, enitioLogo, 128, 44, WHITE); 
+
+  display.setCursor(0, 56);
+  display.println("   Please wait ...   ");
+  display.display();
+};
+
+bool clicked_once = 0;
+unsigned long last_clicked = 0;
+
+void handleJoystick(){
+  joystick_pos joystick_pos = TreasureLevel1_joystick.read_Joystick();
+  if (TreasureLevel1_joystick.get_state() == 0) {
+    switch (joystick_pos){
+    case button:
+      if (clicked_once){
+        AdminFunction = true;
+        clicked_once = 0;
+      }
+      else{
+        clicked_once = 1;
+        last_clicked = millis();
+      }
+      TreasureLevel1_joystick.set_state();
+      break;
+      
+    case idle:
+      if (clicked_once){
+          unsigned long currTime = millis();
+          if(currTime - last_clicked > DOUBLE_CLICK_LENGTH) clicked_once = 0;
+        }
+      break;
+    
+    default:
+      if (clicked_once){
+        unsigned long currTime = millis();
+        if(currTime - last_clicked > DOUBLE_CLICK_LENGTH) clicked_once = 0;
+      }
+      TreasureLevel1_joystick.set_state();
+      break;
+    }
+  }
+}
 
 class TreasureLevel1
 {
   private:
-    int ID;
     int HP;
 
     unsigned long lastOpenedTime = 0;
-    // unsigned long lastActionReceived = 0;
+     unsigned long lastActionReceived = 0;
 
   public:
     
-    int OG_, ID_, En_, action_; 
-
-    TreasureLevel1(int id){
-      ID = id;
-    }
+    int OG_, ID_, En_, MANA_, action_; 
 
     void init_treasure(){
       EEPROM.write(ENABLE_add, 1);
       EEPROM.commit();
-      HP = initialHP;
+      HP = TREASURE_LEVEL1_INITIAL_HP;
     };
     
     void receiveAction() {
       int currStatus = EEPROM.read(ENABLE_add);
-      if (currStatus == 1 && TreasureLevel1_IR.available()) {
+      if (TreasureLevel1_IR.available()) {
          ir_signal IRsignal_ = TreasureLevel1_IR.read();
+         unsigned long currTime = millis();
 
-         OG_ = IRsignal_.address.digit2;
+         if ((currStatus == 1) && (currTime - lastActionReceived > TREASURE_LEVEL1_ACTION_RECV_WAIT)){
+          OG_ = IRsignal_.address.digit2;
          ID_ = IRsignal_.address.digit0 + (IRsignal_.address.digit1 << 4);
-    
-         En_ = IRsignal_.command.digit1;
-         action_ = IRsignal_.command.digit0;
-    
-         Serial.printf("%d %d %d %d \n", action_, En_, ID_, OG_);
+
   
-         if (action_ == collect) {
-          lastOpenedTime = millis();
-          handle_Collected();
+           MANA_ = IRsignal_.command.digit1;
+           action_ = IRsignal_.command.digit0;
+           lastActionReceived = currTime;
+      
+           Serial.printf("%d %d %d %d \n", action_, MANA_, ID_, OG_);
+    
+           if (action_ == collect) {
+            lastOpenedTime = millis();
+            handle_Collected();
+           }
+          }
          }
-        }
       };
 
     void feedback_collectL1(int OG_, int ID_){
       unsigned long currTime = millis();
-      randomSeed(currTime);
+      // randomSeed(currTime);
       int powerup_ID = random(1,6);
-      TreasureLevel1_EspNOW.send_data(2, OG_, ID_, ID, powerup_ID);
+
+       TreasureLevel1_EspNOW.send_data(2, OG_, ID_, ID, powerup_ID);
+
+//       while(!last_send_status){
+//         delay(200);
+//         TreasureLevel1_EspNOW.send_data(2, OG_, ID_, ID, powerup_ID);
+//       }
+
     } ;
 
     void handle_Collected() {
+      interim_collected_display();
       // inform the server here ...
-      int player_identifier = OG_ * pow(16, 2) + ID_;
-      String player_mac_address = dbc.setTreasureAsOpened("TREASURE" + String(ID), player_identifier);
-      // this code to save the info of the OG collected the treasure
-      Serial.print("Treasure opened by "); Serial.println(player_mac_address);
+      TreasureLevel1_NeoPixel.off_FRONT();
+      TreasureLevel1_NeoPixel.off_TOP();
 
       feedback_collectL1(OG_, ID_);
-
+      delay(2000);
+      int player_identifier = OG_ * pow(16, 2) + ID_;
+      Serial.printf("TREASURE%d opened by OG %d ID %d\n", ID, OG_, ID_);
+      String player_mac_address = dbc.setTreasureAsOpened("TREASURE" + String(ID), OG_, ID_);
+      // this code to save the info of the OG collected the treasure
       EEPROM.write(ENABLE_add, 2);
+      switch (OG_)
+      {
+      case ALATAR:
+        EEPROM.write(ALATAR_add, EEPROM.read(ALATAR_add) + 1);
+        break;
+
+      case DRACHEN:
+        EEPROM.write(DRACHEN_add, EEPROM.read(DRACHEN_add) + 1);
+        break;
+
+      case EVA:
+        EEPROM.write(EVA_add, EEPROM.read(EVA_add) + 1);
+        break;
+
+      case INVICTA:
+        EEPROM.write(INVICTA_add, EEPROM.read(INVICTA_add) + 1);
+        break;
+      
+      default:
+        break;
+      }
       EEPROM.commit();
     };
 
@@ -106,9 +250,12 @@ class TreasureLevel1
         // Level1Treasures can recover after a fixed amt of time
         int currStatus = EEPROM.read(ENABLE_add);
         unsigned int currTime = millis();
-        if (currStatus == 2 && currTime - lastOpenedTime > RECOVER_Period * 1000) {
+        if (currStatus == 2 && currTime - lastOpenedTime > TREASURE_LEVEL1_RECOVER_DURATION) {
+            Serial.println("Reopening Treasure..");
             EEPROM.write(ENABLE_add, 1);
-            HP = initialHP;
+            HP = TREASURE_LEVEL1_INITIAL_HP;
+            TreasureLevel1_NeoPixel.displayRGB_FRONT(R_ON, G_ON, B_ON);
+            TreasureLevel1_NeoPixel.displayRGB_TOP(R_ON, G_ON, B_ON);
         }
     };
 
@@ -127,6 +274,19 @@ class TreasureLevel1
       display.println("started yet.");
       display.display();
     };
+
+    void interim_collected_display(){
+      display.clearDisplay();
+      display.setTextSize(1); // Draw SIZE
+      display.setTextColor(SSD1306_BLACK, SSD1306_WHITE); // Draw 'inverse' text
+      display.setCursor(0, 0);
+      display.println(F("   Level 1 Treasure  ")); 
+          
+      display.setCursor(0, 16);
+      display.setTextColor(SSD1306_WHITE); // Draw white text
+      display.println("    Please wait ...   ");
+      display.display();
+    }
 
     void display_in_game(){
       int currStatus = EEPROM.read(ENABLE_add);
@@ -176,7 +336,7 @@ class TreasureLevel1
 
 };
 
-TreasureLevel1 Treasure(3);  // use OLED to input ID 
+TreasureLevel1 Treasure;  // use OLED to input ID 
 bool gameStarted = 0;
 
 void clearEEPROM(){
@@ -184,8 +344,9 @@ void clearEEPROM(){
   for (i=0; i<EEPROM_SIZE; i++){
     EEPROM.write(i,0);
   }
+  EEPROM.commit();
 }
-
+bool setUpDone = 0;
 int get_game_state(){
       // retrieve game state from server
       // 0 mean game did not start
@@ -194,31 +355,70 @@ int get_game_state(){
    
    if (!gameStarted) {
      gameStarted = dbc.hasGameStarted();
+     if(gameStarted){
+      TreasureLevel1_NeoPixel.displayRGB_FRONT(R_ON, G_ON, B_ON);
+      TreasureLevel1_NeoPixel.displayRGB_TOP(R_ON, G_ON, B_ON);
+      Treasure.init_treasure();
+      setUpDone = 1;
+     }
      return gameStarted;
    } else return 1;
 }
 
-void setup() {
-  Serial.begin(115200);
-  TreasureLevel1_IR.enable();
-  EEPROM.begin(EEPROM_SIZE);
-  clearEEPROM();
-  if (EEPROM.read(ENABLE_add) == 0) {
-    Treasure.init_treasure();
-  }
+#include "Admin.h"
 
-  if(!display.begin(SSD1306_SWITCHCAPVCC, SCREEN_ADDRESS)) {
+TaskHandle_t backgroundTask;
+
+void backgroundTaskCode(void * pvParameters){
+  for ( ; ; ) {
+      get_game_state();
+      delay(10000);
+  }
+};
+
+void setup() {
+    if(!display.begin(SSD1306_SWITCHCAPVCC, SCREEN_ADDRESS)) {
         Serial.println(F("SSD1306 allocation failed"));
         for(;;); // Don't proceed, loop forever
       }
-  
+  StartUpDisplay();
+  Serial.begin(115200);
+  TreasureLevel1_NeoPixel.initialize();
+  TreasureLevel1_NeoPixel.off_FRONT();
+  TreasureLevel1_NeoPixel.off_TOP();
+
+  TreasureLevel1_IR.enable();
+  EEPROM.begin(EEPROM_SIZE);
+  int i;
+  for (i=0; i<EEPROM_SIZE; i++){
+    Serial.println(EEPROM.read(i));
+  }
+  // clearEEPROM();
+  if (EEPROM.read(ENABLE_add) != 0) {
+    ID = EEPROM.read(ID_add);
+  }
+
+  TreasureLevel1_EspNOW.enable();
   bool isWiFiConnected = dbc.connectToWiFi();
   while (!isWiFiConnected) {
     Serial.println("Reconnecting..");
     isWiFiConnected = dbc.connectToWiFi();
   }
 
-  TreasureLevel1_EspNOW.enable();
+  GAME_CONSTANTS game_consts = dbc.getGameConstants();
+  HTTP_TIMEOUT = game_consts.HTTP_TIMEOUT;
+  TREASURE_LEVEL1_INITIAL_HP = game_consts.TREASURE_LEVEL1_INITIAL_HP;
+  TREASURE_LEVEL1_ACTION_RECV_WAIT = game_consts.TREASURE_LEVEL1_ACTION_RECV_WAIT;
+  TREASURE_LEVEL1_RECOVER_DURATION = game_consts.TREASURE_LEVEL1_RECOVER_DURATION;
+
+    xTaskCreatePinnedToCore(
+                      backgroundTaskCode,   /* Task function. */
+                      "backgroundTask",     /* name of task. */
+                      10000,       /* Stack size of task */
+                      NULL,        /* parameter of the task */
+                      2,           /* priority of the task */
+                      &backgroundTask,      /* Task handle to keep track of created task */
+                      0);
   
 }
 
@@ -231,14 +431,27 @@ void loop() {
         ESP.restart();
     }
   }
-  switch (get_game_state()){
+  switch (setUpDone){
     case 0:
-      Treasure.display_not_playing_yet();
-      break;
+      if(!AdminFunction){
+        handleJoystick();
+        Treasure.display_not_playing_yet();
+        // delay(10000);
+        break;
+      }
+      else{
+        TreasureLevel1_Admin.AdminLoop();
+      }
     case 1:
+      if(!AdminFunction){
+        handleJoystick();
+        Treasure.display_in_game();
+      }
+      else{
+        TreasureLevel1_Admin.AdminLoop();
+      }
       Treasure.receiveAction();
       Treasure.recover();
-      Treasure.display_in_game();
       break;
   }
 }

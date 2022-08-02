@@ -8,26 +8,38 @@
 
 /**  WiFi Credentials **/
 #define EAP_ANONYMOUS_IDENTITY  ""
-#define EAP_IDENTITY  "@student.main.ntu.edu.sg"
-#define EAP_PASSWORD  ""
-#define HOME_WIFI_SSID "TRAN VAN VIET 1"
-#define HOME_WIFI_PASSWORD "viet2020"
+#define EAP_IDENTITY  "quan005@student.main.ntu.edu.sg"
+#define EAP_PASSWORD  "P1&S1bTV!30121976"
+#define HOME_WIFI_SSID "TP-Link_E45E"
+#define HOME_WIFI_PASSWORD "63824377"
 const char *ssid = "NTUSECURE";
 int wifi_reconnect_counter = 0;
+int HTTP_TIMEOUT = 30 * 1000;
+
+struct GAME_CONSTANTS {
+    int TREASURE_LEVEL1_INITIAL_HP;
+    int TREASURE_LEVEL1_ACTION_RECV_WAIT;
+    int TREASURE_LEVEL1_RECOVER_DURATION;
+    int HTTP_TIMEOUT;
+};
 
 class DBConnection {
     private:
-        String DATABASE_URL = "https://kahleong.pythonanywhere.com/";
+        String DATABASE_URL = "http://enitiotreasurehunt.link/";
         String GET_Request(const char* server) {
             HTTPClient http;
+            http.setTimeout(HTTP_TIMEOUT);
             http.begin(server);
+//            Serial.print("Current WiFi Status     : "); Serial.println(WiFi.status());
+//            Serial.print("Reference - CONNECTED IS: "); Serial.println(WL_CONNECTED);
+//            Serial.print("WiFi Channel: "); Serial.println(WiFi.channel());
             int httpResponseCode = http.GET();
-        
             String payload = "{}";
-        
+            
             if (httpResponseCode > 0) {
+                Serial.print("HTTP Response code: "); Serial.println(httpResponseCode);
                 payload = http.getString();
-            } else {
+            }else {
                 Serial.print("Error code: "); Serial.println(httpResponseCode);
             }
             http.end();
@@ -46,7 +58,7 @@ class DBConnection {
         String POST_Request(const char* server, const char* payload) {
             if (WiFi.status() == WL_CONNECTED) {
                 HTTPClient http;
-        
+                http.setTimeout(HTTP_TIMEOUT);
                 http.begin(server);
                 http.addHeader("Content-Type", "application/json");
                 int httpResponseCode = http.POST(payload);
@@ -62,12 +74,26 @@ class DBConnection {
                 return responsePayload;
             }
         };
+
+        GAME_CONSTANTS retrieveGameConstantsFromJSONArray(String json_array) {
+            JSONVar json_obj = JSON.parse(json_array);
+            GAME_CONSTANTS game_const;
+            if (JSON.typeof(json_obj) == "undefined") {
+                Serial.println("Parsing input failed!");
+                return game_const;
+            }
+            game_const.TREASURE_LEVEL1_INITIAL_HP = JSON.stringify(json_obj["TREASURE_LEVEL1_INITIAL_HP"]).toInt();
+            game_const.TREASURE_LEVEL1_ACTION_RECV_WAIT = JSON.stringify(json_obj["TREASURE_LEVEL1_ACTION_RECV_WAIT"]).toInt();
+            game_const.TREASURE_LEVEL1_RECOVER_DURATION = JSON.stringify(json_obj["TREASURE_LEVEL1_RECOVER_DURATION"]).toInt();
+            game_const.HTTP_TIMEOUT = JSON.stringify(json_obj["HTTP_TIMEOUT"]).toInt();
+            return game_const;
+        };
     
     public:
         bool connectToWiFi() {
             // returns True if connected, False if timeout
-            WiFi.begin(HOME_WIFI_SSID, HOME_WIFI_PASSWORD);
-            // WiFi.begin(ssid, WPA2_AUTH_PEAP, EAP_ANONYMOUS_IDENTITY, EAP_IDENTITY, EAP_PASSWORD);
+            // WiFi.begin(HOME_WIFI_SSID, HOME_WIFI_PASSWORD);
+            WiFi.begin(ssid, WPA2_AUTH_PEAP, EAP_ANONYMOUS_IDENTITY, EAP_IDENTITY, EAP_PASSWORD);
             Serial.print("Connecting to Wi-Fi");
             int counter = 0;
             while (WiFi.status() != WL_CONNECTED) {
@@ -95,11 +121,28 @@ class DBConnection {
             return retrieveParameterFromJSONArray("mac_address", jsonArray);
         };
 
-        String setTreasureAsOpened(String treasureName, int playerIdentifier) {
-            String url = DATABASE_URL + "treasure/1/" + treasureName;
-            String httpRequestData = "{\"player_identifier\": " + String(playerIdentifier) + " }";
-            String jsonArray = POST_Request(url.c_str(), httpRequestData.c_str());
+        String setTreasureAsOpened(String treasureName, int og, int participant_id) {
+            String url = DATABASE_URL + "treasure/1/" + treasureName + "/" + String(og) + "/" + String(participant_id);
+            String jsonArray = GET_Request(url.c_str());
             return retrieveParameterFromJSONArray("mac_address", jsonArray);
+        };
+
+        bool sendGameStatistics(String treasureName, int alatar, int drachen, int eva, int invicta) {
+            String url = DATABASE_URL + "treasure_score";
+            String httpRequestData = "{\"treasureName\": " + treasureName + ", \"alatar\": " + String(alatar) + ", \"drachen\": " + String(drachen);
+            httpRequestData = httpRequestData + ", \"eva\": " + String(eva) + ", \"invicta\": " + String(invicta);
+            httpRequestData = httpRequestData + "}";
+            Serial.println(httpRequestData);
+            String jsonArray = POST_Request(url.c_str(), httpRequestData.c_str());
+            Serial.println(jsonArray);
+            return jsonArray != "{}";
+        };
+
+        GAME_CONSTANTS getGameConstants() {
+            String url = DATABASE_URL + "get_all_game_variables";
+            String jsonArray = GET_Request(url.c_str());
+            // Serial.println(jsonArray);
+            return retrieveGameConstantsFromJSONArray(jsonArray);
         };
 };
 

@@ -4,7 +4,7 @@
 #define TEMP_NOTI_BLINKING 300
 #define FEEDBACK_WAIT 5000
 
-#define LUCKY_NOT_INFECTED_DURATION 5000 // [ms]
+#define LUCKY_NOT_INFECTED_DURATION 20000 // [ms]
 
 #define x2_En_Regen_bonus_duration 300000 // [ms]
 
@@ -165,7 +165,7 @@ class TreasureHuntPlayer
     void sendAction() {
       // format of the IR signal (16-bit hexadecimal, i.e. 4 digits)
       // address: 0x0<OG><ID - 2 bit>  (ID is 2 bits as there maybe more than 16 people in one OG)
-      // command: 0x00<En><Action>
+      // command: 0x00<MANA><Action>
       if ((action != do_nothing) && (En > 0)) {
         uint16_hex_digits address_digits, command_digits;
 
@@ -208,10 +208,26 @@ class TreasureHuntPlayer
         En--;
         EEPROM.write(PLAYER_EN_add, En);
       }
+      else if ((action == collect) && (En == 0)){
+        uint16_hex_digits address_digits, command_digits;
+
+        address_digits.digit0 = ID;
+        address_digits.digit2 = OG;
+
+        command_digits.digit0 = heal_request;
+        
+        ir_signal send_signal;
+        send_signal.address = address_digits;
+        send_signal.command = command_digits;
+
+        Player_IR.send(send_signal, 1);
+
+        start_receiving_feedback = millis();
+      }
     };
 
     void receiveAction() {
-      int OG_, ID_, MANA_, action_, _isL1Treasure; // underscore denotes details of IR signal sender
+      int OG_, ID_, En_, MANA_, action_; // underscore denotes details of IR signal sender
       unsigned long currTime = millis();
       if (Player_IR.available()) {
          ir_signal IRsignal_ = Player_IR.read();
@@ -219,15 +235,16 @@ class TreasureHuntPlayer
          if (currTime - lastActionReceived > ACTION_RECV_WAIT) {
            OG_ = IRsignal_.address.digit2;
            ID_ = IRsignal_.address.digit0 + (IRsignal_.address.digit1 << 4);
-    
+
            MANA_ = IRsignal_.command.digit1;
            action_ = IRsignal_.command.digit0;
+
     
            Serial.printf("%d %d %d %d %d %d %d %d \n", IRsignal_.address.digit3, IRsignal_.address.digit2, IRsignal_.address.digit1, IRsignal_.address.digit0, IRsignal_.command.digit3, IRsignal_.command.digit2, IRsignal_.command.digit1, IRsignal_.command.digit0);
   
            lastActionReceived = currTime;
 
-           if (((OG_ != OG) && (action_ == attack)) || ((action_ == heal) && (OG_ == OG) && (ID_ != ID)) || ((action_ == heal) && (OG_ != OG)))
+           if (((OG_ != OG) && (action_ == attack)) || ((action_ == heal) && (OG_ == OG) && (ID_ != ID)) || ((action_ == heal) && (OG_ != OG))) 
                 handleAction(OG_, ID_, action_, MANA_);
            }
         }
@@ -244,6 +261,10 @@ class TreasureHuntPlayer
         //   EEPROM.write(PLAYER_MaxEn_add, MaxEn);
         //   last_max_en_decay = currTime;
         // }
+        if (infectedWithVirus) {
+            Player_Bluetooth.stopSpreadingVirus();
+            infectedWithVirus = 0;
+        }
         if (MANA > 1) {
           MANA = 1;
           EEPROM.write(PLAYER_MANA_add, MANA);
@@ -285,8 +306,10 @@ class TreasureHuntPlayer
             // currently not infected with virus AND is not healer
             // check if nearby devices are transmitting virus
             if (Player_Bluetooth.isThereVirus && (currTime - last_received_heal >= VIRUS_IMMUNITY_DURATION) && (currTime - last_lucky_not_infected >= LUCKY_NOT_INFECTED_DURATION)) {
-                randomSeed(currTime);
+                // randomSeed(currTime);
                 int virus_infection_num = random(100);
+                Serial.print("Virus infection prob number: ");
+                Serial.println(virus_infection_num);
                 if (virus_infection_num < VIRUS_INFECTION_PROBABILITY){
                   infectedWithVirus = true;
                   HP--;
@@ -294,6 +317,8 @@ class TreasureHuntPlayer
                   last_hp_decay = currTime;
                   Player_Bluetooth.startSpreadingVirus();
                   permNoti = "    You Are Infected!   ";
+                  Player_Buzzer.sound(NOTE_C4);
+                  tempNoti_start = millis();
                 }
                 else {
                   last_lucky_not_infected = currTime;
@@ -314,7 +339,11 @@ class TreasureHuntPlayer
           Player_joystick.set_state();
           break;
 
+        case idle:
+          break;
+
         default:
+          Player_joystick.set_state();
           break;
         }
       }
@@ -550,6 +579,7 @@ class TreasureHuntPlayer
       case 2:
         if ((feedbackData.attacker_OG == OG) && (feedbackData.attacker_ID == ID)){
           Serial.print("L1 Treasure Collected Power Up:"); Serial.println(feedbackData.is_attackee_killed);
+          numL1Treasure++;
           switch (feedbackData.is_attackee_killed)
           {
           case bonus6HP:
@@ -598,6 +628,20 @@ class TreasureHuntPlayer
             temp_bomb_attacked += 1;
           }
         }
+        break;
+
+      case 5:
+        // received a heal feedback
+        if(HP != 0) En++;
+        HP = MaxHP;
+        EEPROM.write(PLAYER_HP_add, HP);
+        tempNoti = "        Healed       ";
+        tempNoti_start = millis();
+        if (infectedWithVirus) {
+            Player_Bluetooth.stopSpreadingVirus();
+        }
+        infectedWithVirus = 0;
+        last_received_heal = tempNoti_start;
         break;
       
       default:
@@ -686,9 +730,9 @@ class TreasureHuntPlayer
         case infoPage:
           TreasureHunt_OLED.display_infoPage(OG, ID, MANA, MaxEn, noti_to_display, lastPageNav);
           break;
-//        case achievementPage:
-//          TreasureHunt_OLED.display_achievementPage(numKilled, numL1Treasure, numL2Treasure, noti_to_display, lastPageNav);
-//          break;
+       case achievementPage:
+         TreasureHunt_OLED.display_achievementPage(numKilled, numL1Treasure, numL2Treasure, noti_to_display, lastPageNav);
+         break;
         case powerupPage:
           TreasureHunt_OLED.display_powerupPage(num_bonus6HP, 
                                               num_bonus1MaxEn,
@@ -754,7 +798,7 @@ class TreasureHuntPlayer
         Player_Bluetooth.scan();
         unsigned long currTime = millis();
         if (currTime - last_update_kills_to_server > KILL_UPDATE_SERVER_INTERVAL) {
-            dbc.sendNumberOfKills(OG, ID, numKilled);
+            dbc.sendGameStatistics(OG, ID, numKilled, numL1Treasure, numL2Treasure);
             last_update_kills_to_server = currTime;
         } else delay(50);
       }
