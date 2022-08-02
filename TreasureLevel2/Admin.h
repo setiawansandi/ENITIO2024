@@ -8,8 +8,8 @@ void clearEEPROM(){
 
 const int FactoryResetFunction = 1;
 const int SetIDFunction = 0;
-const int UncollectTreasureFunction = 3;
-const int ExitFunction = 2;
+const int UncollectTreasureFunction = 2;
+const int ExitFunction = 3;
 class Admin_OLED{
   private:
 
@@ -281,6 +281,9 @@ class Admin {
                             EEPROM.write(ENABLE_add, 1);
                             EEPROM.write(HP_add, TREASURE_LEVEL2_INITIAL_HP);
                             EEPROM.commit();
+                            AdminFunction = false;
+                            verified = false;
+                            FunctionNav = 0;
                             break;
                         
                         default:
