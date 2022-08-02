@@ -96,7 +96,7 @@ void StartUpDisplay(){
 
 #define EEPROM_SIZE 20
 
-#define hp_pxl_bar_width 10 // [pxl/HP]
+#define hp_pxl_bar_width 2 // [pxl/HP]
 
 #define ENABLE_add 0 // 0 means Treasure has not been initialized, 1 means already initialized
 #define ID_add 1
