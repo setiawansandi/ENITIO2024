@@ -36,14 +36,19 @@ class EspNOW {
     }
 
     void getDeviceMACAddress(int attacker_OG, int attacker_ID){
-//      int playerIdentifier = attacker_OG*pow(16,2) + attacker_ID;
-//      MAC_ADDRESS target_addr = dbc.getDeviceMACAddress(playerIdentifier);
       broadcastAddress[0] = 4;
       broadcastAddress[1] = 8;
       broadcastAddress[2] = 1;
       broadcastAddress[3] = attacker_OG;
       broadcastAddress[4] = attacker_ID;
       broadcastAddress[5] = 1;
+//
+//      broadcastAddress[0] = 255;
+//      broadcastAddress[1] = 255;
+//      broadcastAddress[2] = 255;
+//      broadcastAddress[3] = 255;
+//      broadcastAddress[4] = 255;
+//      broadcastAddress[5] = 255;
     }
   
    void send_data(int attackee_type, int attacker_OG, int attacker_ID, int attackee_OG, int is_attackee_killed){
@@ -83,16 +88,16 @@ class EspNOW {
       esp_now_deinit();
     } 
 
-    // static void OnDataRecv(const uint8_t * mac, const uint8_t *incomingData, int len) {
-    //   memcpy(&EspNOW_recvData, incomingData, sizeof(EspNOW_recvData));
-    //   EspNOW_received = 1;
-    // }
+    static void OnDataRecv(const uint8_t * mac, const uint8_t *incomingData, int len) {
+       memcpy(&EspNOW_recvData, incomingData, sizeof(EspNOW_recvData));
+       EspNOW_received = 1;
+    }
 
     static void OnDataSent(const uint8_t *mac_addr, esp_now_send_status_t status) {
       Serial.print("\r\nLast Packet Send Status:\t");
       Serial.println(status == ESP_NOW_SEND_SUCCESS ? "Delivery Success" : "Delivery Fail");
       
-       last_send_status = (status == ESP_NOW_SEND_SUCCESS);
+     // last_send_status = (status == ESP_NOW_SEND_SUCCESS);
     }
 
     feedback_message get_feedback_received(){
