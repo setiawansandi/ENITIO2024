@@ -104,7 +104,7 @@ void StartUpDisplay(){
 #define collectedOG_add 3
 
 
-#define DOUBLE_CLICK_LENGTH 1500 // [ms]
+#define DOUBLE_CLICK_LENGTH 1000 // [ms]
 
 int TREASURE_LEVEL2_INITIAL_HP;
 int NUM_L2TREASURES;

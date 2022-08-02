@@ -40,6 +40,7 @@ class Profile{
                 switch (joystick_pos)
                 { 
                 case button:
+                    Profile_OLED.interim_registering_display();
                     Player_joystick.set_state();
                     OG = OG_pointer;
                     registerStatus = dbc.registerWanderer(OG, my_MAC_address); 

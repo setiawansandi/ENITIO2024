@@ -459,6 +459,19 @@ class Profile_OLED {
       display.display();
     }
 
+    void interim_registering_display(){
+      display.clearDisplay();
+      display.setTextSize(1); // Draw SIZE
+      display.setTextColor(SSD1306_BLACK, SSD1306_WHITE); // Draw 'inverse' text
+      display.setCursor(0, 0);
+      display.println(F("     Your Profile    ")); 
+
+      display.setCursor(0, 28);
+      display.setTextColor(SSD1306_WHITE);
+      display.println(F("   Please wait ...   ")); 
+      display.display();
+    }
+
     // void display_isGLregisteringPage(int isGL_pointer){
     //   display.clearDisplay();
     //   // change text display here
