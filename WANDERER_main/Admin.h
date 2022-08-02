@@ -8,7 +8,7 @@ void clearEEPROM(){
 
 class Admin {
     private:
-        int admin_pwd[6] = {0, 0, 0, 0, 0, 1};
+        int admin_pwd[6] = {1, 0, 0, 0, 0, 9};
         int user_key_in_pwd[6] = {};
         int currentDigitIndex = 0;
         int currentDigit = 0;
