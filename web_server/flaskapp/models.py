@@ -119,6 +119,7 @@ def populate_statuses():
         "TREASURE_LEVEL2_ACTION_RECV_WAIT": 150,
         "TREASURE_LEVEL2_RECOVER_PERIOD": 20 * 1000,
         "TREASURE_LEVEL2_VIRUS_INFECTION_TIME": 10 * 1000,
+        "ASSIGN_PARTICIPANT_ID_AFTER_GAME_START": 0,
     }
     # Reset table
     all_statuses = GameStatus.query.all()

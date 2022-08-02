@@ -137,7 +137,20 @@ def get_player_id(OG, mac_addr):
     result = dict()
     player = Player.query.filter_by(OG=OG, mac_address=mac_addr).first()
     if player:
-        result["player_id"] = player.participant_id
+        player_id = player.participant_id
+        if player_id is None:
+            # Check if server allow for assignment after game starts
+            game_status = GameStatus.query.filter_by(name="started").first()
+            allow_assignment = GameStatus.query.filter_by(name="ASSIGN_PARTICIPANT_ID_AFTER_GAME_START").first()
+            if game_status and allow_assignment:
+                if game_status.value == 1 and allow_assignment.value == 1:
+                    # Assign ID
+                    largest_participant_id_player = Player.query.filter_by(OG=OG).order_by(Player.participant_id.desc()).first()
+                    if largest_participant_id_player is not None:
+                        player_id = largest_participant_id_player.participant_id + 1
+                    else:
+                        player_id = 1  # No other players in OG
+        result["player_id"] = player_id
         return jsonify(result)
 
     abort(404)
@@ -218,15 +231,23 @@ def stop_game():
 # for testing purposes
 @app.route("/treasure_enquiry_all")
 def get_all_treasure_status():
-    treasures = Level2Treasure.query.all()
     result = dict()
-    for treasure in treasures:
+    level2_treasures = Level2Treasure.query.all()
+    for treasure in level2_treasures:
         collected_player = treasure.collected_by
-        result[treasure.name] = "TREASURE " if treasure.is_treasure else "VIRUS "
+        result[treasure.name] = "Level2Treasure " if treasure.is_treasure else "Level2Virus "
+        result[treasure.name] += f"({treasure.location}) "
         if collected_player:
             result[treasure.name] += f"Collected by OG {collected_player.OG} ID {collected_player.participant_id}"
         else:
             result[treasure.name] += "<available>"
+
+    level1_treasures = Level1Treasure.query.all()
+    for treasure in level1_treasures:
+        t_id = treasure.id
+        collection_logs = Level1TreasureCollectors.query.filter_by(level1_treasure_id=t_id).all()
+        num_collected = len(collection_logs)
+        result[treasure.name] = f"Level1Treasure ({treasure.location}) - Collected {num_collected} times"
 
     return jsonify(result)
 
