@@ -37,10 +37,10 @@ class DBConnection {
             String payload = "{}";
             
             if (httpResponseCode > 0) {
-//                Serial.print("HTTP Response code: "); Serial.println(httpResponseCode);
+                Serial.print("HTTP Response code: "); Serial.println(httpResponseCode);
                 payload = http.getString();
             }else {
-//                Serial.print("Error code: "); Serial.println(httpResponseCode);
+                Serial.print("Error code: "); Serial.println(httpResponseCode);
             }
             http.end();
             return payload;

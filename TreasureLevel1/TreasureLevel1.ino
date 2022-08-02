@@ -207,7 +207,6 @@ class TreasureLevel1
 //         TreasureLevel1_EspNOW.send_data(2, OG_, ID_, ID, powerup_ID);
 //       }
 
-//      TreasureLevel1_EspNOW.send_data(2, OG_, ID_, ID, powerup_ID);
     } ;
 
     void handle_Collected() {
@@ -447,7 +446,6 @@ void loop() {
       if(!AdminFunction){
         handleJoystick();
         Treasure.display_in_game();
-        break;
       }
       else{
         TreasureLevel1_Admin.AdminLoop();
