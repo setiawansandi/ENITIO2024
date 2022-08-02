@@ -45,7 +45,7 @@ class Profile{
                     OG = OG_pointer;
                     registerStatus = dbc.registerWanderer(OG, my_MAC_address); 
                     while (!registerStatus){
-                        delay(5000);
+                        delay(10000);
                         registerStatus = dbc.registerWanderer(OG, my_MAC_address); 
                     }
                     EEPROM.write(OG_add, OG);

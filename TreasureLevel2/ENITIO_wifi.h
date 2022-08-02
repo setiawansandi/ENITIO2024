@@ -10,8 +10,8 @@
 #define EAP_ANONYMOUS_IDENTITY  ""
 #define EAP_IDENTITY  "quan005@student.main.ntu.edu.sg"
 #define EAP_PASSWORD  "P1&S1bTV!30121976"
-#define HOME_WIFI_SSID "dlink-A57E"
-#define HOME_WIFI_PASSWORD "37404160"
+#define HOME_WIFI_SSID "FreeWaffles"
+#define HOME_WIFI_PASSWORD "SponsoredByCKL00"
 const char *ssid = "NTUSECURE";
 int wifi_reconnect_counter = 0;
 int HTTP_TIMEOUT = 30 * 1000;
@@ -28,7 +28,7 @@ struct GAME_CONSTANTS {
 
 class DBConnection {
     private:
-        String DATABASE_URL = "https://kahleong.pythonanywhere.com/";
+        String DATABASE_URL = "http://enitiotreasurehunt.link/";
         String GET_Request(const char* server) {
             HTTPClient http;
             http.setTimeout(HTTP_TIMEOUT);
@@ -96,8 +96,8 @@ class DBConnection {
     public:
         bool connectToWiFi() {
             // returns True if connected, False if timeout
-//           WiFi.begin(HOME_WIFI_SSID, HOME_WIFI_PASSWORD);
-              WiFi.begin(ssid, WPA2_AUTH_PEAP, EAP_ANONYMOUS_IDENTITY, EAP_IDENTITY, EAP_PASSWORD);
+            // WiFi.begin(HOME_WIFI_SSID, HOME_WIFI_PASSWORD);
+            WiFi.begin(ssid, WPA2_AUTH_PEAP, EAP_ANONYMOUS_IDENTITY, EAP_IDENTITY, EAP_PASSWORD);
             Serial.print("Connecting to Wi-Fi");
             int counter = 0;
             while (WiFi.status() != WL_CONNECTED) {

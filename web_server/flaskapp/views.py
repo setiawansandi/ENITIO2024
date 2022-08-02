@@ -151,7 +151,7 @@ def register_player():
         mac_addr = content["mac_address"]
         player = Player.query.filter_by(OG=OG, mac_address=mac_addr).first()
         if player:
-            return {}
+            return {"result": "already registered"}
         else:
             player = Player(OG=OG, mac_address=mac_addr)
             db.session.add(player)
