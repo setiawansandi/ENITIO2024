@@ -8,6 +8,7 @@ void clearEEPROM(){
 
 const int FactoryResetFunction = 1;
 const int SetIDFunction = 0;
+const int UncollectTreasureFunction = 3;
 const int ExitFunction = 2;
 class Admin_OLED{
   private:
@@ -108,7 +109,8 @@ class Admin_OLED{
       display.println("Register ID");
       display.setCursor(10, 22);
       display.println("Factory Reset");
-
+      display.setCursor(10, 32);
+      display.println("Uncollect Treasure");
       display.setCursor(10, 42);
       display.println("Back to Main Menu");
 
@@ -126,6 +128,11 @@ class Admin_OLED{
 
       case ExitFunction:
         display.setCursor(2, 42);
+        display.println(">");
+        break;
+
+      case UncollectTreasureFunction:
+        display.setCursor(2, 32);
         display.println(">");
         break;
 
@@ -235,6 +242,7 @@ class Admin {
         bool isConfirmingReset = false;
         int ConfirmingResetNav = 1;
         bool isSettingID = false;
+        bool isUnSettingTreasure = false;
         int currentIDnum = 0 ;
 
     public:
@@ -248,7 +256,7 @@ class Admin {
                         break;
 
                     case down:
-                        FunctionNav = min(FunctionNav + 1, 2);
+                        FunctionNav = min(FunctionNav + 1, 3);
                         TreasureLevel2_joystick.set_state();
                         break;
 
@@ -267,6 +275,12 @@ class Admin {
                             AdminFunction = false;
                             verified = false ; 
                             FunctionNav = 0;
+                            break;
+
+                        case UncollectTreasureFunction:
+                            EEPROM.write(ENABLE_add, 1);
+                            EEPROM.write(HP_add, TREASURE_LEVEL2_INITIAL_HP);
+                            EEPROM.commit();
                             break;
                         
                         default:

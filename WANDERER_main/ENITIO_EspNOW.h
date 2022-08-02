@@ -136,7 +136,7 @@ class EspNOW {
               for (int ii = 0; ii < 6; ++ii ) {
                 bomb_targets[target_count].peer_addr[ii] = (uint8_t) mac[ii];
               }
-              bomb_targets[target_count].channel = 1; // pick a channel
+              bomb_targets[target_count].channel = 0; // pick a channel
               bomb_targets[target_count].encrypt = 0; // no encryption
               target_count++;
             }

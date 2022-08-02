@@ -216,7 +216,7 @@ class TreasureLevel1
       TreasureLevel1_NeoPixel.off_TOP();
 
       feedback_collectL1(OG_, ID_);
-      
+      delay(2000);
       int player_identifier = OG_ * pow(16, 2) + ID_;
       Serial.printf("TREASURE%d opened by OG %d ID %d\n", ID, OG_, ID_);
       String player_mac_address = dbc.setTreasureAsOpened("TREASURE" + String(ID), OG_, ID_);
@@ -372,7 +372,7 @@ TaskHandle_t backgroundTask;
 void backgroundTaskCode(void * pvParameters){
   for ( ; ; ) {
       get_game_state();
-      delay(50);
+      delay(10000);
   }
 };
 

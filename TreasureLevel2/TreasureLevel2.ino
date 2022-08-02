@@ -218,7 +218,7 @@ class TreasureLevel2
       TreasureLevel2_NeoPixel.off_TOP();
       // no need to feedback everytime the player collecting the Treasure. Only feedback to the server and to the player when the treasure is fully collected, ie. HP == 0
       TreasureLevel2_Bluetooth.stopAdvertisingService(pAvailableService);
-      
+      delay(2000);
       // inform the server here ...
       int player_identifier = OG_ * pow(16, 2) + ID_;
       Serial.print("TREASURE NAME:"); Serial.println(TreasureLevel2_Bluetooth.getTreasureName());
@@ -341,7 +341,6 @@ class TreasureLevel2
 
 TreasureLevel2 Treasure;
 bool gameStarted = 0;
-unsigned long last_check_gameStarted = 0;
 bool setUpDone = 0;
 
 int get_game_state(){
@@ -349,12 +348,8 @@ int get_game_state(){
       // 0 mean game did not start
       // 1 mean in game
       // once the game has started then we dunnid to check anymore
-   unsigned long currTime = millis();
    if (!gameStarted) {
-     if ((currTime - last_check_gameStarted) >= 10000) {
-        gameStarted = dbc.hasGameStarted();
-        last_check_gameStarted = currTime;
-     }
+     gameStarted = dbc.hasGameStarted();
      if (gameStarted) {
         // start BLE functions
         Treasure.setup_initial_state();
@@ -413,7 +408,7 @@ TaskHandle_t backgroundTask;
 void backgroundTaskCode(void * pvParameters){
   for ( ; ; ) {
       get_game_state();
-      delay(50);
+      delay(10000);
   }
 };
 
