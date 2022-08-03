@@ -178,7 +178,7 @@ class EspNOW {
         else {
           Serial.println("Error sending the data");
         }
-        delay(80);
+        delay(100);
       }
       for (i = 0; i < target_count; i++){
         esp_now_del_peer(bomb_targets[i].peer_addr);

@@ -14,6 +14,7 @@
 
 TaskHandle_t backgroundTask;
 
+
 void backgroundTaskCode(void * pvParameters){
   for ( ; ; ) {
     if (currentProcess == TreasureHuntProcess){

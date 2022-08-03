@@ -341,7 +341,7 @@ class TreasureLevel2
 
 TreasureLevel2 Treasure;
 bool gameStarted = 0;
-bool setUpDone = 0;
+bool initiateTreasureDone = 0;
 
 int get_game_state(){
       // retrieve game state from server
@@ -354,7 +354,7 @@ int get_game_state(){
         // start BLE functions
         Treasure.setup_initial_state();
         TreasureLevel2_Bluetooth.startAdvertisingService(pAvailableService);
-        setUpDone = 1;
+        initiateTreasureDone = 1;
      }
      return gameStarted;
    } else 
@@ -409,6 +409,7 @@ void backgroundTaskCode(void * pvParameters){
   for ( ; ; ) {
       get_game_state();
       delay(10000);
+      Serial.print("This ID: "); Serial.println(id);
   }
 };
 
@@ -421,11 +422,9 @@ void setup() {
   Serial.begin(115200);
   TreasureLevel2_IR.enable();
   TreasureLevel2_NeoPixel.initialize();
-  EEPROM.begin(EEPROM_SIZE);
 
-  if (EEPROM.read(ENABLE_add) != 0) {
-    id = EEPROM.read(ID_add);
-  }
+  EEPROM.begin(EEPROM_SIZE);
+  id = EEPROM.read(ID_add);
 
   TreasureLevel2_EspNOW.enable();
 
@@ -463,7 +462,7 @@ void loop() {
         ESP.restart();
     }
   }
-  switch (setUpDone){
+  switch (initiateTreasureDone){
     case 0:
       if(!AdminFunction){
         handleJoystick();

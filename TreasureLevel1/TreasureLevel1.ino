@@ -157,6 +157,7 @@ class TreasureLevel1
   private:
     int HP;
 
+    int this_recover_duration = TREASURE_LEVEL1_RECOVER_DURATION;
     unsigned long lastOpenedTime = 0;
      unsigned long lastActionReceived = 0;
 
@@ -211,6 +212,7 @@ class TreasureLevel1
 
     void handle_Collected() {
       interim_collected_display();
+      
       // inform the server here ...
       TreasureLevel1_NeoPixel.off_FRONT();
       TreasureLevel1_NeoPixel.off_TOP();
@@ -221,6 +223,9 @@ class TreasureLevel1
       Serial.printf("TREASURE%d opened by OG %d ID %d\n", ID, OG_, ID_);
       String player_mac_address = dbc.setTreasureAsOpened("TREASURE" + String(ID), OG_, ID_);
       // this code to save the info of the OG collected the treasure
+
+      this_recover_duration = TREASURE_LEVEL1_RECOVER_DURATION*random(1,9);
+
       EEPROM.write(ENABLE_add, 2);
       switch (OG_)
       {
@@ -250,7 +255,8 @@ class TreasureLevel1
         // Level1Treasures can recover after a fixed amt of time
         int currStatus = EEPROM.read(ENABLE_add);
         unsigned int currTime = millis();
-        if (currStatus == 2 && currTime - lastOpenedTime > TREASURE_LEVEL1_RECOVER_DURATION) {
+
+        if (currStatus == 2 && currTime - lastOpenedTime > this_recover_duration) {
             Serial.println("Reopening Treasure..");
             EEPROM.write(ENABLE_add, 1);
             HP = TREASURE_LEVEL1_INITIAL_HP;
@@ -389,14 +395,13 @@ void setup() {
 
   TreasureLevel1_IR.enable();
   EEPROM.begin(EEPROM_SIZE);
-  int i;
-  for (i=0; i<EEPROM_SIZE; i++){
-    Serial.println(EEPROM.read(i));
-  }
+//  int i;
+//  for (i=0; i<EEPROM_SIZE; i++){
+//    Serial.println(EEPROM.read(i));
+//  }
   // clearEEPROM();
-  if (EEPROM.read(ENABLE_add) != 0) {
-    ID = EEPROM.read(ID_add);
-  }
+  
+  ID = EEPROM.read(ID_add);
 
   TreasureLevel1_EspNOW.enable();
   bool isWiFiConnected = dbc.connectToWiFi();
