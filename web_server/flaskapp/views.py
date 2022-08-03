@@ -434,7 +434,7 @@ def calculate_score_from_player_side_stats():
     return jsonify({"tally": tally, "score": OG_score})
 
 
-@app.route("/upload_failed_player_kill/<int:og>/<int:participant_id>")
+@app.route("/player_kill/<int:og>/<int:participant_id>")
 def upload_failed_player_kill(og, participant_id):
     print("Received Failed Player Kill by OG {} ID {}".format(og, participant_id))
     player = Player.query.filter_by(OG=og, participant_id=participant_id).first()
@@ -445,7 +445,7 @@ def upload_failed_player_kill(og, participant_id):
     abort(404)
 
 
-@app.route("/upload_failed_treasure_feedback/<name>/<int:og>/<int:participant_id>")
+@app.route("/treasure_feedback/<name>/<int:og>/<int:participant_id>")
 def upload_failed_treasure_feedback(name, og, participant_id):
     print("Received Failed Level1Treasure Collection ({}) by OG {} ID {}".format(name, og, participant_id))
     player = Player.query.filter_by(OG=og, participant_id=participant_id).first()
