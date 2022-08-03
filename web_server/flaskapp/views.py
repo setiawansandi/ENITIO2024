@@ -146,7 +146,7 @@ def get_player_id(OG, mac_addr):
                 if game_status.value == "1" and allow_assignment.value == "1":
                     # Assign ID
                     largest_participant_id_player = Player.query.filter_by(OG=OG).order_by(Player.participant_id.desc()).first()
-                    if largest_participant_id_player is not None:
+                    if largest_participant_id_player and largest_participant_id_player.participant_id is not None:
                         player_id = largest_participant_id_player.participant_id + 1
                     else:
                         player_id = 1  # No other players in OG
@@ -273,7 +273,7 @@ def delete_all_players():
     g = GameStatus.query.filter_by(name="started").first()
     if g and g.value == "1":
         return {"result": "ignored"}
-    
+
     treasures = Level2Treasure.query.all()
     for treasure in treasures:
         treasure.collected_by = None
