@@ -102,6 +102,8 @@ void StartUpDisplay(){
 #define ID_add 1
 #define HP_add 2
 #define collectedOG_add 3
+#define collectedID_add 4
+#define uploadSuccess_add 5
 
 
 #define DOUBLE_CLICK_LENGTH 1000 // [ms]
@@ -219,15 +221,12 @@ class TreasureLevel2
       // no need to feedback everytime the player collecting the Treasure. Only feedback to the server and to the player when the treasure is fully collected, ie. HP == 0
       TreasureLevel2_Bluetooth.stopAdvertisingService(pAvailableService);
       delay(2000);
-      // inform the server here ...
-      int player_identifier = OG_ * pow(16, 2) + ID_;
       Serial.print("TREASURE NAME:"); Serial.println(TreasureLevel2_Bluetooth.getTreasureName());
-      Serial.print("PLAYER IDENTIFIER:"); Serial.println(player_identifier);
-      String player_mac_address = dbc.setTreasureAsOpened(TreasureLevel2_Bluetooth.getTreasureName(), OG_, ID_);
-      // this code to save the info of the OG collected the treasure
-      EEPROM.write(collectedOG_add, OG_); // save some sent variable to resend if required
+      Serial.printf("OG: %d ID: %d\n", OG_, ID_);
+      // this code to save the info of the player collected the treasure to resend if required
+      EEPROM.write(collectedOG_add, OG_);
+      EEPROM.write(collectedID_add, ID_);
       EEPROM.commit(); 
-      
       // broadcast virus here ...
       if (_isVirus) {
         Serial.println("Broadcasting Virus...");
@@ -236,6 +235,28 @@ class TreasureLevel2
         TreasureLevel2_Bluetooth.stopAdvertisingService(pVirusService);
         Serial.println("Box Shutting down...");
       }
+
+      // upload to server
+      int curr_upload_fail_counter = wifi_timeout_or_refused_counter;
+      String player_mac_address = dbc.setTreasureAsOpened(TreasureLevel2_Bluetooth.getTreasureName(), OG_, ID_);
+      int new_upload_fail_counter = wifi_timeout_or_refused_counter;
+      if (new_upload_fail_counter == curr_upload_fail_counter) {
+        EEPROM.write(uploadSuccess_add, 1);
+        EEPROM.commit();
+      }
+    }
+
+    void resend_treasure_collection() {
+        int upload_status = EEPROM.read(uploadSuccess_add);
+        if (HP == 0 && upload_status == 0) {
+            int curr_upload_fail_counter = wifi_timeout_or_refused_counter;
+            String player_mac_address = dbc.setTreasureAsOpened(TreasureLevel2_Bluetooth.getTreasureName(), OG_, ID_);
+            int new_upload_fail_counter = wifi_timeout_or_refused_counter;
+            if (new_upload_fail_counter == curr_upload_fail_counter) {
+                EEPROM.write(uploadSuccess_add, 1);
+                EEPROM.commit();
+            }
+        }
     }
 
     void display_not_playing_yet(){
@@ -461,6 +482,9 @@ void loop() {
         // timeout
         ESP.restart();
     }
+  }
+  if (wifi_timeout_or_refused_counter >= 3) {
+    ESP.restart();
   }
   switch (initiateTreasureDone){
     case 0:
