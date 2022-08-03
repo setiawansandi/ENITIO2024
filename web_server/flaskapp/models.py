@@ -9,6 +9,8 @@ class Player(db.Model):
     num_kills = db.Column(db.Integer)
     num_level1_treasures_wanderer = db.Column(db.Integer)
     num_level2_treasures_wanderer = db.Column(db.Integer)
+    num_temp_failed_treasure1_feedback = db.Column(db.Integer)
+    num_temp_failed_kills = db.Column(db.Integer)
 
     treasure = db.relationship('Level2Treasure', back_populates='collected_by')
 
@@ -21,6 +23,8 @@ class Player(db.Model):
         self.num_kills = 0
         self.num_level1_treasures_wanderer = 0
         self.num_level2_treasures_wanderer = 0
+        self.num_temp_failed_treasure1_feedback = 0
+        self.num_temp_failed_kills = 0
 
 
 class Level2Treasure(db.Model):

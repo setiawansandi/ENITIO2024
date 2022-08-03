@@ -166,12 +166,12 @@ def register_player():
         mac_addr = content["mac_address"]
         player = Player.query.filter_by(OG=OG, mac_address=mac_addr).first()
         if player:
-            return {"result": "already registered"}
+            return jsonify({"result": "already registered"})
         else:
             player = Player(OG=OG, mac_address=mac_addr)
             db.session.add(player)
             db.session.commit()
-            return {"result": "OK"}
+            return jsonify({"result": "OK"})
 
     abort(404)
 
@@ -196,7 +196,7 @@ def start_game():
         player.num_level1_treasures_wanderer = 0
         player.num_level2_treasures_wanderer = 0
         og_counter[player.OG] += 1
-        result[player.mac_address] = f"OG {player.OG} ID {player.participant_id}"
+        result[player.mac_address] = "OG {} ID {}".format(player.OG, player.participant_id)
 
     # RESET EVERYTHING
     level1_treasure_collection_logs = Level1TreasureCollectors.query.all()
@@ -227,7 +227,7 @@ def stop_game():
     status.value = "0"
     db.session.commit()
 
-    return {"has_game_started": "0"}
+    return jsonify({"has_game_started": "0"})
 
 
 # for testing purposes
@@ -238,9 +238,9 @@ def get_all_treasure_status():
     for treasure in level2_treasures:
         collected_player = treasure.collected_by
         result[treasure.name] = "Level2Treasure " if treasure.is_treasure else "Level2Virus "
-        result[treasure.name] += f"({treasure.location}) "
+        result[treasure.name] += "({}) ".format(treasure.location)
         if collected_player:
-            result[treasure.name] += f"Collected by OG {collected_player.OG} ID {collected_player.participant_id}"
+            result[treasure.name] += "Collected by OG {} ID {}".format(collected_player.OG, collected_player.participant_id)
         else:
             result[treasure.name] += "<available>"
 
@@ -249,7 +249,7 @@ def get_all_treasure_status():
         t_id = treasure.id
         collection_logs = Level1TreasureCollectors.query.filter_by(level1_treasure_id=t_id).all()
         num_collected = len(collection_logs)
-        result[treasure.name] = f"Level1Treasure - Collected {num_collected} times"
+        result[treasure.name] = "Level1Treasure - Collected {} times".format(num_collected)
 
     return jsonify(result)
 
@@ -264,7 +264,7 @@ def unset_all_player_ids():
     status = GameStatus.query.filter_by(name="started").first()
     status.value = "0"
     db.session.commit()
-    return {"result": "OK"}
+    return jsonify({"result": "OK"})
 
 
 @app.route("/delete_all_players")
@@ -287,7 +287,7 @@ def delete_all_players():
         db.session.delete(collection_log)
 
     db.session.commit()
-    return {"result": "OK"}
+    return jsonify({"result": "OK"})
 
 
 @app.route("/get_all_players")
@@ -329,9 +329,14 @@ def update_player_score():
             player.num_kills = int(num_kills)
             player.num_level1_treasures_wanderer = num_level1_treasures
             player.num_level2_treasures_wanderer = num_level2_treasures
+            result = {"OG": int(OG), "ID": int(ID), "sent_kills": int(num_kills),
+                      "level1": num_level1_treasures, "level2": num_level2_treasures,
+                      "num_powerups": int(player.num_temp_failed_treasure1_feedback),
+                      "num_kills": int(player.num_temp_failed_kills)}
+            player.num_temp_failed_treasure1_feedback = 0
+            player.num_temp_failed_kills = 0
             db.session.commit()
-            return jsonify({"OG": int(OG), "ID": int(ID), "num_kills": int(num_kills),
-                            "level1": num_level1_treasures, "level2": num_level2_treasures})
+            return jsonify(result)
 
     abort(404)
 
@@ -380,7 +385,7 @@ def calculate_score():
     level2_treasures = Level2Treasure.query.all()
     for treasure in level2_treasures:
         collected_player = treasure.collected_by
-        if collected_player:
+        if collected_player and treasure.is_treasure:
             og = collected_player.OG
             OG_score[og] += 50
             tally[og]["level2_treasure"] += 1
@@ -422,3 +427,41 @@ def calculate_score_from_player_side_stats():
         tally[og]["level2_treasure"] += level2_treasure
 
     return jsonify({"tally": tally, "score": OG_score})
+
+
+@app.route("/upload_failed_player_kill/<int:og>/<int:participant_id>")
+def upload_failed_player_kill(og, participant_id):
+    print("Received Failed Player Kill by OG {} ID {}".format(og, participant_id))
+    player = Player.query.filter_by(OG=og, participant_id=participant_id).first()
+    if player:
+        player.num_temp_failed_kills += 1
+        db.session.commit()
+        return jsonify({"result": "OK"})
+    abort(404)
+
+
+@app.route("/upload_failed_treasure_feedback/<name>/<int:og>/<int:participant_id>")
+def upload_failed_treasure_feedback(name, og, participant_id):
+    print("Received Failed Level1Treasure Collection ({}) by OG {} ID {}".format(name, og, participant_id))
+    player = Player.query.filter_by(OG=og, participant_id=participant_id).first()
+    treasure = Level1Treasure.query.filter_by(name=name).first()
+    if treasure and player:
+        collection_log = Level1TreasureCollectors(player, treasure)
+        db.session.add(collection_log)
+        player.num_temp_failed_treasure1_feedback += 1
+        db.session.commit()
+        return jsonify({"result": "OK"})
+    abort(404)
+
+
+@app.route("/get_failed_feedback_count")
+def get_failed_feedback_count():
+    players = Player.query.all()
+    result = dict()
+    for player in players:
+        og = player.OG
+        participant_id = player.participant_id
+        key_string = "OG {} ID {}".format(og, participant_id)
+        result[key_string] = "KILLS {} LEVEL1TREASURE {}".format(player.num_temp_failed_kills,
+                                                                 player.num_temp_failed_treasure1_feedback)
+    return jsonify(result)
