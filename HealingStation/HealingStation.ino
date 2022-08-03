@@ -79,6 +79,7 @@ class HealingStation
                       Serial.println("Closing Healing Station");
                       HealingStation_NeoPixel.off_FRONT();
                       HealingStation_NeoPixel.off_TOP();
+                      healing_station.display_no_hp();
                       EEPROM.write(ENABLE_add, 2);
                       EEPROM.commit();
                   }

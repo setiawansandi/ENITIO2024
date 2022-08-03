@@ -8,8 +8,8 @@ void clearEEPROM(){
 
 const int FactoryResetFunction = 1;
 const int SetIDFunction = 0;
-const int UncollectTreasureFunction = 3;
-const int ExitFunction = 2;
+const int UncollectTreasureFunction = 2;
+const int ExitFunction = 3;
 class Admin_OLED{
   private:
 
