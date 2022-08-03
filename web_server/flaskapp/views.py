@@ -459,7 +459,7 @@ def upload_failed_treasure_feedback(name, og, participant_id):
     abort(404)
 
 
-@app.route("/treasure_feedback/<name>", method=["POST"])
+@app.route("/treasure_feedback/<name>", methods=["POST"])
 def upload_failed_treasure_feedback_post(name):
     content = request.json
     print("UPDATE SCORE:", content)
