@@ -145,7 +145,9 @@ class Admin_OLED{
       display.setCursor(10, 12);
       display.println("NO");
       display.setCursor(10, 22);
-      display.println("YES");
+      display.println("YES, KEEP TREASURE ID");
+      display.setCursor(10, 32);
+      display.println("YES, CLEAR TREASURE ID");
 
       switch (ConfirmingResetNav)
       {
@@ -156,6 +158,11 @@ class Admin_OLED{
       
       case 1:
         display.setCursor(2, 22);
+        display.println(">");
+        break;
+
+      case 2:
+        display.setCursor(2, 32);
         display.println(">");
         break;
 
@@ -398,7 +405,7 @@ class Admin {
                         break;
 
                     case down:
-                        ConfirmingResetNav = min(ConfirmingResetNav + 1, 1);
+                        ConfirmingResetNav = min(ConfirmingResetNav + 1, 2);
                         TreasureLevel1_joystick.set_state();
                         break;
 
@@ -411,6 +418,14 @@ class Admin {
                             break;
 
                         case 1:
+                            StartUpDisplay();
+                            clearEEPROM();
+                            EEPROM.write(ID_add, ID);
+                            EEPROM.commit();
+                            ESP.restart();
+                            break;
+
+                        case 2:
                             StartUpDisplay();
                             clearEEPROM();
                             ESP.restart();
