@@ -266,8 +266,12 @@ def delete_all_players():
 def get_all_players():
     players = Player.query.all()
     result = dict()
+    result["tally"] = dict()
     for player in players:
         result[player.mac_address] = "OG " + str(player.OG) + " ID " + str(player.participant_id)
+        if player.OG not in result["tally"]:
+            result["tally"][player.OG] = 0
+        result["tally"][player.OG] += 1
 
     return jsonify(result)
 
@@ -357,7 +361,7 @@ def calculate_score():
     for collection_log in level1_treasures_log:
         player = collection_log.player
         og = player.OG
-        OG_score[og] += 4
+        OG_score[og] += 1
         tally[og]["level1_treasure"] += 1
 
     return jsonify({"tally": tally, "score": OG_score})
@@ -383,7 +387,7 @@ def calculate_score_from_player_side_stats():
         OG_score[og] += (kills * 4)
         tally[og]["kills"] += kills
 
-        OG_score[og] += (level1_treasure * 4)
+        OG_score[og] += (level1_treasure * 1)
         tally[og]["level1_treasure"] += level1_treasure
 
         OG_score[og] += (level2_treasure * 50)
