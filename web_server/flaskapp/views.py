@@ -269,6 +269,11 @@ def unset_all_player_ids():
 
 @app.route("/delete_all_players")
 def delete_all_players():
+    # check if game started
+    g = GameStatus.query.filter_by(name="started").first()
+    if g and g.value == "1":
+        return {"result": "ignored"}
+    
     treasures = Level2Treasure.query.all()
     for treasure in treasures:
         treasure.collected_by = None
