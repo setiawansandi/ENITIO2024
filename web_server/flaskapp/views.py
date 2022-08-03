@@ -459,6 +459,25 @@ def upload_failed_treasure_feedback(name, og, participant_id):
     abort(404)
 
 
+@app.route("/treasure_feedback/<name>", method=["POST"])
+def upload_failed_treasure_feedback_post(name):
+    content = request.json
+    print("UPDATE SCORE:", content)
+    if "OG" in content and "ID" in content:
+        og = content["OG"]
+        participant_id = content["ID"]
+        print("Received Failed Level1Treasure Collection ({}) by OG {} ID {}".format(name, og, participant_id))
+        player = Player.query.filter_by(OG=og, participant_id=participant_id).first()
+        treasure = Level1Treasure.query.filter_by(name=name).first()
+        if treasure and player:
+            collection_log = Level1TreasureCollectors(player, treasure)
+            db.session.add(collection_log)
+            player.num_temp_failed_treasure1_feedback += 1
+            db.session.commit()
+            return jsonify({"result": "OK"})
+    abort(404)
+
+
 @app.route("/get_failed_feedback_count")
 def get_failed_feedback_count():
     players = Player.query.all()
