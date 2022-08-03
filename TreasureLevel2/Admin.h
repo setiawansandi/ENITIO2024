@@ -281,9 +281,7 @@ class Admin {
                             EEPROM.write(ENABLE_add, 1);
                             EEPROM.write(HP_add, TREASURE_LEVEL2_INITIAL_HP);
                             EEPROM.commit();
-                            AdminFunction = false;
-                            verified = false;
-                            FunctionNav = 0;
+                            ESP.restart();
                             break;
                         
                         default:

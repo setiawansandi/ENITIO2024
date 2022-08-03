@@ -249,7 +249,7 @@ def get_all_treasure_status():
         t_id = treasure.id
         collection_logs = Level1TreasureCollectors.query.filter_by(level1_treasure_id=t_id).all()
         num_collected = len(collection_logs)
-        result[treasure.name] = f"Level1Treasure ({treasure.location}) - Collected {num_collected} times"
+        result[treasure.name] = f"Level1Treasure - Collected {num_collected} times"
 
     return jsonify(result)
 

@@ -32,7 +32,7 @@ class DBConnection {
             http.begin(server);
 //            Serial.print("Current WiFi Status     : "); Serial.println(WiFi.status());
 //            Serial.print("Reference - CONNECTED IS: "); Serial.println(WL_CONNECTED);
-//            Serial.print("WiFi Channel: "); Serial.println(WiFi.channel());
+            Serial.print("WiFi Channel: "); Serial.println(WiFi.channel());
             int httpResponseCode = http.GET();
             String payload = "{}";
             
@@ -144,6 +144,12 @@ class DBConnection {
             // Serial.println(jsonArray);
             return retrieveGameConstantsFromJSONArray(jsonArray);
         };
+
+        bool uploadFailedFeedback(String treasureName, int og, int participant_id) {
+            String url = DATABASE_URL + "upload_failed_treasure_feedback/" + treasureName + "/" + String(og) + "/" + String(participant_id);
+            String jsonArray = GET_Request(url.c_str());
+            return jsonArray != "{}";
+        }
 };
 
 DBConnection dbc;
