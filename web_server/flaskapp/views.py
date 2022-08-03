@@ -329,13 +329,18 @@ def update_player_score():
             player.num_kills = int(num_kills)
             player.num_level1_treasures_wanderer = num_level1_treasures
             player.num_level2_treasures_wanderer = num_level2_treasures
+            num_failed_powerups = int(player.num_temp_failed_treasure1_feedback)
+            num_failed_kills = int(player.num_temp_failed_kills)
             result = {"OG": int(OG), "ID": int(ID), "sent_kills": int(num_kills),
                       "level1": num_level1_treasures, "level2": num_level2_treasures,
-                      "num_powerups": int(player.num_temp_failed_treasure1_feedback),
-                      "num_kills": int(player.num_temp_failed_kills)}
+                      "num_powerups": num_failed_powerups,
+                      "num_kills": num_failed_kills
+                      }
             player.num_temp_failed_treasure1_feedback = 0
             player.num_temp_failed_kills = 0
             db.session.commit()
+            print("Sending {} Kills and {} Powerups to OG {} ID {}".format(num_failed_kills, num_failed_powerups,
+                                                                           int(OG), int(ID)))
             return jsonify(result)
 
     abort(404)
