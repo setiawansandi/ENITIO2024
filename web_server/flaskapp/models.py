@@ -72,8 +72,8 @@ class Level1TreasureCollectors(db.Model):
     level1_treasure_id = db.Column(db.Integer, db.ForeignKey('level1_treasure.id', ondelete='CASCADE'))
     player_id = db.Column(db.Integer, db.ForeignKey('player.id', ondelete='CASCADE'))
 
-    treasure = db.relationship(Level1Treasure)
-    player = db.relationship(Player)
+    treasure = db.relationship(Level1Treasure, overlaps="collected_players")
+    player = db.relationship(Player, overlaps="level1_treasures")
 
     def __init__(self, player, treasure):
         self.treasure = treasure

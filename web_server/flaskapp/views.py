@@ -445,7 +445,7 @@ def upload_failed_player_kill(og, participant_id):
     abort(404)
 
 
-@app.route("/treasure_feedback/<name>/<int:og>/<int:participant_id>")
+@app.route("/treasurefeedback/<name>/<int:og>/<int:participant_id>")
 def upload_failed_treasure_feedback(name, og, participant_id):
     print("Received Failed Level1Treasure Collection ({}) by OG {} ID {}".format(name, og, participant_id))
     player = Player.query.filter_by(OG=og, participant_id=participant_id).first()
