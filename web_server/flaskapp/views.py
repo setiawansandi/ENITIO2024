@@ -143,13 +143,15 @@ def get_player_id(OG, mac_addr):
             game_status = GameStatus.query.filter_by(name="started").first()
             allow_assignment = GameStatus.query.filter_by(name="ASSIGN_PARTICIPANT_ID_AFTER_GAME_START").first()
             if game_status and allow_assignment:
-                if game_status.value == 1 and allow_assignment.value == 1:
+                if game_status.value == "1" and allow_assignment.value == "1":
                     # Assign ID
                     largest_participant_id_player = Player.query.filter_by(OG=OG).order_by(Player.participant_id.desc()).first()
                     if largest_participant_id_player is not None:
                         player_id = largest_participant_id_player.participant_id + 1
                     else:
                         player_id = 1  # No other players in OG
+                    player.participant_id = player_id
+                    db.session.commit()
         result["player_id"] = player_id
         return jsonify(result)
 
