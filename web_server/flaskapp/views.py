@@ -33,6 +33,7 @@ def set_treasure_as_collected(level, name, OG, participant_id):
                 # treasure.collected_players.append(player)
                 collection_row = Level1TreasureCollectors(player, treasure)
                 db.session.add(collection_row)
+                player.num_temp_failed_treasure1_feedback += 1
                 db.session.commit()
                 print("Committed")
 
@@ -93,6 +94,7 @@ def set_treasure_as_collected_post(level, name):
                 # treasure.collected_players.append(player)
                 collection_row = Level1TreasureCollectors(player, treasure)
                 db.session.add(collection_row)
+                player.num_temp_failed_treasure1_feedback += 1
                 db.session.commit()
                 print("Committed")
 
