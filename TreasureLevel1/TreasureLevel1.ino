@@ -1,6 +1,14 @@
 // upload this code whenever you want to start testing
 // comment out the clearEEPROM() function when used on real game
 
+int failed_kill_feedback = 0;
+int failed_kill_OG[50] = {};
+int failed_kill_ID[50] = {};
+int current_failed_save_pointer = 0;
+int current_failed_read_pointer = 0;
+
+bool can_upload_fail = 1;
+
 #include <EEPROM.h>
 #include "ENITIO_ir.h"
 #include "ENITIO_enums.h"
@@ -217,8 +225,10 @@ class TreasureLevel1
       TreasureLevel1_NeoPixel.off_FRONT();
       TreasureLevel1_NeoPixel.off_TOP();
 
+
       feedback_collectL1(OG_, ID_);
       delay(2000);
+      can_upload_fail = 0;
       int player_identifier = OG_ * pow(16, 2) + ID_;
       Serial.printf("TREASURE%d opened by OG %d ID %d\n", ID, OG_, ID_);
       String player_mac_address = dbc.setTreasureAsOpened("TREASURE" + String(ID), OG_, ID_);
@@ -249,6 +259,8 @@ class TreasureLevel1
         break;
       }
       EEPROM.commit();
+
+      can_upload_fail = 1;
     };
 
     void recover() {
@@ -377,6 +389,19 @@ TaskHandle_t backgroundTask;
 
 void backgroundTaskCode(void * pvParameters){
   for ( ; ; ) {
+      if ((failed_kill_feedback > 0) && can_upload_fail){
+        int i;
+        for (i = 0; i < failed_kill_feedback; i++){
+          int this_ID = failed_kill_ID[current_failed_read_pointer];
+          int this_OG = failed_kill_OG[current_failed_read_pointer];
+          Serial.println(this_ID);
+          Serial.println(this_OG);
+          dbc.uploadFailedFeedback("TREASURE" + String(ID), this_OG, this_ID);
+          current_failed_read_pointer ++ ;
+          if(current_failed_read_pointer > 50) current_failed_read_pointer -= 50 ;
+          failed_kill_feedback --;
+        }
+      }
       get_game_state();
       delay(10000);
   }

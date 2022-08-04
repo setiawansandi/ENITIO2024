@@ -584,26 +584,31 @@ class TreasureHuntPlayer
           {
           case bonus6HP:
             num_bonus6HP ++ ;
+            EEPROM.write(PLAYER_num_bonus6HP_add, num_bonus6HP);
             tempNoti = "    PowerUp: +6 HP   ";
             break;
 
           case bonus1MaxEn:
             num_bonus1MaxEn ++ ;
+            EEPROM.write(PLAYER_num_bonus1MaxEn_add, num_bonus1MaxEn);
             tempNoti = "  PowerUp: +1 Max En ";
             break;
 
           case bonus1MANA:
             num_bonus1MANA ++ ;
+            EEPROM.write(PLAYER_num_bonus1MANA_add, num_bonus1MANA);
             tempNoti = "   PowerUp: +1 MANA  ";
             break;
 
           case fiveminx2EnRegen:
             num_fiveminx2EnRegen ++ ;
+            EEPROM.write(PLAYER_num_fiveminx2EnRegen_add, num_fiveminx2EnRegen);
             tempNoti = "PowerUp: x2 En Regen ";
             break;
 
           case bomb:
             num_bomb ++ ;
+            EEPROM.write(PLAYER_num_bomb_add, num_bomb);
             tempNoti = "  PowerUp: A Bomb!!  ";
             break;
           
@@ -798,9 +803,66 @@ class TreasureHuntPlayer
         Player_Bluetooth.scan();
         unsigned long currTime = millis();
         if (currTime - last_update_kills_to_server > KILL_UPDATE_SERVER_INTERVAL) {
-            dbc.sendGameStatistics(OG, ID, numKilled, numL1Treasure, numL2Treasure);
+            FailedFeedbackStatistics this_stats ;
+            this_stats = dbc.sendGameStatistics(OG, ID, numKilled, numL1Treasure, numL2Treasure);
+            int unrecognized_kills = this_stats.num_kills;
+            int unrecognized_powerups = this_stats.num_powerups;
+            MANA += unrecognized_kills ;
+            EEPROM.write(PLAYER_MANA_add, MANA);
+            numL1Treasure += unrecognized_powerups ; 
+            EEPROM.write(PLAYER_numL1Treasure_add, numL1Treasure);
+            int i;
+            for (i = 0; i < unrecognized_powerups; i ++){
+              int new_PowerUp = random(1,6);
+              switch (new_PowerUp)
+                {
+                case bonus6HP:
+                  num_bonus6HP ++ ;
+                  EEPROM.write(PLAYER_num_bonus6HP_add, num_bonus6HP);
+                  break;
+
+                case bonus1MaxEn:
+                  num_bonus1MaxEn ++ ;
+                  EEPROM.write(PLAYER_num_bonus1MaxEn_add, num_bonus1MaxEn);
+                  break;
+
+                case bonus1MANA:
+                  num_bonus1MANA ++ ;
+                  EEPROM.write(PLAYER_num_bonus1MANA_add, num_bonus1MANA);
+                  break;
+
+                case fiveminx2EnRegen:
+                  num_fiveminx2EnRegen ++ ;
+                  EEPROM.write(PLAYER_num_fiveminx2EnRegen_add, num_fiveminx2EnRegen);
+                  break;
+
+                case bomb:
+                  num_bomb ++ ;
+                  EEPROM.write(PLAYER_num_bomb_add, num_bomb);
+                  break;
+                
+                default:
+                  break;
+                }
+                tempNoti = " Power-Ups Retrieved ";
+                tempNoti_start = millis();
+            }
             last_update_kills_to_server = currTime;
-        } else delay(50);
+        }
+        EEPROM.commit();
+        
+        if (failed_kill_feedback > 0){
+          int i;
+          for (i = 0; i < failed_kill_feedback; i++){
+            int this_ID = failed_kill_ID[current_failed_read_pointer] ;
+            int this_OG = failed_kill_OG[current_failed_read_pointer] ;
+            dbc.uploadFailedFeedback(this_OG, this_ID);
+            current_failed_read_pointer ++ ;
+            if(current_failed_read_pointer > 50) current_failed_read_pointer -= 50 ;
+            failed_kill_feedback --;
+          }
+        }
+         else delay(50);
       }
       else{
         delay(50);

@@ -3,6 +3,7 @@
         "limits": "cpp",
         "utility": "cpp",
         "initializer_list": "cpp",
-        "xutility": "cpp"
+        "xutility": "cpp",
+        "cmath": "cpp"
     }
 }
