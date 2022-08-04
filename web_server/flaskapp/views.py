@@ -184,21 +184,19 @@ def has_game_started():
     return jsonify({"has_game_started": int(status.value)})
 
 
-@app.route("/start_game")
-def start_game():
-    # assign all players their IDs
+@app.route("/reset_score")
+def reset_score():
+    g = GameStatus.query.filter_by(name="started").first()
+    if g and g.value == "1":
+        return jsonify({"result": "ignored"})
+
     players = Player.query.all()
-    og_counter = dict()
-    result = dict()
     for player in players:
-        if player.OG not in og_counter:
-            og_counter[player.OG] = 0
-        player.participant_id = og_counter[player.OG] + 1
         player.num_kills = 0
         player.num_level1_treasures_wanderer = 0
         player.num_level2_treasures_wanderer = 0
-        og_counter[player.OG] += 1
-        result[player.mac_address] = "OG {} ID {}".format(player.OG, player.participant_id)
+        player.num_temp_failed_treasure1_feedback = 0
+        player.num_temp_failed_kills = 0
 
     # RESET EVERYTHING
     level1_treasure_collection_logs = Level1TreasureCollectors.query.all()
@@ -215,6 +213,22 @@ def start_game():
         treasure.num_drachen_collected = 0
         treasure.num_eva_collected = 0
         treasure.num_invicta_collected = 0
+
+    return jsonify({"result": "OK"})
+
+
+@app.route("/start_game")
+def start_game():
+    # assign all players their IDs
+    players = Player.query.all()
+    og_counter = dict()
+    result = dict()
+    for player in players:
+        if player.OG not in og_counter:
+            og_counter[player.OG] = 0
+        player.participant_id = og_counter[player.OG] + 1
+        og_counter[player.OG] += 1
+        result[player.mac_address] = "OG {} ID {}".format(player.OG, player.participant_id)
 
     status = GameStatus.query.filter_by(name="started").first()
     status.value = "1"
