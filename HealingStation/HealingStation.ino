@@ -6,6 +6,7 @@
 #include "ENITIO_enums.h"
 #include "ENITIO_ESPNOW.h"
 #include "ENITIO_NeoPixel.h"
+#include "ENITIO_joystick.h"
 
 #include <SPI.h>
 #include <Wire.h>
@@ -38,6 +39,8 @@ int HEALING_STATION_INITIAL_HP;
 int HEALING_STATION_ACTION_RECV_WAIT;
 int HEALING_STATION_RECOVER_DURATION;
 
+#define HEAL_MANA 14
+
 class HealingStation
 {
   private:
@@ -55,51 +58,115 @@ class HealingStation
       HP = HEALING_STATION_INITIAL_HP;
     };
     
-    void receiveAction() {
+    // void receiveAction() {
+    //   int currStatus = EEPROM.read(ENABLE_add);
+    //   unsigned long currTime = millis();
+    //   if (currStatus == 1 && HealingStation_IR.available()) {
+    //       ir_signal IRsignal_ = HealingStation_IR.read();
+
+    //       if (currTime - last_healing_request >= HEALING_STATION_ACTION_RECV_WAIT){
+    //           Serial.println("Initiate Healing Request");
+    //           OG_ = IRsignal_.address.digit2;
+    //           ID_ = IRsignal_.address.digit0 + (IRsignal_.address.digit1 << 4);
+        
+    //           En_ = IRsignal_.command.digit1;
+    //           action_ = IRsignal_.command.digit0;
+        
+    //           Serial.printf("%d %d %d %d \n", action_, En_, ID_, OG_);
+      
+    //           if ((action_ == collect) || (action_ == heal_request)) {
+    //               heal_player(OG_, ID_);
+    //               HP--;
+    //               Serial.print(HP); Serial.println(" Before Station Closes");
+    //               if (HP == 0) {
+    //                   Serial.println("Closing Healing Station");
+    //                   HealingStation_NeoPixel.off_FRONT();
+    //                   HealingStation_NeoPixel.off_TOP();
+    //                   healing_station.display_no_hp();
+    //                   EEPROM.write(ENABLE_add, 2);
+    //                   EEPROM.commit();
+    //               }
+    //           }
+    //           last_healing_request = currTime;
+    //       }
+    //   } else if (currStatus == 2) {
+    //       timeleftToRecover = max(int(HEALING_STATION_RECOVER_DURATION - (currTime - last_healing_request)), 0);
+    //       if (timeleftToRecover == 0) {
+    //         Serial.println("Reopening Healing Station");
+    //         HP = HEALING_STATION_INITIAL_HP;
+    //         EEPROM.write(ENABLE_add, 1);
+    //         EEPROM.commit();
+    //         HealingStation_NeoPixel.displayRGB_FRONT(R_ON, B_ON, G_ON);
+    //         HealingStation_NeoPixel.displayRGB_TOP(R_ON, B_ON, G_ON);
+    //       }
+    //   }
+    // };
+
+    void HealingLoop(){
       int currStatus = EEPROM.read(ENABLE_add);
       unsigned long currTime = millis();
-      if (currStatus == 1 && HealingStation_IR.available()) {
-          ir_signal IRsignal_ = HealingStation_IR.read();
+      if (currStatus == 1){
+        handleJoystick();
+      }
+      else if (currStatus == 2){
+        timeleftToRecover = max(int(HEALING_STATION_RECOVER_DURATION - (currTime - last_healing_request)), 0);
+        display_no_hp(timeleftToRecover);
+        if (timeleftToRecover == 0) {
+          Serial.println("Reopening Healing Station");
+          HP = HEALING_STATION_INITIAL_HP;
+          EEPROM.write(ENABLE_add, 1);
+          EEPROM.commit();
+          HealingStation_NeoPixel.displayRGB_FRONT(R_ON, B_ON, G_ON);
+          HealingStation_NeoPixel.displayRGB_TOP(R_ON, B_ON, G_ON);
+        }
+      }
+    }
 
-          if (currTime - last_healing_request >= HEALING_STATION_ACTION_RECV_WAIT){
-              Serial.println("Initiate Healing Request");
-              OG_ = IRsignal_.address.digit2;
-              ID_ = IRsignal_.address.digit0 + (IRsignal_.address.digit1 << 4);
-        
-              En_ = IRsignal_.command.digit1;
-              action_ = IRsignal_.command.digit0;
-        
-              Serial.printf("%d %d %d %d \n", action_, En_, ID_, OG_);
-      
-              if ((action_ == collect) || (action_ == heal_request)) {
-                  heal_player(OG_, ID_);
-                  HP--;
-                  Serial.print(HP); Serial.println(" Before Station Closes");
-                  if (HP == 0) {
-                      Serial.println("Closing Healing Station");
-                      HealingStation_NeoPixel.off_FRONT();
-                      HealingStation_NeoPixel.off_TOP();
-                      EEPROM.write(ENABLE_add, 2);
-                      EEPROM.commit();
-                  }
+    void handleJoystick(){
+      joystick_pos joystick_pos = HealingStation_joystick.read_Joystick();
+      if (HealingStation_joystick.get_state() == 0) {
+        switch (joystick_pos){
+            case button:
+              heal_player();
+              HealingStation_joystick.set_state();
+              HP--;
+              Serial.print(HP); Serial.println(" Before Station Closes");
+              if (HP == 0) {
+                  Serial.println("Closing Healing Station");
+                  HealingStation_NeoPixel.off_FRONT();
+                  HealingStation_NeoPixel.off_TOP();
+                  EEPROM.write(ENABLE_add, 2);
+                  EEPROM.commit();
+                  last_healing_request = millis();
               }
-              last_healing_request = currTime;
-          }
-      } else if (currStatus == 2) {
-          timeleftToRecover = max(int(HEALING_STATION_RECOVER_DURATION - (currTime - last_healing_request)), 0);
-          if (timeleftToRecover == 0) {
-            Serial.println("Reopening Healing Station");
-            HP = HEALING_STATION_INITIAL_HP;
-            EEPROM.write(ENABLE_add, 1);
-            EEPROM.commit();
-            HealingStation_NeoPixel.displayRGB_FRONT(R_ON, B_ON, G_ON);
-            HealingStation_NeoPixel.displayRGB_TOP(R_ON, B_ON, G_ON);
+              break;
+
+            case idle:
+              break;
+
+            default:
+              HealingStation_joystick.set_state();
+              break;
           }
       }
-    };
+    }
 
-    void heal_player(int OG_, int ID_){
-      HealingStation_EspNOW.send_data(5, OG_, ID_, 0, 0);  // 0 as no powerup ID and healing station has no ID
+    void heal_player(){
+      uint16_hex_digits address_digits, command_digits;
+
+      address_digits.digit0 = 0;
+      address_digits.digit2 = 0;
+
+      command_digits.digit0 = heal;
+
+      command_digits.digit1 = HEAL_MANA;
+
+      ir_signal send_signal;
+
+      send_signal.address = address_digits;
+      send_signal.command = command_digits;
+
+      HealingStation_IR.send(send_signal, 1);
     } ;
 
     void display_not_playing_yet(){
@@ -127,17 +194,20 @@ class HealingStation
         display.setCursor(0, 0);
         display.println(F("   Healing Station  ")); 
 
-        display.setCursor(0, 24);
+        display.setCursor(0, 20);
         display.setTextSize(1);      // Normal 1:1 pixel scale
         display.setTextColor(SSD1306_WHITE); // Draw white text
-        display.println("   Collect this to   ");
-        display.println("    heal your HP!    ");
+        display.println("  Put your WANDERer  ");
+        display.setCursor(0, 32);
+        display.println(" towards the Station ");
+        display.setCursor(0, 44);
+        display.println("      and PRESS!     ");
       
         display.display();
       }
     };
 
-    void display_no_hp(){
+    void display_no_hp(int this_timeleftToRecover){
       display.clearDisplay();
       display.setTextSize(1); // Draw SIZE
       display.setTextColor(SSD1306_BLACK, SSD1306_WHITE); // Draw 'inverse' text
@@ -150,7 +220,7 @@ class HealingStation
 
       display.setCursor(0, 40);
       display.print("Come back in: ");
-      display.println(int(timeleftToRecover/1000.0)+1);
+      display.println(int(this_timeleftToRecover/1000.0)+1);
       display.display();
     };
 
@@ -229,7 +299,7 @@ void loop() {
       delay(10000);
       break;
     case 1:
-      healing_station.receiveAction();
+      healing_station.HealingLoop();
       healing_station.display_in_game();
       break;
   }

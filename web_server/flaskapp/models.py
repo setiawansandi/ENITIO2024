@@ -9,6 +9,8 @@ class Player(db.Model):
     num_kills = db.Column(db.Integer)
     num_level1_treasures_wanderer = db.Column(db.Integer)
     num_level2_treasures_wanderer = db.Column(db.Integer)
+    num_temp_failed_treasure1_feedback = db.Column(db.Integer)
+    num_temp_failed_kills = db.Column(db.Integer)
 
     treasure = db.relationship('Level2Treasure', back_populates='collected_by')
 
@@ -21,6 +23,8 @@ class Player(db.Model):
         self.num_kills = 0
         self.num_level1_treasures_wanderer = 0
         self.num_level2_treasures_wanderer = 0
+        self.num_temp_failed_treasure1_feedback = 0
+        self.num_temp_failed_kills = 0
 
 
 class Level2Treasure(db.Model):
@@ -68,8 +72,8 @@ class Level1TreasureCollectors(db.Model):
     level1_treasure_id = db.Column(db.Integer, db.ForeignKey('level1_treasure.id', ondelete='CASCADE'))
     player_id = db.Column(db.Integer, db.ForeignKey('player.id', ondelete='CASCADE'))
 
-    treasure = db.relationship(Level1Treasure)
-    player = db.relationship(Player)
+    treasure = db.relationship(Level1Treasure, overlaps="collected_players")
+    player = db.relationship(Player, overlaps="level1_treasures")
 
     def __init__(self, player, treasure):
         self.treasure = treasure
@@ -119,6 +123,7 @@ def populate_statuses():
         "TREASURE_LEVEL2_ACTION_RECV_WAIT": 150,
         "TREASURE_LEVEL2_RECOVER_PERIOD": 20 * 1000,
         "TREASURE_LEVEL2_VIRUS_INFECTION_TIME": 10 * 1000,
+        "ASSIGN_PARTICIPANT_ID_AFTER_GAME_START": 0,
     }
     # Reset table
     all_statuses = GameStatus.query.all()

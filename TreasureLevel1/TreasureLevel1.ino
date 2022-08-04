@@ -1,6 +1,14 @@
 // upload this code whenever you want to start testing
 // comment out the clearEEPROM() function when used on real game
 
+// int failed_kill_feedback = 0;
+// int failed_kill_OG[50] = {};
+// int failed_kill_ID[50] = {};
+// int current_failed_save_pointer = 0;
+// int current_failed_read_pointer = 0;
+
+// bool can_upload_fail = 1;
+
 #include <EEPROM.h>
 #include "ENITIO_ir.h"
 #include "ENITIO_enums.h"
@@ -157,6 +165,7 @@ class TreasureLevel1
   private:
     int HP;
 
+    int this_recover_duration = TREASURE_LEVEL1_RECOVER_DURATION;
     unsigned long lastOpenedTime = 0;
      unsigned long lastActionReceived = 0;
 
@@ -211,16 +220,22 @@ class TreasureLevel1
 
     void handle_Collected() {
       interim_collected_display();
+      
       // inform the server here ...
       TreasureLevel1_NeoPixel.off_FRONT();
       TreasureLevel1_NeoPixel.off_TOP();
 
+
       feedback_collectL1(OG_, ID_);
       delay(2000);
+      // can_upload_fail = 0;
       int player_identifier = OG_ * pow(16, 2) + ID_;
       Serial.printf("TREASURE%d opened by OG %d ID %d\n", ID, OG_, ID_);
       String player_mac_address = dbc.setTreasureAsOpened("TREASURE" + String(ID), OG_, ID_);
       // this code to save the info of the OG collected the treasure
+
+      this_recover_duration = TREASURE_LEVEL1_RECOVER_DURATION*random(1,9);
+
       EEPROM.write(ENABLE_add, 2);
       switch (OG_)
       {
@@ -244,13 +259,16 @@ class TreasureLevel1
         break;
       }
       EEPROM.commit();
+
+      // can_upload_fail = 1;
     };
 
     void recover() {
         // Level1Treasures can recover after a fixed amt of time
         int currStatus = EEPROM.read(ENABLE_add);
         unsigned int currTime = millis();
-        if (currStatus == 2 && currTime - lastOpenedTime > TREASURE_LEVEL1_RECOVER_DURATION) {
+
+        if (currStatus == 2 && currTime - lastOpenedTime > this_recover_duration) {
             Serial.println("Reopening Treasure..");
             EEPROM.write(ENABLE_add, 1);
             HP = TREASURE_LEVEL1_INITIAL_HP;
@@ -371,6 +389,19 @@ TaskHandle_t backgroundTask;
 
 void backgroundTaskCode(void * pvParameters){
   for ( ; ; ) {
+      // if ((failed_kill_feedback > 0) && can_upload_fail){
+      //   int i;
+      //   for (i = 0; i < failed_kill_feedback; i++){
+      //     int this_ID = failed_kill_ID[current_failed_read_pointer];
+      //     int this_OG = failed_kill_OG[current_failed_read_pointer];
+      //     Serial.println(this_ID);
+      //     Serial.println(this_OG);
+      //     dbc.uploadFailedFeedback("TREASURE" + String(ID), this_OG, this_ID);
+      //     current_failed_read_pointer ++ ;
+      //     if(current_failed_read_pointer > 50) current_failed_read_pointer -= 50 ;
+      //     failed_kill_feedback --;
+      //   }
+      // }
       get_game_state();
       delay(10000);
   }
@@ -389,14 +420,13 @@ void setup() {
 
   TreasureLevel1_IR.enable();
   EEPROM.begin(EEPROM_SIZE);
-  int i;
-  for (i=0; i<EEPROM_SIZE; i++){
-    Serial.println(EEPROM.read(i));
-  }
+//  int i;
+//  for (i=0; i<EEPROM_SIZE; i++){
+//    Serial.println(EEPROM.read(i));
+//  }
   // clearEEPROM();
-  if (EEPROM.read(ENABLE_add) != 0) {
-    ID = EEPROM.read(ID_add);
-  }
+  
+  ID = EEPROM.read(ID_add);
 
   TreasureLevel1_EspNOW.enable();
   bool isWiFiConnected = dbc.connectToWiFi();

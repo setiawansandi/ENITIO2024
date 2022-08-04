@@ -46,6 +46,11 @@ struct GAME_CONSTANTS {
     int HTTP_TIMEOUT;
 };
 
+struct FailedFeedbackStatistics {
+    int num_kills;
+    int num_powerups;
+};
+
 class DBConnection {
     private:
         String DATABASE_URL = "http://enitiotreasurehunt.link/";
@@ -135,6 +140,18 @@ class DBConnection {
 
             return game_const;
         };
+
+        FailedFeedbackStatistics retrieveStatisticsFromJSONArray(String json_array) {
+            JSONVar json_obj = JSON.parse(json_array);
+            FailedFeedbackStatistics feedback_stats;
+            if (JSON.typeof(json_obj) == "undefined") {
+                Serial.println("Parsing input failed!");
+                return feedback_stats;
+            }
+            feedback_stats.num_kills = JSON.stringify(json_obj["num_kills"]).toInt();
+            feedback_stats.num_powerups = JSON.stringify(json_obj["num_powerups"]).toInt();
+            return feedback_stats;
+        }
         
         String POST_Request(const char* server, const char* payload) {
             if (WiFi.status() == WL_CONNECTED) {
@@ -214,7 +231,7 @@ class DBConnection {
             return retrieveMACAddressFromJSONArray(jsonArray);
         };
 
-        bool sendGameStatistics(int OG, int ID, int kills, int num_level1_treasure, int num_level2_treasure) {
+        FailedFeedbackStatistics sendGameStatistics(int OG, int ID, int kills, int num_level1_treasure, int num_level2_treasure) {
             String url = DATABASE_URL + "player_score";
             String httpRequestData = "{\"OG\": " + String(OG) + ", \"ID\": " + String(ID) + ", \"num_kills\": " + String(kills);
             httpRequestData = httpRequestData + ", \"level1\": " + String(num_level1_treasure) + ", \"level2\": " + String(num_level2_treasure);
@@ -222,8 +239,14 @@ class DBConnection {
             Serial.println(httpRequestData);
             String jsonArray = POST_Request(url.c_str(), httpRequestData.c_str());
             Serial.println(jsonArray);
-            return jsonArray != "{}";
+            return retrieveStatisticsFromJSONArray(jsonArray);
         };
+
+        bool uploadFailedFeedback(int og, int participant_id) {
+            String url = DATABASE_URL + "player_kill/" + String(og) + "/" + String(participant_id);
+            String jsonArray = GET_Request(url.c_str());
+            return jsonArray != "{}";
+        }
 };
 
 DBConnection dbc;

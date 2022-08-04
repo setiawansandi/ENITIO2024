@@ -20,6 +20,8 @@ feedback_message EspNOW_recvData[recv_msg_buffer_size] = {};
 int recv_data_pointer = 0;
 int recv_data_read_pointer = 0;
 
+bool send_Status = 1 ;
+
 class EspNOW {
   private:
     feedback_message feedbackData;
@@ -77,6 +79,7 @@ class EspNOW {
       
       // Send message via ESP-NOW
       esp_err_t result = esp_now_send(broadcastAddress, (uint8_t *) &feedbackData, sizeof(feedbackData));
+      Serial.print("Current MAC Address:"); Serial.println(WiFi.macAddress());
        
       if (result == ESP_OK) {
         Serial.println("Sent with success");
@@ -84,8 +87,16 @@ class EspNOW {
       else {
         Serial.println("Error sending the data");
       }
-      
+
       esp_now_del_peer(broadcastAddress);
+
+      if((!send_Status) && is_attackee_killed){
+        failed_kill_feedback ++ ;
+        failed_kill_OG[current_failed_save_pointer] = attacker_OG;
+        failed_kill_ID[current_failed_save_pointer] = attacker_ID;
+        current_failed_save_pointer ++ ;
+        if(current_failed_save_pointer >= 50) current_failed_save_pointer -= 50;
+      }
     }
 
     void disable(){
@@ -103,7 +114,14 @@ class EspNOW {
 
     static void OnDataSent(const uint8_t *mac_addr, esp_now_send_status_t status) {
       Serial.print("\r\nLast Packet Send Status:\t");
-      Serial.println(status == ESP_NOW_SEND_SUCCESS ? "Delivery Success" : "Delivery Fail");
+      if (status == ESP_NOW_SEND_SUCCESS){
+        Serial.println("Delivery Success");
+        send_Status = 1 ;
+        }
+      else {
+          Serial.println("Delivery Failed");
+          send_Status = 0 ;
+        }
     }
 
     feedback_message get_feedback_received(){
@@ -178,7 +196,7 @@ class EspNOW {
         else {
           Serial.println("Error sending the data");
         }
-        delay(80);
+        delay(100);
       }
       for (i = 0; i < target_count; i++){
         esp_now_del_peer(bomb_targets[i].peer_addr);

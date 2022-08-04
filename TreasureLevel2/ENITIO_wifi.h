@@ -15,6 +15,7 @@
 const char *ssid = "NTUSECURE";
 int wifi_reconnect_counter = 0;
 int HTTP_TIMEOUT = 30 * 1000;
+int wifi_timeout_or_refused_counter = 0;
 
 struct GAME_CONSTANTS {
     int TREASURE_LEVEL2_INITIAL_HP;
@@ -42,6 +43,7 @@ class DBConnection {
                 payload = http.getString();
             } else {
                 Serial.print("Error code: "); Serial.println(httpResponseCode);
+                wifi_timeout_or_refused_counter++;
             }
             http.end();
             return payload;
@@ -70,6 +72,7 @@ class DBConnection {
                 }
                 else {
                     Serial.print("Error code: "); Serial.println(httpResponseCode);
+                    wifi_timeout_or_refused_counter++;
                 }
                 http.end();
                 return responsePayload;
