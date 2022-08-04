@@ -250,6 +250,8 @@ class TreasureLevel2
         int upload_status = EEPROM.read(uploadSuccess_add);
         if (HP == 0 && upload_status == 0) {
             int curr_upload_fail_counter = wifi_timeout_or_refused_counter;
+            OG_ = EEPROM.read(collectedOG_add);
+            ID_ = EEPROM.read(collectedID_add);
             String player_mac_address = dbc.setTreasureAsOpened(TreasureLevel2_Bluetooth.getTreasureName(), OG_, ID_);
             int new_upload_fail_counter = wifi_timeout_or_refused_counter;
             if (new_upload_fail_counter == curr_upload_fail_counter) {
@@ -506,6 +508,7 @@ void loop() {
       }
       Treasure.receiveAction();
       Treasure.recover();
+      Treasure.resend_treasure_collection();
       break;
   }
 }
