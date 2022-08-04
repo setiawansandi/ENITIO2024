@@ -213,7 +213,7 @@ def reset_score():
         treasure.num_drachen_collected = 0
         treasure.num_eva_collected = 0
         treasure.num_invicta_collected = 0
-
+    db.session.commit()
     return jsonify({"result": "OK"})
 
 
