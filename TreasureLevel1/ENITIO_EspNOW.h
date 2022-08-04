@@ -100,11 +100,11 @@ class EspNOW {
         Serial.println("Delivery Success"); }
       else {
           Serial.println("Delivery Failed");
-          failed_kill_feedback ++ ;
-          failed_kill_OG[current_failed_save_pointer] = mac_addr[3];
-          failed_kill_ID[current_failed_save_pointer] = mac_addr[4];
-          current_failed_save_pointer ++ ;
-          if(current_failed_save_pointer >= 50) current_failed_save_pointer -= 50;
+        // failed_kill_feedback ++ ;
+        // failed_kill_OG[current_failed_save_pointer] = mac_addr[3];
+        // failed_kill_ID[current_failed_save_pointer] = mac_addr[4];
+        // current_failed_save_pointer ++ ;
+        // if(current_failed_save_pointer >= 50) current_failed_save_pointer -= 50;
         }      
      // last_send_status = (status == ESP_NOW_SEND_SUCCESS);
     }

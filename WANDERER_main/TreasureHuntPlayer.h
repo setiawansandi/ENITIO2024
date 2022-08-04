@@ -809,6 +809,8 @@ class TreasureHuntPlayer
             int unrecognized_powerups = this_stats.num_powerups;
             MANA += unrecognized_kills ;
             EEPROM.write(PLAYER_MANA_add, MANA);
+            tempNoti = "   Kills Retrieved   ";
+            tempNoti_start = millis();
             numL1Treasure += unrecognized_powerups ; 
             EEPROM.write(PLAYER_numL1Treasure_add, numL1Treasure);
             int i;
