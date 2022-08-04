@@ -49,3 +49,9 @@ int MAX_ATTACK_MANA;
 int MAX_COLLECT_MANA;
 int BOMB_HP_DEDUCTION;
 int KILL_UPDATE_SERVER_INTERVAL;
+
+int failed_kill_feedback = 0;
+int failed_kill_OG[50] = {};
+int failed_kill_ID[50] = {};
+int current_failed_save_pointer = 0;
+int current_failed_read_pointer = 0;

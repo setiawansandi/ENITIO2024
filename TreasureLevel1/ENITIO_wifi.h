@@ -3,6 +3,7 @@
 #include <HTTPClient.h>
 #include <Arduino_JSON.h>
 #include <esp_now.h>
+#include <esp_wifi.h>
 
 // WiFi Based on https://github.com/martinius96/ESP32-eduroam/blob/master/2022/test_2.0.3/test_2.0.3.ino
 
@@ -93,6 +94,7 @@ class DBConnection {
         bool connectToWiFi() {
             // returns True if connected, False if timeout
             // WiFi.begin(HOME_WIFI_SSID, HOME_WIFI_PASSWORD);
+            
             WiFi.begin(ssid, WPA2_AUTH_PEAP, EAP_ANONYMOUS_IDENTITY, EAP_IDENTITY, EAP_PASSWORD);
             Serial.print("Connecting to Wi-Fi");
             int counter = 0;
@@ -146,8 +148,11 @@ class DBConnection {
         };
 
         bool uploadFailedFeedback(String treasureName, int og, int participant_id) {
-            String url = DATABASE_URL + "upload_failed_treasure_feedback/" + treasureName + "/" + String(og) + "/" + String(participant_id);
-            String jsonArray = GET_Request(url.c_str());
+            String url = DATABASE_URL + "treasurefeedback/" + treasureName + "/" + String(og) + "/" + String(participant_id);
+             String jsonArray = GET_Request(url.c_str());
+//            String httpRequestData = "{\"OG\": " + String(og) + ", \"ID\": " + String(participant_id) + "}";
+//            String jsonArray = POST_Request(url.c_str(), httpRequestData.c_str());
+            Serial.println(jsonArray);
             return jsonArray != "{}";
         }
 };

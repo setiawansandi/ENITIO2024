@@ -242,8 +242,8 @@ class DBConnection {
             return retrieveStatisticsFromJSONArray(jsonArray);
         };
 
-        bool uploadFailedFeedback(String treasureName, int og, int participant_id) {
-            String url = DATABASE_URL + "upload_failed_player_kill/" + String(og) + "/" + String(participant_id);
+        bool uploadFailedFeedback(int og, int participant_id) {
+            String url = DATABASE_URL + "player_kill/" + String(og) + "/" + String(participant_id);
             String jsonArray = GET_Request(url.c_str());
             return jsonArray != "{}";
         }
