@@ -11,6 +11,7 @@
 #include "Profile.h"
 #include "TreasureHuntPlayer.h"
 #include "Admin.h"
+#include "Credits.h"
 
 TaskHandle_t backgroundTask;
 
@@ -104,6 +105,8 @@ void loop() {
   }
   else if (currentProcess == AdminProcess){
     My_Admin.AdminLoop();
+  } else if (currentProcess == CreditProcess) {
+    My_Credits.CreditsLoop();
   }
   else {
     currentProcess = MainMenuProcess;

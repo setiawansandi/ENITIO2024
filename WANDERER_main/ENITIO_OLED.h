@@ -81,6 +81,30 @@ void StartUpDisplay(){
   display.display();
 }
 
+void CreditsDisplay() {
+    display.clearDisplay();
+    display.setTextColor(SSD1306_BLACK, SSD1306_WHITE); // Draw 'inverse' text
+    display.setCursor(0, 0);
+    display.println(F("  ENITIO Tech Team  ")); 
+
+    display.setTextColor(SSD1306_WHITE);
+    display.setTextSize(1); // Draw SIZE
+    display.setCursor(0, 12);
+    display.println("Quan Tran");
+    
+    display.setCursor(0, 22);
+    display.println("Kah Leong");
+    display.setCursor(0, 32);
+    display.println("Siddhangana");
+    display.setCursor(0, 42);
+    display.println("Edmund");
+
+    display.setCursor(10, 56);
+    display.setTextColor(SSD1306_BLACK, SSD1306_WHITE);
+    display.println("(Press to go back)"); 
+    display.display();
+}
+
 class Admin_OLED{
   private:
 
