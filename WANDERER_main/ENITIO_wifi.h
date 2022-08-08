@@ -9,8 +9,8 @@
 
 /**  WiFi Credentials **/
 #define EAP_ANONYMOUS_IDENTITY  ""
-#define EAP_IDENTITY  "quan005@student.main.ntu.edu.sg"
-#define EAP_PASSWORD  "P1&S1bTV!30121976"
+#define EAP_IDENTITY  "@student.main.ntu.edu.sg"
+#define EAP_PASSWORD  ""
 #define HOME_WIFI_SSID "FreeWaffles"
 #define HOME_WIFI_PASSWORD "SponsoredByCKL00"
 
