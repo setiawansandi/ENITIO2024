@@ -1,12 +1,12 @@
 # ENITIO 2022 WANDERer Programming Project
 
-C++ codes for ESP32 and Python codes web server, developed by Team Treasure Hunt, ENITIO 2022, School of Electrical & Electronic Engineering, NTU Singapore.
+Treasure Hunt tech game developed by Tech Team of 2022 ENITIO Freshmen Transition & Orientation Programme, School of Electrical & Electronic Engineering, Nanyang Technological University, Singapore.
 
 ## Credit:
-Quan
+Tran Anh Quan
 
-Kah Leong
+Chan Kah Leong
 
-Siddhangana
+Siddhangana Sinha
 
-Edmund
+Edmund Ang
