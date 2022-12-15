@@ -15,3 +15,6 @@ Edmund Ang
 
 ## Gallery
 ![image info](./IMG20220731114022.jpg)
+![image info](./IMG20220731114707.jpg)
+![image info](./IMG20220731114904.jpg)
+![image info](./IMG20220731115857.jpg)
