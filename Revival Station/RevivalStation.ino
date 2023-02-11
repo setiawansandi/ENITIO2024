@@ -45,7 +45,7 @@ class HealingStation
 {
   private:
     int HP;
-    unsigned long last_healing_request = 0;
+    unsigned long last_revival_request = 0;
     unsigned long timeleftToRecover = 0;
     
   public:
@@ -64,7 +64,7 @@ class HealingStation
     //   if (currStatus == 1 && HealingStation_IR.available()) {
     //       ir_signal IRsignal_ = HealingStation_IR.read();
 
-    //       if (currTime - last_healing_request >= HEALING_STATION_ACTION_RECV_WAIT){
+    //       if (currTime - last_revival_request >= HEALING_STATION_ACTION_RECV_WAIT){
     //           Serial.println("Initiate Healing Request");
     //           CLAN_ = IRsignal_.address.digit2;
     //           ID_ = IRsignal_.address.digit0 + (IRsignal_.address.digit1 << 4);
@@ -74,7 +74,7 @@ class HealingStation
         
     //           Serial.printf("%d %d %d %d \n", action_, En_, ID_, CLAN_);
       
-    //           if ((action_ == collect) || (action_ == heal_request)) {
+    //           if ((action_ == collect) || (action_ == revive)) {
     //               heal_player(CLAN_, ID_);
     //               HP--;
     //               Serial.print(HP); Serial.println(" Before Station Closes");
@@ -87,10 +87,10 @@ class HealingStation
     //                   EEPROM.commit();
     //               }
     //           }
-    //           last_healing_request = currTime;
+    //           last_revival_request = currTime;
     //       }
     //   } else if (currStatus == 2) {
-    //       timeleftToRecover = max(int(HEALING_STATION_RECOVER_DURATION - (currTime - last_healing_request)), 0);
+    //       timeleftToRecover = max(int(HEALING_STATION_RECOVER_DURATION - (currTime - last_revival_request)), 0);
     //       if (timeleftToRecover == 0) {
     //         Serial.println("Reopening Healing Station");
     //         HP = HEALING_STATION_INITIAL_HP;
@@ -109,7 +109,7 @@ class HealingStation
         handleJoystick();
       }
       else if (currStatus == 2){
-        timeleftToRecover = max(int(HEALING_STATION_RECOVER_DURATION - (currTime - last_healing_request)), 0);
+        timeleftToRecover = max(int(HEALING_STATION_RECOVER_DURATION - (currTime - last_revival_request)), 0);
         display_no_hp(timeleftToRecover);
         if (timeleftToRecover == 0) {
           Serial.println("Reopening Healing Station");
@@ -137,7 +137,7 @@ class HealingStation
                   HealingStation_NeoPixel.off_TOP();
                   EEPROM.write(ENABLE_add, 2);
                   EEPROM.commit();
-                  last_healing_request = millis();
+                  last_revival_request = millis();
               }
               break;
 
@@ -159,7 +159,7 @@ class HealingStation
 
       command_digits.digit0 = heal;
 
-      command_digits.digit1 = HEAL_MULTIPLIER;
+      command_digits.digit1 = revival_MULTIPLIER;
 
       ir_signal send_signal;
 
