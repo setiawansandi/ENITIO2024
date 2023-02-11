@@ -159,7 +159,7 @@ class HealingStation
 
       command_digits.digit0 = heal;
 
-      command_digits.digit1 = HEAL_MULTIPLIER;
+      command_digits.digit1 = revival_MULTIPLIER;
 
       ir_signal send_signal;
 
