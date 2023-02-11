@@ -11,8 +11,8 @@
 #define EAP_ANONYMOUS_IDENTITY  ""
 #define EAP_IDENTITY  "@student.main.ntu.edu.sg"
 #define EAP_PASSWORD  ""
-#define HOME_WIFI_SSID "FreeWaffles"
-#define HOME_WIFI_PASSWORD "SponsoredByCKL00"
+#define HOME_WIFI_SSID "garage@eee"
+#define HOME_WIFI_PASSWORD "garage@eee"
 
 const char *ssid = "NTUSECURE";
 int wifi_reconnect_counter = 0;
@@ -54,10 +54,11 @@ struct FailedFeedbackStatistics {
 
 class DBConnection {
     private:
-        String DATABASE_URL = "https://script.google.com/macros/s/AKfycbzarqhbnCHzChpjNQIWEjc84ev_uOb5rSe4gGifaBnETFog-7u3vHJCMGhv29MGjf8/exec?";
+        String DATABASE_URL = "https://script.google.com/macros/s/AKfycbxSQhiIBxEUvF-Rkhtp3Y0pYaH6L8wQwVjJa5WZ5px5rO0pkmPItvXHorNmOkvK5mBl/exec?";
         String GET_Request(const char* server) {
             HTTPClient http;
             http.setTimeout(HTTP_TIMEOUT);
+            http.setFollowRedirects(HTTPC_STRICT_FOLLOW_REDIRECTS);
             http.begin(server);
             int httpResponseCode = http.GET();
         
@@ -123,8 +124,10 @@ class DBConnection {
         
         String POST_Request(const char* server, const char* payload) {
             if (WiFi.status() == WL_CONNECTED) {
+                Serial.println(server);
                 HTTPClient http;
                 http.setTimeout(HTTP_TIMEOUT);
+                http.setFollowRedirects(HTTPC_STRICT_FOLLOW_REDIRECTS);
                 http.begin(server);
                 http.addHeader("Content-Type", "application/json");
                 int httpResponseCode = http.POST(payload);
@@ -143,8 +146,8 @@ class DBConnection {
     
     public:
         void startWiFiConnection() {
-            // WiFi.begin(HOME_WIFI_SSID, HOME_WIFI_PASSWORD);
-            WiFi.begin(ssid, WPA2_AUTH_PEAP, EAP_ANONYMOUS_IDENTITY, EAP_IDENTITY, EAP_PASSWORD);
+            WiFi.begin(HOME_WIFI_SSID, HOME_WIFI_PASSWORD);
+            // WiFi.begin(ssid, WPA2_AUTH_PEAP, EAP_ANONYMOUS_IDENTITY, EAP_IDENTITY, EAP_PASSWORD);
         }
         bool connectToWiFi() {
             // returns True if connected, False if timeout
@@ -165,10 +168,12 @@ class DBConnection {
         };
 
         bool registerWanderer(int CLAN, String mac_addr) {
-            String url = DATABASE_URL + "register";
-            String httpRequestData = "{\"clan\": " + String(CLAN) + ", \"mac_address\": \"" + mac_addr + "\" }";
-            Serial.println(httpRequestData);
-            String jsonArray = POST_Request(url.c_str(), httpRequestData.c_str());
+            // String url = DATABASE_URL + "register";
+            // String httpRequestData = "{\"clan\": " + String(CLAN) + ", \"mac_address\": \"" + mac_addr + "\" }";
+            // Serial.println(httpRequestData);
+            // String jsonArray = POST_Request(url.c_str(), httpRequestData.c_str());
+            String url = DATABASE_URL + "register&clan=" + String(CLAN) + "&mac_address=" + mac_addr;
+            String jsonArray = GET_Request(url.c_str());
             Serial.println(jsonArray);
             return jsonArray != "{\"status\":\"OK\"}";
         };
@@ -194,12 +199,15 @@ class DBConnection {
         };
 
         FailedFeedbackStatistics sendGameStatistics(int CLAN, int ID, int kills, int num_level1_treasure, int num_level2_treasure) {
-            String url = DATABASE_URL + "player_score";
+            /* String url = DATABASE_URL + "player_score";
             String httpRequestData = "{\"clan\": " + String(CLAN) + ", \"id\": " + String(ID) + ", \"num_kills\": " + String(kills);
             httpRequestData = httpRequestData + ", \"level1\": " + String(num_level1_treasure) + ", \"level2\": " + String(num_level2_treasure);
             httpRequestData = httpRequestData + "}";
             Serial.println(httpRequestData);
-            String jsonArray = POST_Request(url.c_str(), httpRequestData.c_str());
+            String jsonArray = POST_Request(url.c_str(), httpRequestData.c_str()); */
+            String url = DATABASE_URL + "player_score&clan=" + String(CLAN) + "&id=" + String(ID) + "&num_kills=" + String(kills);
+            url = url + "&level1=" + String(num_level1_treasure) + "&level2=" + String(num_level2_treasure);
+            String jsonArray = GET_Request(url.c_str());
             Serial.println(jsonArray);
             return retrieveStatisticsFromJSONArray(jsonArray);
         };
@@ -212,3 +220,4 @@ class DBConnection {
 };
 
 DBConnection dbc;
+
