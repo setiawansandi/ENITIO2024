@@ -128,8 +128,8 @@ class DBConnection {
             return retrieveParameterFromJSONArray("mac_address", jsonArray);
         };
 
-        String setTreasureAsOpened(String treasureName, int og, int participant_id) {
-            String url = DATABASE_URL + "treasure/2/" + treasureName + "/" + String(og) + "/" + String(participant_id);
+        String setTreasureAsOpened(String treasureName, int CLAN, int participant_id) {
+            String url = DATABASE_URL + "treasure/2/" + treasureName + "/" + String(CLAN) + "/" + String(participant_id);
             String jsonArray = GET_Request(url.c_str());
             return retrieveParameterFromJSONArray("mac_address", jsonArray);
         };
