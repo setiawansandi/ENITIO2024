@@ -37,10 +37,10 @@ struct GAME_CONSTANTS {
     int GL_MaxHP;
     int PARTICIPANT_MaxEn;
     int GL_MaxEn;
-    int INITIAL_MANA;
-    int HEAL_MANA;
-    int MAX_ATTACK_MANA;
-    int MAX_COLLECT_MANA;
+    int INITIAL_MULTIPLIER;
+    int HEAL_MULTIPLIER;
+    int MAX_ATTACK_MULTIPLIER;
+    int MAX_COLLECT_MULTIPLIER;
     int BOMB_HP_DEDUCTION;
     int KILL_UPDATE_SERVER_INTERVAL;
     int HTTP_TIMEOUT;
@@ -130,10 +130,10 @@ class DBConnection {
             game_const.GL_MaxHP = JSON.stringify(json_obj["GL_MaxHP"]).toInt();
             game_const.PARTICIPANT_MaxEn = JSON.stringify(json_obj["PARTICIPANT_MaxEn"]).toInt();
             game_const.GL_MaxEn = JSON.stringify(json_obj["GL_MaxEn"]).toInt();
-            game_const.INITIAL_MANA = JSON.stringify(json_obj["INITIAL_MANA"]).toInt();
-            game_const.HEAL_MANA = JSON.stringify(json_obj["HEAL_MANA"]).toInt();
-            game_const.MAX_ATTACK_MANA = JSON.stringify(json_obj["MAX_ATTACK_MANA"]).toInt();
-            game_const.MAX_COLLECT_MANA = JSON.stringify(json_obj["MAX_COLLECT_MANA"]).toInt();
+            game_const.INITIAL_MULTIPLIER = JSON.stringify(json_obj["INITIAL_MULTIPLIER"]).toInt();
+            game_const.HEAL_MULTIPLIER = JSON.stringify(json_obj["HEAL_MULTIPLIER"]).toInt();
+            game_const.MAX_ATTACK_MULTIPLIER = JSON.stringify(json_obj["MAX_ATTACK_MULTIPLIER"]).toInt();
+            game_const.MAX_COLLECT_MULTIPLIER = JSON.stringify(json_obj["MAX_COLLECT_MULTIPLIER"]).toInt();
             game_const.BOMB_HP_DEDUCTION = JSON.stringify(json_obj["BOMB_HP_DEDUCTION"]).toInt();
             game_const.KILL_UPDATE_SERVER_INTERVAL = JSON.stringify(json_obj["KILL_UPDATE_SERVER_INTERVAL"]).toInt();
             game_const.HTTP_TIMEOUT = JSON.stringify(json_obj["HTTP_TIMEOUT"]).toInt();
@@ -196,9 +196,9 @@ class DBConnection {
             return true;
         };
 
-        bool registerWanderer(int OG, String mac_addr) {
+        bool registerWanderer(int CLAN, String mac_addr) {
             String url = DATABASE_URL + "player_registration";
-            String httpRequestData = "{\"OG\": " + String(OG) + ", \"mac_address\": \"" + mac_addr + "\" }";
+            String httpRequestData = "{\"CLAN\": " + String(CLAN) + ", \"mac_address\": \"" + mac_addr + "\" }";
             Serial.println(httpRequestData);
             String jsonArray = POST_Request(url.c_str(), httpRequestData.c_str());
             Serial.println(jsonArray);
@@ -212,8 +212,8 @@ class DBConnection {
             return gameStatus == "1";
         }
 
-        int getPlayerID(int OG, String mac_addr) {
-            String url = DATABASE_URL + "player_id/" + String(OG) + "/" + mac_addr;
+        int getPlayerID(int CLAN, String mac_addr) {
+            String url = DATABASE_URL + "player_id/" + String(CLAN) + "/" + mac_addr;
             String jsonArray = GET_Request(url.c_str());
             return retrieveParameterFromJSONArray("player_id", jsonArray).toInt();
         };
@@ -231,9 +231,9 @@ class DBConnection {
             return retrieveMACAddressFromJSONArray(jsonArray);
         };
 
-        FailedFeedbackStatistics sendGameStatistics(int OG, int ID, int kills, int num_level1_treasure, int num_level2_treasure) {
+        FailedFeedbackStatistics sendGameStatistics(int CLAN, int ID, int kills, int num_level1_treasure, int num_level2_treasure) {
             String url = DATABASE_URL + "player_score";
-            String httpRequestData = "{\"OG\": " + String(OG) + ", \"ID\": " + String(ID) + ", \"num_kills\": " + String(kills);
+            String httpRequestData = "{\"CLAN\": " + String(CLAN) + ", \"ID\": " + String(ID) + ", \"num_kills\": " + String(kills);
             httpRequestData = httpRequestData + ", \"level1\": " + String(num_level1_treasure) + ", \"level2\": " + String(num_level2_treasure);
             httpRequestData = httpRequestData + "}";
             Serial.println(httpRequestData);
