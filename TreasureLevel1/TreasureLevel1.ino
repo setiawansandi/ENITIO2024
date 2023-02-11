@@ -2,7 +2,7 @@
 // comment out the clearEEPROM() function when used on real game
 
 // int failed_kill_feedback = 0;
-// int failed_kill_OG[50] = {};
+// int failed_kill_CLAN[50] = {};
 // int failed_kill_ID[50] = {};
 // int current_failed_save_pointer = 0;
 // int current_failed_read_pointer = 0;
@@ -171,7 +171,7 @@ class TreasureLevel1
 
   public:
     
-    int OG_, ID_, En_, MANA_, action_; 
+    int CLAN_, ID_, En_, MULTIPLIER_, action_; 
 
     void init_treasure(){
       EEPROM.write(ENABLE_add, 1);
@@ -186,15 +186,15 @@ class TreasureLevel1
          unsigned long currTime = millis();
 
          if ((currStatus == 1) && (currTime - lastActionReceived > TREASURE_LEVEL1_ACTION_RECV_WAIT)){
-          OG_ = IRsignal_.address.digit2;
+          CLAN_ = IRsignal_.address.digit2;
          ID_ = IRsignal_.address.digit0 + (IRsignal_.address.digit1 << 4);
 
   
-           MANA_ = IRsignal_.command.digit1;
+           MULTIPLIER_ = IRsignal_.command.digit1;
            action_ = IRsignal_.command.digit0;
            lastActionReceived = currTime;
       
-           Serial.printf("%d %d %d %d \n", action_, MANA_, ID_, OG_);
+           Serial.printf("%d %d %d %d \n", action_, MULTIPLIER_, ID_, CLAN_);
     
            if (action_ == collect) {
             lastOpenedTime = millis();
@@ -204,16 +204,16 @@ class TreasureLevel1
          }
       };
 
-    void feedback_collectL1(int OG_, int ID_){
+    void feedback_collectL1(int CLAN_, int ID_){
       unsigned long currTime = millis();
       // randomSeed(currTime);
       int powerup_ID = random(1,6);
 
-       TreasureLevel1_EspNOW.send_data(2, OG_, ID_, ID, powerup_ID);
+       TreasureLevel1_EspNOW.send_data(2, CLAN_, ID_, ID, powerup_ID);
 
 //       while(!last_send_status){
 //         delay(200);
-//         TreasureLevel1_EspNOW.send_data(2, OG_, ID_, ID, powerup_ID);
+//         TreasureLevel1_EspNOW.send_data(2, CLAN_, ID_, ID, powerup_ID);
 //       }
 
     } ;
@@ -226,18 +226,18 @@ class TreasureLevel1
       TreasureLevel1_NeoPixel.off_TOP();
 
 
-      feedback_collectL1(OG_, ID_);
+      feedback_collectL1(CLAN_, ID_);
       delay(2000);
       // can_upload_fail = 0;
-      int player_identifier = OG_ * pow(16, 2) + ID_;
-      Serial.printf("TREASURE%d opened by OG %d ID %d\n", ID, OG_, ID_);
-      String player_mac_address = dbc.setTreasureAsOpened("TREASURE" + String(ID), OG_, ID_);
-      // this code to save the info of the OG collected the treasure
+      int player_identifier = CLAN_ * pow(16, 2) + ID_;
+      Serial.printf("TREASURE%d opened by CLAN %d ID %d\n", ID, CLAN_, ID_);
+      String player_mac_address = dbc.setTreasureAsOpened("TREASURE" + String(ID), CLAN_, ID_);
+      // this code to save the info of the CLAN collected the treasure
 
       this_recover_duration = TREASURE_LEVEL1_RECOVER_DURATION*random(1,9);
 
       EEPROM.write(ENABLE_add, 2);
-      switch (OG_)
+      switch (CLAN_)
       {
       case ALATAR:
         EEPROM.write(ALATAR_add, EEPROM.read(ALATAR_add) + 1);
@@ -339,14 +339,14 @@ class TreasureLevel1
         display.println("  Resetting soon...  ");
 
         display.setCursor(0, 46);
-        if (OG_ == ALATAR)
-          display.println("OG collected: ALATAR");
-        else if (OG_ == DRACHEN)
-          display.println("OG collected: DRACHEN");
-        else if (OG_ == EVA)
-          display.println("OG collected: EVA");
-        else if (OG_ == INVICTA)
-          display.println("OG collected: INVICTA");
+        if (CLAN_ == ALATAR)
+          display.println("CLAN collected: ALATAR");
+        else if (CLAN_ == DRACHEN)
+          display.println("CLAN collected: DRACHEN");
+        else if (CLAN_ == EVA)
+          display.println("CLAN collected: EVA");
+        else if (CLAN_ == INVICTA)
+          display.println("CLAN collected: INVICTA");
         
         display.display();
       };
@@ -393,10 +393,10 @@ void backgroundTaskCode(void * pvParameters){
       //   int i;
       //   for (i = 0; i < failed_kill_feedback; i++){
       //     int this_ID = failed_kill_ID[current_failed_read_pointer];
-      //     int this_OG = failed_kill_OG[current_failed_read_pointer];
+      //     int this_CLAN = failed_kill_CLAN[current_failed_read_pointer];
       //     Serial.println(this_ID);
-      //     Serial.println(this_OG);
-      //     dbc.uploadFailedFeedback("TREASURE" + String(ID), this_OG, this_ID);
+      //     Serial.println(this_CLAN);
+      //     dbc.uploadFailedFeedback("TREASURE" + String(ID), this_CLAN, this_ID);
       //     current_failed_read_pointer ++ ;
       //     if(current_failed_read_pointer > 50) current_failed_read_pointer -= 50 ;
       //     failed_kill_feedback --;
