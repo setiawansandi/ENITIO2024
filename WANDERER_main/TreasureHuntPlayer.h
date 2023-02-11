@@ -105,7 +105,7 @@ class TreasureHuntPlayer
     
     void setup_initial_state(int id, int CLAN, bool isGL) {
       ID = id;
-      CLAN = CLAN ;
+      CLAN = CLAN;
       _isGL = isGL;
 
       newMACAddress_AP[3] = CLAN;
@@ -127,14 +127,14 @@ class TreasureHuntPlayer
           En = PARTICIPANT_MaxEn;
           MaxHP = PARTICIPANT_MaxHP;
           MaxEn = PARTICIPANT_MaxEn;
-          Multiplier = INITIAL_Multiplier;
+          Multiplier = INITIAL_MULTIPLIER;
         }
         else {
           HP = GL_MaxHP;
           En = GL_MaxEn;
           MaxHP = GL_MaxHP;
           MaxEn = GL_MaxEn;
-          Multiplier = INITIAL_Multiplier;
+          Multiplier = INITIAL_MULTIPLIER;
         }
 
         EEPROM.write(PLAYER_enable_add, 1);
@@ -142,7 +142,7 @@ class TreasureHuntPlayer
         EEPROM.write(PLAYER_EN_add, En);
         EEPROM.write(PLAYER_MaxHP_add, MaxHP);
         EEPROM.write(PLAYER_MaxEn_add, MaxEn);
-        EEPROM.write(PLAYER_Multiplier_add, Multiplier);
+        EEPROM.write(PLAYER_MULTIPLIER_add, Multiplier);
         EEPROM.commit();
       }
       else {
@@ -150,13 +150,13 @@ class TreasureHuntPlayer
         En = EEPROM.read(PLAYER_EN_add);
         MaxHP = EEPROM.read(PLAYER_MaxHP_add);
         MaxEn = EEPROM.read(PLAYER_MaxEn_add);
-        MULTIPLIER = EEPROM.read(PLAYER_MULTIPLIER_add);
+        Multiplier = EEPROM.read(PLAYER_MULTIPLIER_add);
         numKilled = EEPROM.read(PLAYER_numKilled_add);
         numL1Treasure = EEPROM.read(PLAYER_numL1Treasure_add);
         numL2Treasure = EEPROM.read(PLAYER_numL2Treasure_add);
         num_bonus6HP = EEPROM.read(PLAYER_num_bonus6HP_add);
         num_bonus1MaxEn = EEPROM.read(PLAYER_num_bonus1MaxEn_add);
-        num_bonus1MULTIPLIER = EEPROM.read(PLAYER_num_bonus1MULTIPLIER_add);
+        num_bonus1Multiplier = EEPROM.read(PLAYER_num_bonus1MULTIPLIER_add);
         num_fiveminx2EnRegen = EEPROM.read(PLAYER_num_fiveminx2EnRegen_add);
         num_bomb = EEPROM.read(PLAYER_num_bomb_add);
       }
@@ -179,11 +179,11 @@ class TreasureHuntPlayer
         switch (action)
         {
         case attack:
-          this_action_multiplier = min(MULTIPLIER, MAX_ATTACK_MULTIPLIER);
+          this_action_multiplier = min(Multiplier, MAX_ATTACK_MULTIPLIER);
           break;
 
         case collect:
-          this_action_multiplier = min(MULTIPLIER, MAX_COLLECT_MULTIPLIER);
+          this_action_multiplier = min(Multiplier, MAX_COLLECT_MULTIPLIER);
           break;
 
         case heal:
@@ -207,22 +207,6 @@ class TreasureHuntPlayer
 
         En--;
         EEPROM.write(PLAYER_EN_add, En);
-      }
-      else if ((action == collect) && (En == 0)){
-        uint16_hex_digits address_digits, command_digits;
-
-        address_digits.digit0 = ID;
-        address_digits.digit2 = CLAN;
-
-        command_digits.digit0 = heal_request;
-        
-        ir_signal send_signal;
-        send_signal.address = address_digits;
-        send_signal.command = command_digits;
-
-        Player_IR.send(send_signal, 1);
-
-        start_receiving_feedback = millis();
       }
     };
 
@@ -265,9 +249,9 @@ class TreasureHuntPlayer
             Player_Bluetooth.stopSpreadingVirus();
             infectedWithVirus = 0;
         }
-        if (MULTIPLIER > 1) {
-          MULTIPLIER = 1;
-          EEPROM.write(PLAYER_MULTIPLIER_add, MULTIPLIER);
+        if (Multiplier > 1) {
+          Multiplier = 1;
+          EEPROM.write(PLAYER_MULTIPLIER_add, Multiplier);
         }
         
     
@@ -365,7 +349,7 @@ class TreasureHuntPlayer
           if (!_isGL) 
             action = collect;
           else
-            action = heal ;
+            action = heal;
           Player_joystick.set_state();
           break;
 
@@ -466,11 +450,11 @@ class TreasureHuntPlayer
         break;
 
       case bonus1MULTIPLIER:
-        if (num_bonus1MULTIPLIER > 0){
-          num_bonus1MULTIPLIER -- ;
-          MULTIPLIER++;
-          EEPROM.write(PLAYER_num_bonus1MULTIPLIER_add, num_bonus1MULTIPLIER);
-          EEPROM.write(PLAYER_MULTIPLIER_add, MULTIPLIER);
+        if (num_bonus1Multiplier > 0){
+          num_bonus1Multiplier -- ;
+          Multiplier++;
+          EEPROM.write(PLAYER_num_bonus1MULTIPLIER_add, num_bonus1Multiplier);
+          EEPROM.write(PLAYER_MULTIPLIER_add, Multiplier);
         }
         break; 
 
@@ -564,9 +548,9 @@ class TreasureHuntPlayer
           if (feedbackData.is_attackee_killed == true) {
             tempNoti = " You killed a person ";
             tempNoti_start = millis();
-            MULTIPLIER++;
+            Multiplier++;
             numKilled ++ ;
-            EEPROM.write(PLAYER_MULTIPLIER_add, MULTIPLIER);
+            EEPROM.write(PLAYER_MULTIPLIER_add, Multiplier);
             EEPROM.write(PLAYER_numKilled_add, numKilled);
           }
           else {
@@ -610,8 +594,8 @@ class TreasureHuntPlayer
             break;
 
           case bonus1MULTIPLIER:
-            num_bonus1MULTIPLIER ++ ;
-            EEPROM.write(PLAYER_num_bonus1MULTIPLIER_add, num_bonus1MULTIPLIER);
+            num_bonus1Multiplier ++ ;
+            EEPROM.write(PLAYER_num_bonus1MULTIPLIER_add, num_bonus1Multiplier);
             tempNoti = "   PowerUp: +1 MULTIPLIER  ";
             break;
 
@@ -639,9 +623,9 @@ class TreasureHuntPlayer
           if (feedbackData.is_attackee_killed == true) {
             temp_bomb_killed += 1;
             temp_bomb_attacked += 1;
-            MULTIPLIER++;
+            Multiplier++;
             numKilled ++ ;
-            EEPROM.write(PLAYER_MULTIPLIER_add, MULTIPLIER);
+            EEPROM.write(PLAYER_MULTIPLIER_add, Multiplier);
             EEPROM.write(PLAYER_numKilled_add, numKilled);
           }
           else {
@@ -748,7 +732,7 @@ class TreasureHuntPlayer
           TreasureHunt_OLED.display_mainPage(HP, En, noti_to_display, lastPageNav);
           break;
         case infoPage:
-          TreasureHunt_OLED.display_infoPage(CLAN, ID, MULTIPLIER, MaxEn, noti_to_display, lastPageNav);
+          TreasureHunt_OLED.display_infoPage(CLAN, ID, Multiplier, MaxEn, noti_to_display, lastPageNav);
           break;
        case achievementPage:
          TreasureHunt_OLED.display_achievementPage(numKilled, numL1Treasure, numL2Treasure, noti_to_display, lastPageNav);
@@ -756,7 +740,7 @@ class TreasureHuntPlayer
         case powerupPage:
           TreasureHunt_OLED.display_powerupPage(num_bonus6HP, 
                                               num_bonus1MaxEn,
-                                              num_bonus1MULTIPLIER,
+                                              num_bonus1Multiplier,
                                               num_fiveminx2EnRegen,
                                               num_bomb,
                                               noti_to_display,
@@ -822,8 +806,8 @@ class TreasureHuntPlayer
             this_stats = dbc.sendGameStatistics(CLAN, ID, numKilled, numL1Treasure, numL2Treasure);
             int unrecognized_kills = this_stats.num_kills;
             int unrecognized_powerups = this_stats.num_powerups;
-            MULTIPLIER += unrecognized_kills ;
-            EEPROM.write(PLAYER_MULTIPLIER_add, MULTIPLIER);
+            Multiplier += unrecognized_kills ;
+            EEPROM.write(PLAYER_MULTIPLIER_add, Multiplier);
             tempNoti = "   Kills Retrieved   ";
             tempNoti_start = millis();
             numL1Treasure += unrecognized_powerups ; 
@@ -844,8 +828,8 @@ class TreasureHuntPlayer
                   break;
 
                 case bonus1MULTIPLIER:
-                  num_bonus1MULTIPLIER ++ ;
-                  EEPROM.write(PLAYER_num_bonus1MULTIPLIER_add, num_bonus1MULTIPLIER);
+                  num_bonus1Multiplier ++ ;
+                  EEPROM.write(PLAYER_num_bonus1MULTIPLIER_add, num_bonus1Multiplier);
                   break;
 
                 case fiveminx2EnRegen:

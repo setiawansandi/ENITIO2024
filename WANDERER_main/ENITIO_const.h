@@ -49,7 +49,7 @@ int MAX_COLLECT_MULTIPLIER;
 int BOMB_HP_DEDUCTION;
 int KILL_UPDATE_SERVER_INTERVAL;
 int revival_MULTIPLIER;
-
+int HEAL_MULTIPLIER;
 
 int failed_kill_feedback = 0;
 int failed_kill_CLAN[50] = {};

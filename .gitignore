@@ -3,3 +3,7 @@ web_server/venv/
 web_server/instance/
 *.pyc
 __pycache__/
+.vscode/
+WANDERER_main/debug.cfg
+WANDERER_main/debug_custom.json
+WANDERER_main/esp32.svd
