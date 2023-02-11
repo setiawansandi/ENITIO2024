@@ -17,9 +17,10 @@ int wifi_reconnect_counter = 0;
 int HTTP_TIMEOUT = 30 * 1000;
 
 struct GAME_CONSTANTS {
-    int HEALING_STATION_INITIAL_HP;
-    int HEALING_STATION_ACTION_RECV_WAIT;
-    int HEALING_STATION_RECOVER_DURATION;
+    int REVIVAL_STATION_INITIAL_HP;
+    int REVIVAL_STATION_ACTION_RECV_WAIT;
+    int REVIVAL_STATION_RECOVER_DURATION;
+    int REVIVAL_STATION_MULTIPLIER;
     int HTTP_TIMEOUT;
 };
 
@@ -80,9 +81,10 @@ class DBConnection {
                 Serial.println("Parsing input failed!");
                 return game_const;
             }
-            game_const.HEALING_STATION_INITIAL_HP = JSON.stringify(json_obj["HEALING_STATION_INITIAL_HP"]).toInt();
-            game_const.HEALING_STATION_ACTION_RECV_WAIT = JSON.stringify(json_obj["HEALING_STATION_ACTION_RECV_WAIT"]).toInt();
-            game_const.HEALING_STATION_RECOVER_DURATION = JSON.stringify(json_obj["HEALING_STATION_RECOVER_DURATION"]).toInt();
+            game_const.REVIVAL_STATION_INITIAL_HP = JSON.stringify(json_obj["REVIVAL_STATION_INITIAL_HP"]).toInt();
+            game_const.REVIVAL_STATION_ACTION_RECV_WAIT = JSON.stringify(json_obj["REVIVAL_STATION_ACTION_RECV_WAIT"]).toInt();
+            game_const.REVIVAL_STATION_RECOVER_DURATION = JSON.stringify(json_obj["REVIVAL_STATION_RECOVER_DURATION"]).toInt();
+            game_const.REVIVAL_STATION_MULTIPLIER = JSON.stringify(json_obj["REVIVAL_MULTIPLIER"]).toInt();
             game_const.HTTP_TIMEOUT = JSON.stringify(json_obj["HTTP_TIMEOUT"]).toInt();
             return game_const;
         };
