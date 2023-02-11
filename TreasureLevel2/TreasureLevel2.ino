@@ -101,7 +101,7 @@ void StartUpDisplay(){
 #define ENABLE_add 0 // 0 means Treasure has not been initialized, 1 means already initialized
 #define ID_add 1
 #define HP_add 2
-#define collectedOG_add 3
+#define collectedCLAN_add 3
 #define collectedID_add 4
 #define uploadSuccess_add 5
 
@@ -127,7 +127,7 @@ class TreasureLevel2
 
   public:
     
-    int OG_, ID_, En_, MANA_, action_; 
+    int CLAN_, ID_, En_, MULTIPLIER_, action_; 
 
     void setup_initial_state(){
       if (id > TREASURE_VIRUS_THRESHOLD) _isVirus = true;
@@ -141,7 +141,7 @@ class TreasureLevel2
       else{
         HP = EEPROM.read(HP_add);
         if (HP == 0) {
-          OG_ = EEPROM.read(collectedOG_add);
+        CLAN_ = EEPROM.read(collectedCLAN_add);
         }
       }
 
@@ -158,9 +158,9 @@ class TreasureLevel2
       
     }
 
-    void feedback_collectL2(int OG_, int ID_){
+    void feedback_collectL2(int CLAN_, int ID_){
       bool killed = (HP == 0);
-      TreasureLevel2_EspNOW.send_data(3, OG_, ID_, id, killed);
+      TreasureLevel2_EspNOW.send_data(3, CLAN_, ID_, id, killed);
     } ;
 
     void receiveAction() {
@@ -170,19 +170,19 @@ class TreasureLevel2
            ir_signal IRsignal_ = TreasureLevel2_IR.read();
 
            if (currTime - lastActionReceived > TREASURE_LEVEL2_ACTION_RECV_WAIT) {
-             OG_ = IRsignal_.address.digit2;
+             CLAN_ = IRsignal_.address.digit2;
              ID_ = IRsignal_.address.digit0 + (IRsignal_.address.digit1 << 4);
 
-             MANA_ = IRsignal_.command.digit1;
+             MULTIPLIER_ = IRsignal_.command.digit1;
              action_ = IRsignal_.command.digit0;
         
-             Serial.printf("%d %d %d %d %d\n", action_, MANA_, ID_, OG_, HP);
+             Serial.printf("%d %d %d %d %d\n", action_, MULTIPLIER_, ID_, CLAN_, HP);
 
              lastActionReceived = currTime;
       
              if (action_ == collect) {
-               HP = max(HP-MANA_, 0);
-               feedback_collectL2(OG_, ID_);
+               HP = max(HP-MULTIPLIER_, 0);
+               feedback_collectL2(CLAN_, ID_);
                EEPROM.write(HP_add, HP);
                EEPROM.commit(); 
                Serial.printf("Current HP: %d\n", HP);
@@ -222,9 +222,9 @@ class TreasureLevel2
       TreasureLevel2_Bluetooth.stopAdvertisingService(pAvailableService);
       delay(2000);
       Serial.print("TREASURE NAME:"); Serial.println(TreasureLevel2_Bluetooth.getTreasureName());
-      Serial.printf("OG: %d ID: %d\n", OG_, ID_);
+      Serial.printf("CLAN: %d ID: %d\n", CLAN_, ID_);
       // this code to save the info of the player collected the treasure to resend if required
-      EEPROM.write(collectedOG_add, OG_);
+      EEPROM.write(collectedCLAN_add, CLAN_);
       EEPROM.write(collectedID_add, ID_);
       EEPROM.commit(); 
       // broadcast virus here ...
@@ -238,7 +238,7 @@ class TreasureLevel2
 
       // upload to server
       int curr_upload_fail_counter = wifi_timeout_or_refused_counter;
-      String player_mac_address = dbc.setTreasureAsOpened(TreasureLevel2_Bluetooth.getTreasureName(), OG_, ID_);
+      String player_mac_address = dbc.setTreasureAsOpened(TreasureLevel2_Bluetooth.getTreasureName(), CLAN_, ID_);
       int new_upload_fail_counter = wifi_timeout_or_refused_counter;
       if (new_upload_fail_counter == curr_upload_fail_counter) {
         EEPROM.write(uploadSuccess_add, 1);
@@ -250,9 +250,9 @@ class TreasureLevel2
         int upload_status = EEPROM.read(uploadSuccess_add);
         if (HP == 0 && upload_status == 0) {
             int curr_upload_fail_counter = wifi_timeout_or_refused_counter;
-            OG_ = EEPROM.read(collectedOG_add);
+            CLAN_ = EEPROM.read(collectedCLAN_add);
             ID_ = EEPROM.read(collectedID_add);
-            String player_mac_address = dbc.setTreasureAsOpened(TreasureLevel2_Bluetooth.getTreasureName(), OG_, ID_);
+            String player_mac_address = dbc.setTreasureAsOpened(TreasureLevel2_Bluetooth.getTreasureName(), CLAN_, ID_);
             int new_upload_fail_counter = wifi_timeout_or_refused_counter;
             if (new_upload_fail_counter == curr_upload_fail_counter) {
                 EEPROM.write(uploadSuccess_add, 1);
@@ -346,14 +346,14 @@ class TreasureLevel2
         display.setCursor(0, 46);
         
 
-        if (OG_ == ALATAR)
-          display.println("OG collected: ALATAR");
-        else if (OG_ == DRACHEN)
-          display.println("OG collected: DRACHEN");
-        else if (OG_ == EVA)
-          display.println("OG collected: EVA");
-        else if (OG_ == INVICTA)
-          display.println("OG collected: INVICTA");
+        if (CLAN_ == ALATAR)
+          display.println("CLAN collected: ALATAR");
+        else if (CLAN_ == DRACHEN)
+          display.println("CLAN collected: DRACHEN");
+        else if (CLAN_ == EVA)
+          display.println("CLAN collected: EVA");
+        else if (CLAN_ == INVICTA)
+          display.println("CLAN collected: INVICTA");
 
         display.display();
       };
