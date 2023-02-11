@@ -61,7 +61,7 @@ class Profile{
                     break;
 
                 case down:
-                    CLAN_pointer = min(CLAN_pointer + 1, 3);
+                    CLAN_pointer = min(CLAN_pointer + 1, 4);
                     Player_joystick.set_state();
                     break;
 
