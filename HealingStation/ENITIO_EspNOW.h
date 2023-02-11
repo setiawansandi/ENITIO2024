@@ -3,9 +3,9 @@
 typedef struct feedback_message {
   int msg_type = 1;
   int attackee_type; // 1 for player, 2 for Lvl 1 Treasure, 3 for Lvl 2 Treasure, 4 for bomb, 5 for healing station
-  int attacker_OG;
+  int attacker_CLAN;
   int attacker_ID; 
-  int attackee_OG; // or Treasure ID
+  int attackee_CLAN; // or Treasure ID
   int is_attackee_killed;
 } feedback_message;
 
@@ -33,26 +33,26 @@ class EspNOW {
       // esp_now_register_recv_cb(OnDataRecv);
     }
 
-    void getDeviceMACAddress(int attacker_OG, int attacker_ID){
-//      int playerIdentifier = attacker_OG*pow(16,2) + attacker_ID;
+    void getDeviceMACAddress(int attacker_CLAN, int attacker_ID){
+//      int playerIdentifier = attacker_CLAN*pow(16,2) + attacker_ID;
 //      MAC_ADDRESS target_addr = dbc.getDeviceMACAddress(playerIdentifier);
       broadcastAddress[0] = 4;
       broadcastAddress[1] = 8;
       broadcastAddress[2] = 1;
-      broadcastAddress[3] = attacker_OG;
+      broadcastAddress[3] = attacker_CLAN;
       broadcastAddress[4] = attacker_ID;
       broadcastAddress[5] = 1;
     }
   
-   void send_data(int attackee_type, int attacker_OG, int attacker_ID, int attackee_OG, int is_attackee_killed){
+   void send_data(int attackee_type, int attacker_CLAN, int attacker_ID, int attackee_CLAN, int is_attackee_killed){
       // Register peer
       feedbackData.attackee_type = attackee_type;
-      feedbackData.attacker_OG = attacker_OG;
+      feedbackData.attacker_CLAN = attacker_CLAN;
       feedbackData.attacker_ID = attacker_ID;
-      feedbackData.attackee_OG = attackee_OG;
+      feedbackData.attackee_CLAN = attackee_CLAN;
       feedbackData.is_attackee_killed = is_attackee_killed;
   
-      getDeviceMACAddress(attacker_OG, attacker_ID);
+      getDeviceMACAddress(attacker_CLAN, attacker_ID);
       
       memcpy(peerInfo.peer_addr, broadcastAddress, 6);
       peerInfo.channel = 0;  
