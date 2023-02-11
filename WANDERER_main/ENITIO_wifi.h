@@ -44,6 +44,7 @@ struct GAME_CONSTANTS {
     int BOMB_HP_DEDUCTION;
     int KILL_UPDATE_SERVER_INTERVAL;
     int HTTP_TIMEOUT;
+    int revival_MULTIPLIER;
 };
 
 struct FailedFeedbackStatistics {
@@ -53,7 +54,7 @@ struct FailedFeedbackStatistics {
 
 class DBConnection {
     private:
-        String DATABASE_URL = "http://enitiotreasurehunt.link/";
+        String DATABASE_URL = "https://script.google.com/macros/s/AKfycbzarqhbnCHzChpjNQIWEjc84ev_uOb5rSe4gGifaBnETFog-7u3vHJCMGhv29MGjf8/exec?";
         String GET_Request(const char* server) {
             HTTPClient http;
             http.setTimeout(HTTP_TIMEOUT);
@@ -81,40 +82,6 @@ class DBConnection {
             return JSON.stringify(json_obj[parameter]);
         };
 
-        MAC_ADDRESS retrieveMACAddressFromJSONArray(String json_array) {
-            JSONVar json_obj = JSON.parse(json_array);
-            MAC_ADDRESS mac_addr;
-            if (JSON.typeof(json_obj) == "undefined") {
-                Serial.println("Parsing input failed!");
-                return mac_addr;
-            }
-            Serial.println(JSON.stringify(json_obj["mac_address_part0"]));
-            String n1 = JSON.stringify(json_obj["mac_address_part5"]);
-            String n2 = JSON.stringify(json_obj["mac_address_part4"]);
-            String n3 = JSON.stringify(json_obj["mac_address_part3"]);
-            String n4 = JSON.stringify(json_obj["mac_address_part2"]);
-            String n5 = JSON.stringify(json_obj["mac_address_part1"]);
-            String n6 = JSON.stringify(json_obj["mac_address_part0"]);
-
-            n1 = n1.substring(1, n1.length() - 1);
-            n2 = n2.substring(1, n2.length() - 1);
-            n3 = n3.substring(1, n3.length() - 1);
-            n4 = n4.substring(1, n4.length() - 1);
-            n5 = n5.substring(1, n5.length() - 1);
-            n6 = n6.substring(1, n6.length() - 1);
-            
-            mac_addr.n1 = n1.toInt();
-            mac_addr.n2 = n2.toInt();
-            mac_addr.n3 = n3.toInt();
-            mac_addr.n4 = n4.toInt();
-            mac_addr.n5 = n5.toInt();
-            mac_addr.n6 = n6.toInt();
-
-            Serial.println(mac_addr.n6);
-
-            return mac_addr;
-        };
-
         GAME_CONSTANTS retrieveGameConstantsFromJSONArray(String json_array) {
             JSONVar json_obj = JSON.parse(json_array);
             GAME_CONSTANTS game_const;
@@ -132,10 +99,11 @@ class DBConnection {
             game_const.GL_MaxEn = JSON.stringify(json_obj["GL_MaxEn"]).toInt();
             game_const.INITIAL_MULTIPLIER = JSON.stringify(json_obj["INITIAL_MULTIPLIER"]).toInt();
             game_const.HEAL_MULTIPLIER = JSON.stringify(json_obj["HEAL_MULTIPLIER"]).toInt();
+            game_const.revival_MULTIPLIER = JSON.stringify(json_obj["REVIVAL_MULTIPLIER"]).toInt();
             game_const.MAX_ATTACK_MULTIPLIER = JSON.stringify(json_obj["MAX_ATTACK_MULTIPLIER"]).toInt();
             game_const.MAX_COLLECT_MULTIPLIER = JSON.stringify(json_obj["MAX_COLLECT_MULTIPLIER"]).toInt();
             game_const.BOMB_HP_DEDUCTION = JSON.stringify(json_obj["BOMB_HP_DEDUCTION"]).toInt();
-            game_const.KILL_UPDATE_SERVER_INTERVAL = JSON.stringify(json_obj["KILL_UPDATE_SERVER_INTERVAL"]).toInt();
+            game_const.KILL_UPDATE_SERVER_INTERVAL = JSON.stringify(json_obj["SERVER_UPDATE_INTERVAL"]).toInt();
             game_const.HTTP_TIMEOUT = JSON.stringify(json_obj["HTTP_TIMEOUT"]).toInt();
 
             return game_const;
@@ -197,43 +165,37 @@ class DBConnection {
         };
 
         bool registerWanderer(int CLAN, String mac_addr) {
-            String url = DATABASE_URL + "player_registration";
-            String httpRequestData = "{\"CLAN\": " + String(CLAN) + ", \"mac_address\": \"" + mac_addr + "\" }";
+            String url = DATABASE_URL + "register";
+            String httpRequestData = "{\"clan\": " + String(CLAN) + ", \"mac_address\": \"" + mac_addr + "\" }";
             Serial.println(httpRequestData);
             String jsonArray = POST_Request(url.c_str(), httpRequestData.c_str());
             Serial.println(jsonArray);
-            return jsonArray != "{}";
+            return jsonArray != "{\"status\":\"OK\"}";
         };
 
         bool hasGameStarted() {
-            String url = DATABASE_URL + "game_status";
+            String url = DATABASE_URL + "started";
             String jsonArray = GET_Request(url.c_str());
-            String gameStatus = retrieveParameterFromJSONArray("has_game_started", jsonArray);
+            String gameStatus = retrieveParameterFromJSONArray("started", jsonArray);
             return gameStatus == "1";
         }
 
         int getPlayerID(int CLAN, String mac_addr) {
-            String url = DATABASE_URL + "player_id/" + String(CLAN) + "/" + mac_addr;
+            String url = DATABASE_URL + "player_id&clan=" + String(CLAN) + "&mac_address=" + mac_addr;
             String jsonArray = GET_Request(url.c_str());
             return retrieveParameterFromJSONArray("player_id", jsonArray).toInt();
         };
 
         GAME_CONSTANTS getGameConstants() {
-            String url = DATABASE_URL + "get_all_game_variables";
+            String url = DATABASE_URL + "get_game_constants";
             String jsonArray = GET_Request(url.c_str());
             // Serial.println(jsonArray);
             return retrieveGameConstantsFromJSONArray(jsonArray);
         };
-        
-        MAC_ADDRESS getDeviceMACAddress(int playerIdentifier) {
-            String url = DATABASE_URL + "player/" + String(playerIdentifier);
-            String jsonArray = GET_Request(url.c_str());
-            return retrieveMACAddressFromJSONArray(jsonArray);
-        };
 
         FailedFeedbackStatistics sendGameStatistics(int CLAN, int ID, int kills, int num_level1_treasure, int num_level2_treasure) {
             String url = DATABASE_URL + "player_score";
-            String httpRequestData = "{\"CLAN\": " + String(CLAN) + ", \"ID\": " + String(ID) + ", \"num_kills\": " + String(kills);
+            String httpRequestData = "{\"clan\": " + String(CLAN) + ", \"id\": " + String(ID) + ", \"num_kills\": " + String(kills);
             httpRequestData = httpRequestData + ", \"level1\": " + String(num_level1_treasure) + ", \"level2\": " + String(num_level2_treasure);
             httpRequestData = httpRequestData + "}";
             Serial.println(httpRequestData);
