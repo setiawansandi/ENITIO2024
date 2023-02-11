@@ -222,7 +222,7 @@ class Admin_OLED{
         display.clearDisplay();
         display.setTextColor(SSD1306_BLACK, SSD1306_WHITE); // Draw 'inverse' text
         display.setCursor(0, 0);
-        display.println(F("  Collections by OG  ")); 
+        display.println(F("  Collections by CLAN  ")); 
         
         display.setTextColor(SSD1306_WHITE); // Draw 'inverse' text
         display.setCursor(0, 10);
