@@ -1,7 +1,7 @@
 class Profile{
     private:
-        int OG_pointer = 0;
-        int OG;
+        int CLAN_pointer = 0;
+        int CLAN;
         bool registerStatus = false;
         // int isGL_pointer = 0;
         // int isGL;
@@ -9,7 +9,7 @@ class Profile{
     
     public:
         // void reset(){
-        //   OG_pointer = 0;
+        //   CLAN_pointer = 0;
         //   isGL_pointer = 0;
         //   currentRegisteringPage = 0;
         // }
@@ -34,7 +34,7 @@ class Profile{
             }
         }
 
-        void handleJoystickRegisteringOG(){
+        void handleJoystickRegisteringCLAN(){
             joystick_pos joystick_pos = Player_joystick.read_Joystick();
             if (Player_joystick.get_state() == 0) {
                 switch (joystick_pos)
@@ -42,13 +42,13 @@ class Profile{
                 case button:
                     Profile_OLED.interim_registering_display();
                     Player_joystick.set_state();
-                    OG = OG_pointer;
-                    registerStatus = dbc.registerWanderer(OG, my_MAC_address); 
+                    CLAN = CLAN_pointer;
+                    registerStatus = dbc.registerWanderer(CLAN, my_MAC_address); 
                     while (!registerStatus){
                         delay(10000);
-                        registerStatus = dbc.registerWanderer(OG, my_MAC_address); 
+                        registerStatus = dbc.registerWanderer(CLAN, my_MAC_address); 
                     }
-                    EEPROM.write(OG_add, OG);
+                    EEPROM.write(CLAN_add, CLAN);
                     EEPROM.write(PROFILE_enable_add, 1);
                     if (EEPROM.read(isGL_add) != 1) EEPROM.write(isGL_add, 0);
                     EEPROM.commit();
@@ -56,12 +56,12 @@ class Profile{
                     break;
 
                 case up:
-                    OG_pointer = max(OG_pointer - 1, 0);
+                    CLAN_pointer = max(CLAN_pointer - 1, 0);
                     Player_joystick.set_state();
                     break;
 
                 case down:
-                    OG_pointer = min(OG_pointer + 1, 3);
+                    CLAN_pointer = min(CLAN_pointer + 1, 3);
                     Player_joystick.set_state();
                     break;
 
@@ -93,8 +93,8 @@ class Profile{
         //         case button:
         //             isGL = isGL_pointer;
         //             EEPROM.write(isGL_add, isGL);
-        //             EEPROM.write(OG_add, OG);
-        //             dbc.registerWanderer(OG, my_MAC_address); 
+        //             EEPROM.write(CLAN_add, CLAN);
+        //             dbc.registerWanderer(CLAN, my_MAC_address); 
         //             EEPROM.write(PROFILE_enable_add, 1);
         //             EEPROM.commit();
         //             Player_joystick.set_state();
@@ -108,16 +108,17 @@ class Profile{
 
         void ProfileLoop(){
             if (EEPROM.read(PROFILE_enable_add) == 0){
-                handleJoystickRegisteringOG();
-                Profile_OLED.display_OGregisteringPage(OG_pointer);
+                handleJoystickRegisteringCLAN();
+                Profile_OLED.display_CLANregisteringPage(CLAN_pointer);
             }
             else {
                 handleJoystickRegistered();
-                int OG_ = EEPROM.read(OG_add);
+                int CLAN_ = EEPROM.read(CLAN_add);
                 int isGL_ = EEPROM.read(isGL_add);
-                Profile_OLED.display_CompleteProfilePage(OG_, isGL_);
+                Profile_OLED.display_CompleteProfilePage(CLAN_, isGL_);
             }
         }
 };
 
 Profile My_Profile;
+
