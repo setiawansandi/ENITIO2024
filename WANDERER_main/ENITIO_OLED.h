@@ -410,7 +410,7 @@ class Profile_OLED {
 
       display.setTextColor(SSD1306_WHITE);
       display.setCursor(0, 12);
-      display.println("ENITIO 2022");
+      display.println("ENITIO 2023");
 
       display.setCursor(0, 24);
 
@@ -423,17 +423,20 @@ class Profile_OLED {
 
       display.setCursor(0, 36);
       switch (CLAN){
-          case ALATAR:
-            display.println("CLAN: Alatar ");
-            break;
-          case DRACHEN:
-            display.println("CLAN: Drachen ");
-            break;
-          case EVA:
-            display.println("CLAN: Eva ");
-            break;
           case INVICTA:
             display.println("CLAN: Invicta ");
+            break;
+          case DYNARI:
+            display.println("CLAN: Dynari ");
+            break;
+          case EPHILIA:
+            display.println("CLAN: Ephilia ");
+            break;
+          case AKRONA:
+            display.println("CLAN: Akrona ");
+            break;
+          case SOLARIS:
+            display.println("CLAN: Solaris ");
             break;
         }
 
@@ -456,24 +459,28 @@ class Profile_OLED {
 
       display.setTextColor(SSD1306_WHITE);
 
-      display.setCursor(10, 12);
-      
-      display.println("ALATAR");
-
-      display.setCursor(10, 22);
-      
-      display.println("DRACHEN");
-
-      display.setCursor(10, 32);
-      
-      display.println("EVA");
-
-      display.setCursor(10, 42);
+      display.setCursor(10, 10);
       
       display.println("INVICTA");
+
+      display.setCursor(10, 19);
+      
+      display.println("DYNARI");
+
+      display.setCursor(10, 28);
+      
+      display.println("EPHILIA");
+
+      display.setCursor(10, 37);
+      
+      display.println("AKRONA");
+
+      display.setCursor(10, 46);
+      
+      display.println("SOLARIS");
       
       // prints the cursor to highlight menu items
-      display.setCursor(2, (CLAN_pointer * 10) + 12);
+      display.setCursor(2, (CLAN_pointer * 9) + 10);
       display.println(">");
 
       display.setCursor(14, 56);
@@ -762,17 +769,20 @@ class TreasureHunt_OLED {
         display.setTextColor(SSD1306_WHITE); // Draw white text      
 
         switch (CLAN){
-          case ALATAR:
-            display.println("CLAN: Alatar ");
-            break;
-          case DRACHEN:
-            display.println("CLAN: Drachen ");
-            break;
-          case EVA:
-            display.println("CLAN: Eva ");
-            break;
           case INVICTA:
             display.println("CLAN: Invicta ");
+            break;
+          case DYNARI:
+            display.println("CLAN: Dynari ");
+            break;
+          case EPHILIA:
+            display.println("CLAN: Ephilia ");
+            break;
+          case AKRONA:
+            display.println("CLAN: Akrona ");
+            break;
+          case SOLARIS:
+            display.println("CLAN: Solaris ");
             break;
         }
 
