@@ -401,7 +401,7 @@ class Profile_OLED {
   private:
 
   public:
-    void display_CompleteProfilePage(int OG, int isGL){
+    void display_CompleteProfilePage(int CLAN, int isGL){
       display.clearDisplay();
       display.setTextSize(1); // Draw SIZE
       display.setTextColor(SSD1306_BLACK, SSD1306_WHITE); // Draw 'inverse' text
@@ -422,18 +422,18 @@ class Profile_OLED {
       }
 
       display.setCursor(0, 36);
-      switch (OG){
+      switch (CLAN){
           case ALATAR:
-            display.println("OG: Alatar ");
+            display.println("CLAN: Alatar ");
             break;
           case DRACHEN:
-            display.println("OG: Drachen ");
+            display.println("CLAN: Drachen ");
             break;
           case EVA:
-            display.println("OG: Eva ");
+            display.println("CLAN: Eva ");
             break;
           case INVICTA:
-            display.println("OG: Invicta ");
+            display.println("CLAN: Invicta ");
             break;
         }
 
@@ -443,7 +443,7 @@ class Profile_OLED {
       display.display();
     }
 
-    void display_OGregisteringPage(int OG_pointer){
+    void display_CLANregisteringPage(int CLAN_pointer){
       display.clearDisplay();
       // change text display here
       display.setTextSize(1);
@@ -451,7 +451,7 @@ class Profile_OLED {
 
       display.setCursor(0,0);
       // menu title
-      display.println(" Choose your OG...   ");
+      display.println(" Choose your CLAN...   ");
       //---------------------------------
 
       display.setTextColor(SSD1306_WHITE);
@@ -473,7 +473,7 @@ class Profile_OLED {
       display.println("INVICTA");
       
       // prints the cursor to highlight menu items
-      display.setCursor(2, (OG_pointer * 10) + 12);
+      display.setCursor(2, (CLAN_pointer * 10) + 12);
       display.println(">");
 
       display.setCursor(14, 56);
@@ -638,7 +638,7 @@ class TreasureHunt_OLED {
 
     void display_powerupPage(int num_bonus6HP, 
                             int num_bonus1MaxEn,
-                            int num_bonus1MANA,
+                            int num_bonus1MULTIPLIER,
                             int num_fiveminx2EnRegen,
                             int num_bomb,
                             String noti,
@@ -687,11 +687,11 @@ class TreasureHunt_OLED {
         display.println("    Press to use!    ");
         break;
 
-      case bonus1MANA:
-        display.println(("     Bonus 1 MANA    ")); 
+      case bonus1MULTIPLIER:
+        display.println(("     Bonus 1 MULTIPLIER    ")); 
         display.setCursor(0, 36);
         display.print(("You have "));    
-        display.print(num_bonus1MANA);
+        display.print(num_bonus1MULTIPLIER);
         display.println((" of this!"));   
         display.setTextColor(SSD1306_BLACK, SSD1306_WHITE);
         display.setCursor(0, 56);
@@ -740,7 +740,7 @@ class TreasureHunt_OLED {
       display.display();
     }
 
-    void display_infoPage(int OG, int ID, int MANA, int MaxEn, String noti, int pageNav)
+    void display_infoPage(int CLAN, int ID, int MULTIPLIER, int MaxEn, String noti, int pageNav)
     {
       display.clearDisplay();
       display.setTextSize(1); // Draw SIZE
@@ -761,18 +761,18 @@ class TreasureHunt_OLED {
         display.setTextSize(1);      // Normal 1:1 pixel scale
         display.setTextColor(SSD1306_WHITE); // Draw white text      
 
-        switch (OG){
+        switch (CLAN){
           case ALATAR:
-            display.println("OG: Alatar ");
+            display.println("CLAN: Alatar ");
             break;
           case DRACHEN:
-            display.println("OG: Drachen ");
+            display.println("CLAN: Drachen ");
             break;
           case EVA:
-            display.println("OG: Eva ");
+            display.println("CLAN: Eva ");
             break;
           case INVICTA:
-            display.println("OG: Invicta ");
+            display.println("CLAN: Invicta ");
             break;
         }
 
@@ -781,8 +781,8 @@ class TreasureHunt_OLED {
         display.println(ID);
 
         display.setCursor(0, 30);
-        display.print("MANA: ");
-        display.println(MANA);
+        display.print("MULTIPLIER: ");
+        display.println(MULTIPLIER);
 
         display.setCursor(0, 40);
         display.print("Max En: ");
@@ -931,3 +931,4 @@ class TreasureHunt_OLED {
 };
 
 TreasureHunt_OLED TreasureHunt_OLED;
+
