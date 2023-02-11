@@ -103,9 +103,9 @@ class TreasureHuntPlayer
     // }
 
     
-    void setup_initial_state(int id, int CLAN, bool isGL) {
+    void setup_initial_state(int id, int clan, bool isGL) {
       ID = id;
-      CLAN = CLAN;
+      CLAN = clan;
       _isGL = isGL;
 
       newMACAddress_AP[3] = CLAN;
@@ -201,6 +201,8 @@ class TreasureHuntPlayer
         send_signal.address = address_digits;
         send_signal.command = command_digits;
 
+        Serial.printf("%d %d %d %d %d %d %d %d \n", address_digits.digit3, address_digits.digit2, address_digits.digit1, address_digits.digit0, \
+                                                    command_digits.digit3, command_digits.digit2, command_digits.digit1, command_digits.digit0);
         Player_IR.send(send_signal, 1);
 
         start_receiving_feedback = millis();
@@ -215,7 +217,7 @@ class TreasureHuntPlayer
       unsigned long currTime = millis();
       if (Player_IR.available()) {
          ir_signal IRsignal_ = Player_IR.read();
-
+          Serial.printf("%d %d %d\n", currTime, lastActionReceived, ACTION_RECV_WAIT);
          if (currTime - lastActionReceived > ACTION_RECV_WAIT) {
            CLAN_ = IRsignal_.address.digit2;
            ID_ = IRsignal_.address.digit0 + (IRsignal_.address.digit1 << 4);
@@ -228,7 +230,7 @@ class TreasureHuntPlayer
   
            lastActionReceived = currTime;
 
-           if (((CLAN_ != CLAN) && (action_ == attack)) || ((action_ == heal) && (CLAN_ == CLAN) && (ID_ != ID)) || (action_ == heal)) 
+           if (((CLAN_ != CLAN) && (action_ == attack)) || ((action_ == heal) && (CLAN_ == CLAN) && (ID_ != ID)) || (action_ == heal) || (action_ == revive)) 
                 handleAction(CLAN_, ID_, action_, MULTIPLIER_);
            }
         }
@@ -773,6 +775,7 @@ class TreasureHuntPlayer
           int id = dbc.getPlayerID(CLAN, my_MAC_address);
           EEPROM.write(ID_add, id);
           Serial.println(id);
+          Serial.printf("[INITIALISE] Current CLAN: %d %d\n", CLAN, EEPROM.read(CLAN_add));
           setup_initial_state(id, CLAN, isGL); // initialize Player
           Player_Bluetooth.initialise();
           deviceReady = 1;
