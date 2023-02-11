@@ -6,14 +6,14 @@ typedef enum {
     DRACHEN = 1,
     EVA = 2,
     INVICTA = 3,
-} OG_id ;
+} CLAN_id ;
 
 typedef enum {
     do_nothing = 0,
     attack = 1,
     collect = 2,
     heal = 3,
-    heal_request = 4
+    revive = 4
 } action_id ;
 
 typedef enum {
@@ -28,9 +28,10 @@ typedef enum {
 typedef enum {
     bonus6HP = 1,
     bonus1MaxEn = 2,
-    bonus1MANA = 3,
+    bonus1MULTIPLIER = 3,
     fiveminx2EnRegen = 4,
     bomb = 5,
 } power_up; 
 
 #endif
+
