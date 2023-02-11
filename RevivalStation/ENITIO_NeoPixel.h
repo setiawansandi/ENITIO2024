@@ -56,4 +56,4 @@ class NeoPixel {
     }
 };
 
-NeoPixel HealingStation_NeoPixel;
+NeoPixel RevivalStation_NeoPixel;

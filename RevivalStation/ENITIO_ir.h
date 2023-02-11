@@ -78,4 +78,4 @@ class IR{
         }
 };
 
-IR HealingStation_IR;
+IR RevivalStation_IR;

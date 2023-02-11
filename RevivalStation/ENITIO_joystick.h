@@ -61,4 +61,4 @@ class Joystick{
         }
 };
 
-Joystick HealingStation_joystick;
+Joystick RevivalStation_joystick;
