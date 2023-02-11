@@ -8,10 +8,11 @@
 #define ENITIO_enums_h
 
 typedef enum {
-    ALATAR = 0,
-    DRACHEN = 1,
-    EVA = 2,
-    INVICTA = 3,
+    INVICTA = 0,
+    DYNARI = 1,
+    EPHILIA = 2,
+    AKRONA = 3,
+    SOLARIS = 4,
 } CLAN_id ;
 
 typedef enum {

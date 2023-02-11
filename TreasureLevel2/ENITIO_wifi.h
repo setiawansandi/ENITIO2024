@@ -29,10 +29,11 @@ struct GAME_CONSTANTS {
 
 class DBConnection {
     private:
-        String DATABASE_URL = "http://enitiotreasurehunt.link/";
+        String DATABASE_URL = "https://script.google.com/macros/s/AKfycbxSQhiIBxEUvF-Rkhtp3Y0pYaH6L8wQwVjJa5WZ5px5rO0pkmPItvXHorNmOkvK5mBl/exec?";
         String GET_Request(const char* server) {
             HTTPClient http;
             http.setTimeout(HTTP_TIMEOUT);
+            http.setFollowRedirects(HTTPC_STRICT_FOLLOW_REDIRECTS);
             http.begin(server);
             int httpResponseCode = http.GET();
         
@@ -43,7 +44,6 @@ class DBConnection {
                 payload = http.getString();
             } else {
                 Serial.print("Error code: "); Serial.println(httpResponseCode);
-                wifi_timeout_or_refused_counter++;
             }
             http.end();
             return payload;
@@ -117,9 +117,9 @@ class DBConnection {
         };
 
         int hasGameStarted() {
-            String url = DATABASE_URL + "game_status";
+            String url = DATABASE_URL + "started";
             String jsonArray = GET_Request(url.c_str());
-            return retrieveParameterFromJSONArray("has_game_started", jsonArray).toInt();
+            return retrieveParameterFromJSONArray("started", jsonArray).toInt();
         }
         
         String getDeviceMACAddress(int playerIdentifier) {
@@ -135,7 +135,7 @@ class DBConnection {
         };
         
         GAME_CONSTANTS getGameConstants() {
-            String url = DATABASE_URL + "get_all_game_variables";
+            String url = DATABASE_URL + "get_game_constants";
             String jsonArray = GET_Request(url.c_str());
             // Serial.println(jsonArray);
             return retrieveGameConstantsFromJSONArray(jsonArray);

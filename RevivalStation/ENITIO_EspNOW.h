@@ -96,4 +96,4 @@ class EspNOW {
     }
 };
 
-EspNOW HealingStation_EspNOW;
+EspNOW RevivalStation_EspNOW;
