@@ -3,9 +3,9 @@
 typedef struct esp_now_msg {
   int msg_type; // 1 for feedback msg, 2 for bomb msg
   int attackee_type; // 1 for player, 2 for Lvl 1 Treasure, 3 for Lvl 2 Treasure, 4 for bomb, 5 for Healing Station
-  int attacker_OG;
+  int attacker_CLAN;
   int attacker_ID; 
-  int attackee_OG; // or Treasure ID
+  int attackee_CLAN; // or Treasure ID
   int is_attackee_killed;
 } feedback_message;
 
@@ -47,25 +47,25 @@ class EspNOW {
       Serial.print(WiFi.channel());
     }
 
-    void getDeviceMACAddress(int attacker_OG, int attacker_ID){
+    void getDeviceMACAddress(int attacker_CLAN, int attacker_ID){
       broadcastAddress[0] = 4;
       broadcastAddress[1] = 8;
       broadcastAddress[2] = 1;
-      broadcastAddress[3] = attacker_OG;
+      broadcastAddress[3] = attacker_CLAN;
       broadcastAddress[4] = attacker_ID;
       broadcastAddress[5] = 1;
     }
   
-   void send_data(int msg_type, int attackee_type, int attacker_OG, int attacker_ID, int attackee_OG, int is_attackee_killed){
+   void send_data(int msg_type, int attackee_type, int attacker_CLAN, int attacker_ID, int attackee_CLAN, int is_attackee_killed){
             // Register peer
       feedbackData.msg_type = msg_type;
       feedbackData.attackee_type = attackee_type;
-      feedbackData.attacker_OG = attacker_OG;
+      feedbackData.attacker_CLAN = attacker_CLAN;
       feedbackData.attacker_ID = attacker_ID;
-      feedbackData.attackee_OG = attackee_OG;
+      feedbackData.attackee_CLAN = attackee_CLAN;
       feedbackData.is_attackee_killed = is_attackee_killed;
   
-      getDeviceMACAddress(attacker_OG, attacker_ID);
+      getDeviceMACAddress(attacker_CLAN, attacker_ID);
       
       memcpy(peerInfo.peer_addr, broadcastAddress, 6);
       peerInfo.channel = 0;  
@@ -92,7 +92,7 @@ class EspNOW {
 
       if((!send_Status) && is_attackee_killed){
         failed_kill_feedback ++ ;
-        failed_kill_OG[current_failed_save_pointer] = attacker_OG;
+        failed_kill_CLAN[current_failed_save_pointer] = attacker_CLAN;
         failed_kill_ID[current_failed_save_pointer] = attacker_ID;
         current_failed_save_pointer ++ ;
         if(current_failed_save_pointer >= 50) current_failed_save_pointer -= 50;
@@ -173,7 +173,7 @@ class EspNOW {
       WiFi.scanDelete();
     }
 
-    void SendBombToAllTargets(int attacker_OG, int attacker_ID){
+    void SendBombToAllTargets(int attacker_CLAN, int attacker_ID){
       int i;
       for (i = 0; i < target_count; i++){
         if (esp_now_add_peer(&bomb_targets[i]) != ESP_OK){
@@ -182,9 +182,9 @@ class EspNOW {
         }
         feedbackData.msg_type = 2;
         feedbackData.attackee_type = 1;
-        feedbackData.attacker_OG = attacker_OG;
+        feedbackData.attacker_CLAN = attacker_CLAN;
         feedbackData.attacker_ID = attacker_ID;
-        feedbackData.attackee_OG = 255;
+        feedbackData.attackee_CLAN = 255;
         feedbackData.is_attackee_killed = 255;
 
         // Send message via ESP-NOW
@@ -209,3 +209,4 @@ class EspNOW {
 };
 
 EspNOW Player_EspNOW;
+
