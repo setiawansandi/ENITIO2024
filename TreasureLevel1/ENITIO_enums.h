@@ -12,7 +12,7 @@ typedef enum {
     DRACHEN = 1,
     EVA = 2,
     INVICTA = 3,
-} OG_id ;
+} CLAN_id ;
 
 typedef enum {
     do_nothing = 0,
