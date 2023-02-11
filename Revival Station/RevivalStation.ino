@@ -109,7 +109,7 @@ class HealingStation
         handleJoystick();
       }
       else if (currStatus == 2){
-        timeleftToRecover = max(int(HEALING_STATION_RECOVER_DURATION - (currTime - last_healing_request)), 0);
+        timeleftToRecover = max(int(HEALING_STATION_RECOVER_DURATION - (currTime - last_revival_request)), 0);
         display_no_hp(timeleftToRecover);
         if (timeleftToRecover == 0) {
           Serial.println("Reopening Healing Station");
@@ -137,7 +137,7 @@ class HealingStation
                   HealingStation_NeoPixel.off_TOP();
                   EEPROM.write(ENABLE_add, 2);
                   EEPROM.commit();
-                  last_healing_request = millis();
+                  last_revival_request = millis();
               }
               break;
 
