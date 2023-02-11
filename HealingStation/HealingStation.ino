@@ -39,7 +39,7 @@ int HEALING_STATION_INITIAL_HP;
 int HEALING_STATION_ACTION_RECV_WAIT;
 int HEALING_STATION_RECOVER_DURATION;
 
-#define HEAL_MANA 14
+#define HEAL_MULTIPLIER 14
 
 class HealingStation
 {
@@ -50,7 +50,7 @@ class HealingStation
     
   public:
     
-    int OG_, ID_, En_, action_; 
+    int CLAN_, ID_, En_, action_; 
 
     void init_treasure(){
       EEPROM.write(ENABLE_add, 1);
@@ -66,16 +66,16 @@ class HealingStation
 
     //       if (currTime - last_healing_request >= HEALING_STATION_ACTION_RECV_WAIT){
     //           Serial.println("Initiate Healing Request");
-    //           OG_ = IRsignal_.address.digit2;
+    //           CLAN_ = IRsignal_.address.digit2;
     //           ID_ = IRsignal_.address.digit0 + (IRsignal_.address.digit1 << 4);
         
     //           En_ = IRsignal_.command.digit1;
     //           action_ = IRsignal_.command.digit0;
         
-    //           Serial.printf("%d %d %d %d \n", action_, En_, ID_, OG_);
+    //           Serial.printf("%d %d %d %d \n", action_, En_, ID_, CLAN_);
       
     //           if ((action_ == collect) || (action_ == heal_request)) {
-    //               heal_player(OG_, ID_);
+    //               heal_player(CLAN_, ID_);
     //               HP--;
     //               Serial.print(HP); Serial.println(" Before Station Closes");
     //               if (HP == 0) {
@@ -159,7 +159,7 @@ class HealingStation
 
       command_digits.digit0 = heal;
 
-      command_digits.digit1 = HEAL_MANA;
+      command_digits.digit1 = HEAL_MULTIPLIER;
 
       ir_signal send_signal;
 
