@@ -35,13 +35,14 @@ Adafruit_SSD1306 display(SCREEN_WIDTH, SCREEN_HEIGHT, &Wire, OLED_RESET);
 #define G_ON 0
 #define B_ON 0
 
-int HEALING_STATION_INITIAL_HP;
-int HEALING_STATION_ACTION_RECV_WAIT;
-int HEALING_STATION_RECOVER_DURATION;
 
-#define HEAL_MULTIPLIER 14
+int REVIVAL_STATION_INITIAL_HP;
+int REVIVAL_STATION_ACTION_RECV_WAIT;
+int REVIVAL_STATION_RECOVER_DURATION;
+int REVIVAL_MULTIPLIER;
 
-class HealingStation
+
+class RevivalStation
 {
   private:
     int HP;
@@ -55,7 +56,7 @@ class HealingStation
     void init_treasure(){
       EEPROM.write(ENABLE_add, 1);
       EEPROM.commit();
-      HP = HEALING_STATION_INITIAL_HP;
+      HP = REVIVAL_STATION_INITIAL_HP;
     };
     
     // void receiveAction() {
@@ -102,39 +103,39 @@ class HealingStation
     //   }
     // };
 
-    void HealingLoop(){
+    void RevivalLoop(){
       int currStatus = EEPROM.read(ENABLE_add);
       unsigned long currTime = millis();
       if (currStatus == 1){
         handleJoystick();
       }
       else if (currStatus == 2){
-        timeleftToRecover = max(int(HEALING_STATION_RECOVER_DURATION - (currTime - last_revival_request)), 0);
+        timeleftToRecover = max(int(REVIVAL_STATION_RECOVER_DURATION - (currTime - last_revival_request)), 0);
         display_no_hp(timeleftToRecover);
         if (timeleftToRecover == 0) {
-          Serial.println("Reopening Healing Station");
-          HP = HEALING_STATION_INITIAL_HP;
+          Serial.println("Reopening REVIVAL Station");
+          HP = REVIVAL_STATION_INITIAL_HP;
           EEPROM.write(ENABLE_add, 1);
           EEPROM.commit();
-          HealingStation_NeoPixel.displayRGB_FRONT(R_ON, B_ON, G_ON);
-          HealingStation_NeoPixel.displayRGB_TOP(R_ON, B_ON, G_ON);
+          RevivalStation_NeoPixel.displayRGB_FRONT(R_ON, B_ON, G_ON);
+          RevivalStation_NeoPixel.displayRGB_TOP(R_ON, B_ON, G_ON);
         }
       }
     }
 
     void handleJoystick(){
-      joystick_pos joystick_pos = HealingStation_joystick.read_Joystick();
-      if (HealingStation_joystick.get_state() == 0) {
+      joystick_pos joystick_pos = RevivalStation_joystick.read_Joystick();
+      if (RevivalStation_joystick.get_state() == 0) {
         switch (joystick_pos){
             case button:
-              heal_player();
-              HealingStation_joystick.set_state();
+              revive_player();
+              RevivalStation_joystick.set_state();
               HP--;
               Serial.print(HP); Serial.println(" Before Station Closes");
               if (HP == 0) {
-                  Serial.println("Closing Healing Station");
-                  HealingStation_NeoPixel.off_FRONT();
-                  HealingStation_NeoPixel.off_TOP();
+                  Serial.println("Closing Revival Station");
+                  RevivalStation_NeoPixel.off_FRONT();
+                  RevivalStation_NeoPixel.off_TOP();
                   EEPROM.write(ENABLE_add, 2);
                   EEPROM.commit();
                   last_revival_request = millis();
@@ -145,28 +146,28 @@ class HealingStation
               break;
 
             default:
-              HealingStation_joystick.set_state();
+              RevivalStation_joystick.set_state();
               break;
           }
       }
     }
 
-    void heal_player(){
+    void revive_player(){
       uint16_hex_digits address_digits, command_digits;
 
       address_digits.digit0 = 0;
       address_digits.digit2 = 0;
 
-      command_digits.digit0 = heal;
+      command_digits.digit0 = revive;
 
-      command_digits.digit1 = revival_MULTIPLIER;
+      command_digits.digit1 = REVIVAL_MULTIPLIER;
 
       ir_signal send_signal;
 
       send_signal.address = address_digits;
       send_signal.command = command_digits;
 
-      HealingStation_IR.send(send_signal, 1);
+      RevivalStation_IR.send(send_signal, 1);
     } ;
 
     void display_not_playing_yet(){
@@ -174,7 +175,7 @@ class HealingStation
       display.setTextSize(1); // Draw SIZE
       display.setTextColor(SSD1306_BLACK, SSD1306_WHITE); // Draw 'inverse' text
       display.setCursor(0, 0);
-      display.println(F("   Healing Station  ")); 
+      display.println(F("   Revival Station  ")); 
           
       display.setCursor(0, 16);
       display.setTextColor(SSD1306_WHITE); // Draw white text
@@ -192,7 +193,7 @@ class HealingStation
         display.setTextSize(1); // Draw SIZE
         display.setTextColor(SSD1306_BLACK, SSD1306_WHITE); // Draw 'inverse' text
         display.setCursor(0, 0);
-        display.println(F("   Healing Station  ")); 
+        display.println(F("   Revival Station  ")); 
 
         display.setCursor(0, 20);
         display.setTextSize(1);      // Normal 1:1 pixel scale
@@ -212,7 +213,7 @@ class HealingStation
       display.setTextSize(1); // Draw SIZE
       display.setTextColor(SSD1306_BLACK, SSD1306_WHITE); // Draw 'inverse' text
       display.setCursor(0, 0);
-      display.println(F("   Healing Station  ")); 
+      display.println(F("   Revival Station  ")); 
           
       display.setCursor(0, 24);
       display.setTextColor(SSD1306_WHITE); // Draw white text              |  
@@ -226,7 +227,7 @@ class HealingStation
 
 };
 
-HealingStation healing_station;
+RevivalStation revival_station;
 bool gameStarted = 0;
 
 void clearEEPROM(){
@@ -246,20 +247,20 @@ int get_game_state(){
      gameStarted = dbc.hasGameStarted();
      Serial.print("Game Status: "); Serial.println(gameStarted);
      if(gameStarted) {
-       HealingStation_NeoPixel.displayRGB_FRONT(R_ON, B_ON, G_ON);
-       HealingStation_NeoPixel.displayRGB_TOP(R_ON, B_ON, G_ON);
-       healing_station.init_treasure();
+       RevivalStation_NeoPixel.displayRGB_FRONT(R_ON, B_ON, G_ON);
+       RevivalStation_NeoPixel.displayRGB_TOP(R_ON, B_ON, G_ON);
+       revival_station.init_treasure();
      }
      return gameStarted;
    } else return 1;
 }
 
 void setup() {
-  HealingStation_NeoPixel.initialize();
-  HealingStation_NeoPixel.off_FRONT();
-  HealingStation_NeoPixel.off_TOP();
+  RevivalStation_NeoPixel.initialize();
+  RevivalStation_NeoPixel.off_FRONT();
+  RevivalStation_NeoPixel.off_TOP();
   Serial.begin(115200);
-  HealingStation_IR.enable();
+  RevivalStation_IR.enable();
   EEPROM.begin(EEPROM_SIZE);
   clearEEPROM();
 
@@ -268,7 +269,7 @@ void setup() {
         for(;;); // Don't proceed, loop forever
       }
 
-  HealingStation_EspNOW.enable();
+  RevivalStation_EspNOW.enable();
   
   bool isWiFiConnected = dbc.connectToWiFi();
   while (!isWiFiConnected) {
@@ -278,10 +279,10 @@ void setup() {
 
   GAME_CONSTANTS game_consts = dbc.getGameConstants();
   HTTP_TIMEOUT = game_consts.HTTP_TIMEOUT;
-  HEALING_STATION_INITIAL_HP = game_consts.HEALING_STATION_INITIAL_HP;
-  HEALING_STATION_ACTION_RECV_WAIT = game_consts.HEALING_STATION_ACTION_RECV_WAIT;
-  HEALING_STATION_RECOVER_DURATION = game_consts.HEALING_STATION_RECOVER_DURATION;
-  
+  REVIVAL_STATION_INITIAL_HP = game_consts.REVIVAL_STATION_INITIAL_HP;
+  REVIVAL_STATION_ACTION_RECV_WAIT = game_consts.REVIVAL_STATION_ACTION_RECV_WAIT;
+  REVIVAL_STATION_RECOVER_DURATION = game_consts.REVIVAL_STATION_RECOVER_DURATION;
+  REVIVAL_MULTIPLIER = game_consts.REVIVAL_STATION_MULTIPLIER;
 }
 
 void loop() {
@@ -295,12 +296,12 @@ void loop() {
   }
   switch (get_game_state()){
     case 0:
-      healing_station.display_not_playing_yet();
+      revival_station.display_not_playing_yet();
       delay(10000);
       break;
     case 1:
-      healing_station.HealingLoop();
-      healing_station.display_in_game();
+      revival_station.RevivalLoop();
+      revival_station.display_in_game();
       break;
   }
 }
