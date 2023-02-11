@@ -68,10 +68,10 @@ void setup() {
       GL_MaxHP = game_consts.GL_MaxHP;
       PARTICIPANT_MaxEn = game_consts.PARTICIPANT_MaxEn;
       GL_MaxEn = game_consts.GL_MaxEn;
-      INITIAL_MANA = game_consts.INITIAL_MANA;
-      HEAL_MANA = game_consts.HEAL_MANA;
-      MAX_ATTACK_MANA = game_consts.MAX_ATTACK_MANA;
-      MAX_COLLECT_MANA = game_consts.MAX_COLLECT_MANA;
+      INITIAL_MULTIPLIER = game_consts.INITIAL_MULTIPLIER;
+      HEAL_MULTIPLIER = game_consts.HEAL_MULTIPLIER;
+      MAX_ATTACK_MULTIPLIER = game_consts.MAX_ATTACK_MULTIPLIER;
+      MAX_COLLECT_MULTIPLIER = game_consts.MAX_COLLECT_MULTIPLIER;
       BOMB_HP_DEDUCTION = game_consts.BOMB_HP_DEDUCTION;
       KILL_UPDATE_SERVER_INTERVAL = game_consts.KILL_UPDATE_SERVER_INTERVAL;
 
