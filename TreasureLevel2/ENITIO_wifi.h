@@ -133,12 +133,12 @@ class DBConnection {
                 return game_const;
             }
             game_const.TREASURE_LEVEL2_INITIAL_HP = JSON.stringify(json_obj["TREASURE_LEVEL2_INITIAL_HP"]).toInt();
-            game_const.NUM_L2TREASURES = JSON.stringify(json_obj["NUM_L2TREASURES"]).toInt();
+            game_const.NUM_L2TREASURES = JSON.stringify(json_obj["NUM_TREASURE_LEVEL2"]).toInt();
             game_const.TREASURE_VIRUS_THRESHOLD = JSON.stringify(json_obj["TREASURE_VIRUS_THRESHOLD"]).toInt();
             game_const.HTTP_TIMEOUT = JSON.stringify(json_obj["HTTP_TIMEOUT"]).toInt();
             game_const.TREASURE_LEVEL2_ACTION_RECV_WAIT = JSON.stringify(json_obj["TREASURE_LEVEL2_ACTION_RECV_WAIT"]).toInt();
-            game_const.TREASURE_LEVEL2_RECOVER_PERIOD = JSON.stringify(json_obj["TREASURE_LEVEL2_RECOVER_PERIOD"]).toInt();
-            game_const.TREASURE_LEVEL2_VIRUS_INFECTION_TIME = JSON.stringify(json_obj["TREASURE_LEVEL2_VIRUS_INFECTION_TIME"]).toInt();
+            game_const.TREASURE_LEVEL2_RECOVER_PERIOD = JSON.stringify(json_obj["TREASURE_LEVEL2_RECOVER_DURATION"]).toInt();
+            game_const.TREASURE_LEVEL2_VIRUS_INFECTION_TIME = JSON.stringify(json_obj["TREASURE_LEVEL2_VIRUS_BROADCAST_DURATION"]).toInt();
             return game_const;
         };
     
