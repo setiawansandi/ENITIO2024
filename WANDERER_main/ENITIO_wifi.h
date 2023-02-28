@@ -1,23 +1,48 @@
 #include <HTTPClient.h>
+#include <WiFiClientSecure.h>
 #include "esp_wpa2.h" //wpa2 library for connections to Enterprise networks
 #include <Arduino_JSON.h>
 #include <esp_now.h>
 #include <WiFi.h>
 #include <esp_wifi.h>
 
-// WiFi Based on https://github.com/martinius96/ESP32-eduroam/blob/master/2022/test_2.0.3/test_2.0.3.ino
+// WiFi Based on https://github.com/martinius96/ESP32-eduroam/blob/master/2022/eduroam/eduroam.ino
 
 /**  WiFi Credentials **/
 #define EAP_ANONYMOUS_IDENTITY  ""
 #define EAP_IDENTITY  "@student.main.ntu.edu.sg"
 #define EAP_PASSWORD  ""
-#define HOME_WIFI_SSID "garage@eee"
-#define HOME_WIFI_PASSWORD "garage@eee"
+#define HOME_WIFI_SSID "FreeWaffles"
+#define HOME_WIFI_PASSWORD "SponsoredByCKL00"
 
 const char *ssid = "NTUSECURE";
 int wifi_reconnect_counter = 0;
 unsigned long last_disconnected_time = 0;
 int HTTP_TIMEOUT = 30 * 1000;
+
+const char* root_ca PROGMEM = \
+"-----BEGIN CERTIFICATE-----\n" \
+"MIIDljCCAn6gAwIBAgIQNVdBpOD85JGeYm6zWCKCmjANBgkqhkiG9w0BAQsFADBI\n" \
+"MRswGQYDVQQDDBJFU0VUIFNTTCBGaWx0ZXIgQ0ExHDAaBgNVBAoME0VTRVQsIHNw\n" \
+"b2wuIHMgci4gby4xCzAJBgNVBAYTAlNLMB4XDTIzMDIyNzE1NTU1N1oXDTIzMDUy\n" \
+"ODE1NTU1NlowIjEgMB4GA1UEAxMXZW5pdGlvdHJlYXN1cmVodW50LmxpbmswggEi\n" \
+"MA0GCSqGSIb3DQEBAQUAA4IBDwAwggEKAoIBAQDXIa37ToQjxiy8koxWUw0Rpzdv\n" \
+"/11odPGgIbMGpT05DD/UNK9CaxTfJLw3ftT4EEcPHFzavvTXG7uJ6OOtXfi0WIbf\n" \
+"fgiKD/ve8ch6oc9Vqp7HbFWZ0cg3JKFwkGw5MF2JO6vTkzbzht97dj4UAj5FMh8d\n" \
+"EGPFMR7plbf8P5RGuQCdzrPk+i3/6N/jo6bSCYr1hqxCMQgeGkTLFr+F7I7emkdQ\n" \
+"JcOfaqAcJalnKS39PDqf44bhza2xz2cxKllgS4fxCKJQH/ApyTaHDMLHPlhMNStj\n" \
+"uf6WDs6c1K8XIj5AmGYvFxuRyhzmcbdAG2hv3WyPGjcDAeu53LK/wejj/h05AgMB\n" \
+"AAGjgaEwgZ4wCwYDVR0PBAQDAgWgMB0GA1UdDgQWBBQtHxvNJX/jCsJbVPZZFiai\n" \
+"0ndfqTAfBgNVHSMEGDAWgBR1fBmAqE/V8PIcSLwG0TBEt6AnrTAdBgNVHSUEFjAU\n" \
+"BggrBgEFBQcDAQYIKwYBBQUHAwIwDAYDVR0TAQH/BAIwADAiBgNVHREEGzAZghdl\n" \
+"bml0aW90cmVhc3VyZWh1bnQubGluazANBgkqhkiG9w0BAQsFAAOCAQEAuThNYcXz\n" \
+"VVMGPYNICi/puKYGxkiS019soTbIwRjq3dNKcWF4sB/ba2OjioM7UCnJ1TE9uEGO\n" \
+"vkjj7gbSIcJakfv0idFrj5i3q9Kgo3bnpqcm+LdpEo6+FvR+Lra+ptxG8lqj1p4l\n" \
+"luth4Pf6Sf1Ck2iPgjIoTDtdO/xW+0oF2pG9dEAFnHMabjS6F+CpR126SHv80gcW\n" \
+"D86l8F9Z5/r7mTwGv2K5B6OiTuxV1UkbxRfHlzosVkRTu1nvOKxuwS/6do1spy6F\n" \
+"IZXVoS81d2f+4CTAnwDLajUUcL27i/UD+nVhHaR2vs+WQcZ2FrIlXVsoXdlgr+ko\n" \
+"nDWRvXqKgJnnMA==\n" \
+"-----END CERTIFICATE-----\n";
 
 struct MAC_ADDRESS {
   int n1;
@@ -54,12 +79,12 @@ struct FailedFeedbackStatistics {
 
 class DBConnection {
     private:
-        String DATABASE_URL = "https://script.google.com/macros/s/AKfycbxSQhiIBxEUvF-Rkhtp3Y0pYaH6L8wQwVjJa5WZ5px5rO0pkmPItvXHorNmOkvK5mBl/exec?";
+        String DATABASE_URL = "https://enitiotreasurehunt.link/";
+        WiFiClientSecure https_client;
         String GET_Request(const char* server) {
             HTTPClient http;
             http.setTimeout(HTTP_TIMEOUT);
-            http.setFollowRedirects(HTTPC_STRICT_FOLLOW_REDIRECTS);
-            http.begin(server);
+            http.begin(https_client, server);
             int httpResponseCode = http.GET();
         
             String payload = "{}";
@@ -73,7 +98,7 @@ class DBConnection {
             http.end();
             return payload;
         };
-    
+
         String retrieveParameterFromJSONArray(String parameter, String json_array) {
             JSONVar json_obj = JSON.parse(json_array);
             if (JSON.typeof(json_obj) == "undefined") {
@@ -147,7 +172,9 @@ class DBConnection {
     public:
         void startWiFiConnection() {
             WiFi.begin(HOME_WIFI_SSID, HOME_WIFI_PASSWORD);
-            // WiFi.begin(ssid, WPA2_AUTH_PEAP, EAP_ANONYMOUS_IDENTITY, EAP_IDENTITY, EAP_PASSWORD);
+            https_client.setCACert(root_ca);
+            // WiFi.begin(ssid, WPA2_AUTH_PEAP, EAP_ANONYMOUS_IDENTITY, EAP_IDENTITY, EAP_PASSWORD, root_ca);
+            https_client.setInsecure();
         }
         bool connectToWiFi() {
             // returns True if connected, False if timeout
@@ -168,25 +195,26 @@ class DBConnection {
         };
 
         bool registerWanderer(int CLAN, String mac_addr) {
-            // String url = DATABASE_URL + "register";
-            // String httpRequestData = "{\"clan\": " + String(CLAN) + ", \"mac_address\": \"" + mac_addr + "\" }";
-            // Serial.println(httpRequestData);
-            // String jsonArray = POST_Request(url.c_str(), httpRequestData.c_str());
-            String url = DATABASE_URL + "register&clan=" + String(CLAN) + "&mac_address=" + mac_addr;
-            String jsonArray = GET_Request(url.c_str());
+            String url = DATABASE_URL + "register";
+            String httpRequestData = "{\"clan\": " + String(CLAN) + ", \"mac_address\": \"" + mac_addr + "\" }";
+            Serial.println(httpRequestData);
+             String jsonArray = POST_Request(url.c_str(), httpRequestData.c_str());
+            // String url = DATABASE_URL + "register&clan=" + String(CLAN) + "&mac_address=" + mac_addr;
+            // String jsonArray = GET_Request(url.c_str());
             Serial.println(jsonArray);
-            return jsonArray != "{\"status\":\"OK\"}";
+            return jsonArray != "{\"result\":\"OK\"}";
         };
 
         bool hasGameStarted() {
-            String url = DATABASE_URL + "started";
+            String url = DATABASE_URL + "game_status";
             String jsonArray = GET_Request(url.c_str());
-            String gameStatus = retrieveParameterFromJSONArray("started", jsonArray);
+            String gameStatus = retrieveParameterFromJSONArray("has_game_started", jsonArray);
             return gameStatus == "1";
         }
 
         int getPlayerID(int CLAN, String mac_addr) {
-            String url = DATABASE_URL + "player_id&clan=" + String(CLAN) + "&mac_address=" + mac_addr;
+            String url = DATABASE_URL + "player_id/" + String(CLAN) + "/" + mac_addr;
+            // String url = DATABASE_URL + "player_id&clan=" + String(CLAN) + "&mac_address=" + mac_addr;
             String jsonArray = GET_Request(url.c_str());
             return retrieveParameterFromJSONArray("player_id", jsonArray).toInt();
         };
@@ -220,4 +248,3 @@ class DBConnection {
 };
 
 DBConnection dbc;
-

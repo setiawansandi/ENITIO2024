@@ -13,8 +13,8 @@ class Player(db.Model):
     treasure = db.relationship('Level2Treasure', back_populates='collected_by')
     level1_treasures = db.relationship('Level1TreasureCollectors')
 
-    def __init__(self, clan, mac_address):
-        self.clan_id = clan
+    def __init__(self, clan_id, mac_address):
+        self.clan_id = clan_id
         self.mac_address = mac_address
         self.participant_id = None
         self.num_kills = 0

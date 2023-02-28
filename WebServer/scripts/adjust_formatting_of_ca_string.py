@@ -1,0 +1,30 @@
+ca_string = '''-----BEGIN CERTIFICATE-----
+MIIDljCCAn6gAwIBAgIQNVdBpOD85JGeYm6zWCKCmjANBgkqhkiG9w0BAQsFADBI
+MRswGQYDVQQDDBJFU0VUIFNTTCBGaWx0ZXIgQ0ExHDAaBgNVBAoME0VTRVQsIHNw
+b2wuIHMgci4gby4xCzAJBgNVBAYTAlNLMB4XDTIzMDIyNzE1NTU1N1oXDTIzMDUy
+ODE1NTU1NlowIjEgMB4GA1UEAxMXZW5pdGlvdHJlYXN1cmVodW50LmxpbmswggEi
+MA0GCSqGSIb3DQEBAQUAA4IBDwAwggEKAoIBAQDXIa37ToQjxiy8koxWUw0Rpzdv
+/11odPGgIbMGpT05DD/UNK9CaxTfJLw3ftT4EEcPHFzavvTXG7uJ6OOtXfi0WIbf
+fgiKD/ve8ch6oc9Vqp7HbFWZ0cg3JKFwkGw5MF2JO6vTkzbzht97dj4UAj5FMh8d
+EGPFMR7plbf8P5RGuQCdzrPk+i3/6N/jo6bSCYr1hqxCMQgeGkTLFr+F7I7emkdQ
+JcOfaqAcJalnKS39PDqf44bhza2xz2cxKllgS4fxCKJQH/ApyTaHDMLHPlhMNStj
+uf6WDs6c1K8XIj5AmGYvFxuRyhzmcbdAG2hv3WyPGjcDAeu53LK/wejj/h05AgMB
+AAGjgaEwgZ4wCwYDVR0PBAQDAgWgMB0GA1UdDgQWBBQtHxvNJX/jCsJbVPZZFiai
+0ndfqTAfBgNVHSMEGDAWgBR1fBmAqE/V8PIcSLwG0TBEt6AnrTAdBgNVHSUEFjAU
+BggrBgEFBQcDAQYIKwYBBQUHAwIwDAYDVR0TAQH/BAIwADAiBgNVHREEGzAZghdl
+bml0aW90cmVhc3VyZWh1bnQubGluazANBgkqhkiG9w0BAQsFAAOCAQEAuThNYcXz
+VVMGPYNICi/puKYGxkiS019soTbIwRjq3dNKcWF4sB/ba2OjioM7UCnJ1TE9uEGO
+vkjj7gbSIcJakfv0idFrj5i3q9Kgo3bnpqcm+LdpEo6+FvR+Lra+ptxG8lqj1p4l
+luth4Pf6Sf1Ck2iPgjIoTDtdO/xW+0oF2pG9dEAFnHMabjS6F+CpR126SHv80gcW
+D86l8F9Z5/r7mTwGv2K5B6OiTuxV1UkbxRfHlzosVkRTu1nvOKxuwS/6do1spy6F
+IZXVoS81d2f+4CTAnwDLajUUcL27i/UD+nVhHaR2vs+WQcZ2FrIlXVsoXdlgr+ko
+nDWRvXqKgJnnMA==
+-----END CERTIFICATE-----'''
+
+final_result = ''
+for line in ca_string.split("\n"):
+    final_result += f'\"{line}\\n\" \\\n'
+
+# remove last newline and add semicolon
+final_result = final_result[:-3] + ";"
+print(final_result)
