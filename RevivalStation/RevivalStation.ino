@@ -58,50 +58,6 @@ class RevivalStation
       EEPROM.commit();
       HP = REVIVAL_STATION_INITIAL_HP;
     };
-    
-    // void receiveAction() {
-    //   int currStatus = EEPROM.read(ENABLE_add);
-    //   unsigned long currTime = millis();
-    //   if (currStatus == 1 && HealingStation_IR.available()) {
-    //       ir_signal IRsignal_ = HealingStation_IR.read();
-
-    //       if (currTime - last_revival_request >= HEALING_STATION_ACTION_RECV_WAIT){
-    //           Serial.println("Initiate Healing Request");
-    //           CLAN_ = IRsignal_.address.digit2;
-    //           ID_ = IRsignal_.address.digit0 + (IRsignal_.address.digit1 << 4);
-        
-    //           En_ = IRsignal_.command.digit1;
-    //           action_ = IRsignal_.command.digit0;
-        
-    //           Serial.printf("%d %d %d %d \n", action_, En_, ID_, CLAN_);
-      
-    //           if ((action_ == collect) || (action_ == revive)) {
-    //               heal_player(CLAN_, ID_);
-    //               HP--;
-    //               Serial.print(HP); Serial.println(" Before Station Closes");
-    //               if (HP == 0) {
-    //                   Serial.println("Closing Healing Station");
-    //                   HealingStation_NeoPixel.off_FRONT();
-    //                   HealingStation_NeoPixel.off_TOP();
-    //                   healing_station.display_no_hp();
-    //                   EEPROM.write(ENABLE_add, 2);
-    //                   EEPROM.commit();
-    //               }
-    //           }
-    //           last_revival_request = currTime;
-    //       }
-    //   } else if (currStatus == 2) {
-    //       timeleftToRecover = max(int(HEALING_STATION_RECOVER_DURATION - (currTime - last_revival_request)), 0);
-    //       if (timeleftToRecover == 0) {
-    //         Serial.println("Reopening Healing Station");
-    //         HP = HEALING_STATION_INITIAL_HP;
-    //         EEPROM.write(ENABLE_add, 1);
-    //         EEPROM.commit();
-    //         HealingStation_NeoPixel.displayRGB_FRONT(R_ON, B_ON, G_ON);
-    //         HealingStation_NeoPixel.displayRGB_TOP(R_ON, B_ON, G_ON);
-    //       }
-    //   }
-    // };
 
     void RevivalLoop(){
       int currStatus = EEPROM.read(ENABLE_add);
@@ -179,10 +135,10 @@ class RevivalStation
           
       display.setCursor(0, 16);
       display.setTextColor(SSD1306_WHITE); // Draw white text
-      display.println("Hold on!!");
+      display.println("      Hold on!!     ");
       display.setCursor(0, 30);
-      display.println("The game has not");
-      display.println("started yet.");
+      display.println("  The game has not  ");
+      display.println("    started yet.    ");
       display.display();
     };
 

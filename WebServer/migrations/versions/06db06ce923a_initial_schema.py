@@ -21,7 +21,7 @@ def upgrade():
     op.create_table('game_status',
     sa.Column('id', sa.Integer(), autoincrement=True, nullable=False),
     sa.Column('name', sa.Text(), nullable=False),
-    sa.Column('value', sa.Text(), nullable=False),
+    sa.Column('value', sa.Integer(), nullable=False),
     sa.PrimaryKeyConstraint('id')
     )
     op.create_table('level1_treasure',

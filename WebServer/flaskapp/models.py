@@ -84,7 +84,7 @@ class Level1TreasureCollectors(db.Model):
 class GameStatus(db.Model):
     id = db.Column(db.Integer, primary_key=True, autoincrement=True, nullable=False)
     name = db.Column(db.Text, nullable=False)
-    value = db.Column(db.Text, nullable=False)
+    value = db.Column(db.Integer, nullable=False)
 
     def __init__(self, name, value):
         self.name = name

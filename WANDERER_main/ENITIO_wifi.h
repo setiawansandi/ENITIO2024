@@ -12,8 +12,8 @@
 #define EAP_ANONYMOUS_IDENTITY  ""
 #define EAP_IDENTITY  "@student.main.ntu.edu.sg"
 #define EAP_PASSWORD  ""
-#define HOME_WIFI_SSID "FreeWaffles"
-#define HOME_WIFI_PASSWORD "SponsoredByCKL00"
+#define HOME_WIFI_SSID ""
+#define HOME_WIFI_PASSWORD ""
 
 const char *ssid = "NTUSECURE";
 int wifi_reconnect_counter = 0;
@@ -80,13 +80,25 @@ struct FailedFeedbackStatistics {
 class DBConnection {
     private:
         String DATABASE_URL = "https://enitiotreasurehunt.link/";
-        WiFiClientSecure https_client;
-        String GET_Request(const char* server) {
+        String DATABASE_DEBUG_URL = "http://192.168.0.114:5000/";
+        bool DEBUG = false;
+        String GET_Request(String route) {
             HTTPClient http;
+            String url;
             http.setTimeout(HTTP_TIMEOUT);
-            http.begin(https_client, server);
+            if (!DEBUG) {
+                WiFiClientSecure https_client;
+                https_client.setCACert(root_ca);
+                https_client.setInsecure();
+                url = DATABASE_URL + route;
+                http.begin(https_client, url.c_str());
+            } else {
+                url = DATABASE_DEBUG_URL + route;
+                Serial.print("DEBUG GET "); Serial.println(url);
+                http.begin(url.c_str());
+            }
+            
             int httpResponseCode = http.GET();
-        
             String payload = "{}";
         
             if (httpResponseCode > 0) {
@@ -147,34 +159,40 @@ class DBConnection {
             return feedback_stats;
         }
         
-        String POST_Request(const char* server, const char* payload) {
-            if (WiFi.status() == WL_CONNECTED) {
-                Serial.println(server);
-                HTTPClient http;
-                http.setTimeout(HTTP_TIMEOUT);
-                http.setFollowRedirects(HTTPC_STRICT_FOLLOW_REDIRECTS);
-                http.begin(server);
-                http.addHeader("Content-Type", "application/json");
-                int httpResponseCode = http.POST(payload);
-                String responsePayload = "{}";
-                if (httpResponseCode > 0) {
-                    Serial.print("HTTP Response code: "); Serial.println(httpResponseCode);
-                    responsePayload = http.getString();
-                }
-                else {
-                    Serial.print("Error code: "); Serial.println(httpResponseCode);
-                }
-                http.end();
-                return responsePayload;
+        String POST_Request(String route, const char* payload) {
+            HTTPClient http;
+            http.setTimeout(HTTP_TIMEOUT);
+            String url;
+            if (!DEBUG) {
+                WiFiClientSecure https_client;
+                https_client.setCACert(root_ca);
+                https_client.setInsecure();
+                url = DATABASE_URL + route;
+                http.begin(https_client, url.c_str());
+            } else {
+                url = DATABASE_DEBUG_URL + route;
+                Serial.print("DEBUG POST "); Serial.println(url);
+                http.begin(url.c_str());
             }
+            Serial.println(url);
+            http.addHeader("Content-Type", "application/json");
+            int httpResponseCode = http.POST(payload);
+            String responsePayload = "{}";
+            if (httpResponseCode > 0) {
+                Serial.print("HTTP Response code: "); Serial.println(httpResponseCode);
+                responsePayload = http.getString();
+            }
+            else {
+                Serial.print("Error code: "); Serial.println(httpResponseCode);
+            }
+            http.end();
+            return responsePayload;    
         };
     
     public:
         void startWiFiConnection() {
-            WiFi.begin(HOME_WIFI_SSID, HOME_WIFI_PASSWORD);
-            https_client.setCACert(root_ca);
-            // WiFi.begin(ssid, WPA2_AUTH_PEAP, EAP_ANONYMOUS_IDENTITY, EAP_IDENTITY, EAP_PASSWORD, root_ca);
-            https_client.setInsecure();
+            // WiFi.begin(HOME_WIFI_SSID, HOME_WIFI_PASSWORD);
+            WiFi.begin(ssid, WPA2_AUTH_PEAP, EAP_ANONYMOUS_IDENTITY, EAP_IDENTITY, EAP_PASSWORD);
         }
         bool connectToWiFi() {
             // returns True if connected, False if timeout
@@ -195,10 +213,10 @@ class DBConnection {
         };
 
         bool registerWanderer(int CLAN, String mac_addr) {
-            String url = DATABASE_URL + "register";
+            String url = "register";
             String httpRequestData = "{\"clan\": " + String(CLAN) + ", \"mac_address\": \"" + mac_addr + "\" }";
             Serial.println(httpRequestData);
-             String jsonArray = POST_Request(url.c_str(), httpRequestData.c_str());
+             String jsonArray = POST_Request(url, httpRequestData.c_str());
             // String url = DATABASE_URL + "register&clan=" + String(CLAN) + "&mac_address=" + mac_addr;
             // String jsonArray = GET_Request(url.c_str());
             Serial.println(jsonArray);
@@ -206,42 +224,44 @@ class DBConnection {
         };
 
         bool hasGameStarted() {
-            String url = DATABASE_URL + "game_status";
-            String jsonArray = GET_Request(url.c_str());
+            String url = "game_status";
+            String jsonArray = GET_Request(url);
             String gameStatus = retrieveParameterFromJSONArray("has_game_started", jsonArray);
             return gameStatus == "1";
         }
 
         int getPlayerID(int CLAN, String mac_addr) {
-            String url = DATABASE_URL + "player_id/" + String(CLAN) + "/" + mac_addr;
+            Serial.println("Retrieving Participant ID from server...");
+            String url = "player_id/" + String(CLAN) + "/" + mac_addr;
             // String url = DATABASE_URL + "player_id&clan=" + String(CLAN) + "&mac_address=" + mac_addr;
-            String jsonArray = GET_Request(url.c_str());
+            String jsonArray = GET_Request(url);
+            Serial.println(jsonArray);
             return retrieveParameterFromJSONArray("player_id", jsonArray).toInt();
         };
 
         GAME_CONSTANTS getGameConstants() {
-            String url = DATABASE_URL + "get_game_constants";
-            String jsonArray = GET_Request(url.c_str());
+            String url = "get_game_constants";
+            String jsonArray = GET_Request(url);
             // Serial.println(jsonArray);
             return retrieveGameConstantsFromJSONArray(jsonArray);
         };
 
         FailedFeedbackStatistics sendGameStatistics(int CLAN, int ID, int kills, int num_level1_treasure, int num_level2_treasure) {
-            /* String url = DATABASE_URL + "player_score";
+            String url = "player_score";
             String httpRequestData = "{\"clan\": " + String(CLAN) + ", \"id\": " + String(ID) + ", \"num_kills\": " + String(kills);
             httpRequestData = httpRequestData + ", \"level1\": " + String(num_level1_treasure) + ", \"level2\": " + String(num_level2_treasure);
             httpRequestData = httpRequestData + "}";
             Serial.println(httpRequestData);
-            String jsonArray = POST_Request(url.c_str(), httpRequestData.c_str()); */
-            String url = DATABASE_URL + "player_score&clan=" + String(CLAN) + "&id=" + String(ID) + "&num_kills=" + String(kills);
-            url = url + "&level1=" + String(num_level1_treasure) + "&level2=" + String(num_level2_treasure);
-            String jsonArray = GET_Request(url.c_str());
+            String jsonArray = POST_Request(url, httpRequestData.c_str());
+            // String url = DATABASE_URL + "player_score&clan=" + String(CLAN) + "&id=" + String(ID) + "&num_kills=" + String(kills);
+            // url = url + "&level1=" + String(num_level1_treasure) + "&level2=" + String(num_level2_treasure);
+            // String jsonArray = GET_Request(url.c_str());
             Serial.println(jsonArray);
             return retrieveStatisticsFromJSONArray(jsonArray);
         };
 
         bool uploadFailedFeedback(int CLAN, int participant_id) {
-            String url = DATABASE_URL + "player_kill/" + String(CLAN) + "/" + String(participant_id);
+            String url = "player_kill/" + String(CLAN) + "/" + String(participant_id);
             String jsonArray = GET_Request(url.c_str());
             return jsonArray != "{}";
         }
