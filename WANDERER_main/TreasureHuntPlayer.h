@@ -118,7 +118,7 @@ class TreasureHuntPlayer
       esp_wifi_set_mac(WIFI_IF_STA, &newMACAddress_STA[0]);
       
 
-      Serial.print("[NEW] ESP8266 Board MAC Address:  ");
+      Serial.print("[NEW] ESP32 Board MAC Address:  ");
       Serial.println(WiFi.macAddress());
 
       if (EEPROM.read(PLAYER_enable_add) == 0){
@@ -770,6 +770,7 @@ class TreasureHuntPlayer
       if (!gameStarted) {
         gameStarted = game_started_buffer;
         if (gameStarted) {
+          Serial.println("Game has started! Starting initialisation processes...");
           int CLAN = EEPROM.read(CLAN_add);
           bool isGL = EEPROM.read(isGL_add);
           int id = dbc.getPlayerID(CLAN, my_MAC_address);

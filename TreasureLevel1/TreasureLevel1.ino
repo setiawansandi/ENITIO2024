@@ -44,10 +44,11 @@ Adafruit_SSD1306 display(SCREEN_WIDTH, SCREEN_HEIGHT, &Wire, OLED_RESET);
 #define ENABLE_add 0  // 0 means Treasure has not been initialized, 1 means already initialized
 #define ID_add 1
 #define HP_add 2
-#define ALATAR_add 3
-#define DRACHEN_add 4
-#define EVA_add 5
-#define INVICTA_add 6
+#define INVICTA_add 3
+#define DYNARI_add 4
+#define EPHILIA_add 5
+#define AKRONA_add 6
+#define SOLARIS_add 7
 
 #define R_ON 0
 #define G_ON 0
@@ -238,20 +239,24 @@ class TreasureLevel1
       EEPROM.write(ENABLE_add, 2);
       switch (CLAN_)
       {
-      case ALATAR:
-        EEPROM.write(ALATAR_add, EEPROM.read(ALATAR_add) + 1);
-        break;
-
-      case DRACHEN:
-        EEPROM.write(DRACHEN_add, EEPROM.read(DRACHEN_add) + 1);
-        break;
-
-      case EVA:
-        EEPROM.write(EVA_add, EEPROM.read(EVA_add) + 1);
-        break;
-
       case INVICTA:
         EEPROM.write(INVICTA_add, EEPROM.read(INVICTA_add) + 1);
+        break;
+
+      case DYNARI:
+        EEPROM.write(DYNARI_add, EEPROM.read(DYNARI_add) + 1);
+        break;
+
+      case EPHILIA:
+        EEPROM.write(EPHILIA_add, EEPROM.read(EPHILIA_add) + 1);
+        break;
+
+      case AKRONA:
+        EEPROM.write(AKRONA_add, EEPROM.read(AKRONA_add) + 1);
+        break;
+
+      case SOLARIS:
+        EEPROM.write(SOLARIS_add, EEPROM.read(SOLARIS_add) + 1);
         break;
       
       default:
@@ -285,10 +290,10 @@ class TreasureLevel1
           
       display.setCursor(0, 16);
       display.setTextColor(SSD1306_WHITE); // Draw white text
-      display.println("Hold on!!");
+      display.println("      Hold on!!     ");
       display.setCursor(0, 30);
-      display.println("The game has not");
-      display.println("started yet.");
+      display.println("  The game has not  ");
+      display.println("    started yet.    ");
       display.display();
     };
 
@@ -337,20 +342,24 @@ class TreasureLevel1
         display.setCursor(0, 30);
         display.println("  Resetting soon...  ");
 
-        display.setCursor(0, 46);
-        if (CLAN_ == ALATAR)
-          display.println("CLAN collected: ALATAR");
-        else if (CLAN_ == DRACHEN)
-          display.println("CLAN collected: DRACHEN");
-        else if (CLAN_ == EVA)
-          display.println("CLAN collected: EVA");
-        else if (CLAN_ == INVICTA)
-          display.println("CLAN collected: INVICTA");
+        display.setCursor(0, 44);
+        display.println("   Clan Collected:  ");
+
+        display.setCursor(0, 54);
+        if (CLAN_ == INVICTA)
+          display.println("      INVICTA       ");
+        else if (CLAN_ == DYNARI)
+          display.println("       DYNARI       ");
+        else if (CLAN_ == EPHILIA)
+          display.println("      EPHILIA       ");
+        else if (CLAN_ == AKRONA)
+          display.println("       AKRONA       ");
+        else if (CLAN_ == SOLARIS)
+          display.println("      SOLARIS       ");
         
         display.display();
       };
     }
-
 };
 
 TreasureLevel1 Treasure;  // use OLED to input ID 

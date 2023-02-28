@@ -454,7 +454,7 @@ class Profile_OLED {
 
       display.setCursor(0,0);
       // menu title
-      display.println(" Choose your CLAN...   ");
+      display.println(" Choose your CLAN... ");
       //---------------------------------
 
       display.setTextColor(SSD1306_WHITE);
@@ -941,4 +941,3 @@ class TreasureHunt_OLED {
 };
 
 TreasureHunt_OLED TreasureHunt_OLED;
-

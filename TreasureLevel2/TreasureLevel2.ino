@@ -270,10 +270,10 @@ class TreasureLevel2
           
       display.setCursor(0, 16);
       display.setTextColor(SSD1306_WHITE); // Draw white text
-      display.println("Hold on!!");
+      display.println("      Hold on!!     ");
       display.setCursor(0, 30);
-      display.println("The game has not");
-      display.println("started yet.");
+      display.println("  The game has not  ");
+      display.println("    started yet.    ");
       display.display();
     };
 
@@ -294,7 +294,7 @@ class TreasureLevel2
       display.println(HP);
 
       display.setCursor(0, 48);
-      display.print("Please wait ...");
+      display.println("    Please wait ...   ");
       display.display();
     }
     
@@ -343,17 +343,20 @@ class TreasureLevel2
           display.println("    It's a Virus!   ");
         }   
 
-        display.setCursor(0, 46);
-        
+        display.setCursor(0, 44);
+        display.println("   Clan Collected:  ");
 
-        if (CLAN_ == ALATAR)
-          display.println("CLAN collected: ALATAR");
-        else if (CLAN_ == DRACHEN)
-          display.println("CLAN collected: DRACHEN");
-        else if (CLAN_ == EVA)
-          display.println("CLAN collected: EVA");
-        else if (CLAN_ == INVICTA)
-          display.println("CLAN collected: INVICTA");
+        display.setCursor(0, 54);
+        if (CLAN_ == INVICTA)
+          display.println("      INVICTA       ");
+        else if (CLAN_ == DYNARI)
+          display.println("       DYNARI       ");
+        else if (CLAN_ == EPHILIA)
+          display.println("      EPHILIA       ");
+        else if (CLAN_ == AKRONA)
+          display.println("       AKRONA       ");
+        else if (CLAN_ == SOLARIS)
+          display.println("      SOLARIS       ");
 
         display.display();
       };
