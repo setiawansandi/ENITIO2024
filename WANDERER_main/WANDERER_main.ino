@@ -6,12 +6,13 @@
 #include "ENITIO_EspNOW.h"
 #include "ENITIO_OLED.h"
 #include "ENITIO_player_bluetooth.h"
-
 #include "MainMenu.h"
 #include "Profile.h"
 #include "TreasureHuntPlayer.h"
 #include "Admin.h"
 #include "Credits.h"
+#include "MACAddress.h"
+#define LED_BUILTIN 2
 
 #define LED_BUILTIN 2
 
@@ -81,6 +82,8 @@ void setup() {
 
       Serial.println(my_MAC_address);
 
+      pinMode(LED_BUILTIN, OUTPUT);
+
       xTaskCreatePinnedToCore(
                       backgroundTaskCode,   /* Task function. */
                       "backgroundTask",     /* name of task. */
@@ -92,17 +95,17 @@ void setup() {
 }
 
 void loop() {
-  static unsigned long last_wifi_check_time = 0;
-  const unsigned long wifi_check_interval = 5000; // check WiFi connection every 5 seconds
-  
-  if (millis() - last_wifi_check_time > wifi_check_interval) {
-    if (WiFi.status() != WL_CONNECTED) {
-      Serial.println("Lost WiFi Connection.. attempting to reconnect");
-      dbc.startWiFiConnection();
-    }
-    last_wifi_check_time = millis();
+  // First check if ESP is connected to WiFi
+  if ((WiFi.status() != WL_CONNECTED) && (millis() - last_disconnected_time > 2000)) {
+    Serial.println("Lost WiFi Connection.. attempting to reconnect");
+    digitalWrite(LED_BUILTIN, HIGH); // lights up the built-in LED when the WiFi connection is lost
+    dbc.startWiFiConnection();
+    last_disconnected_time = millis();
   }
-
+  else {
+    digitalWrite(LED_BUILTIN, LOW);
+  }
+  
   switch (currentProcess) {
     case MainMenuProcess:
       My_MainMenu.MainMenuLoop();
@@ -124,3 +127,4 @@ void loop() {
       break;
   }
 }
+

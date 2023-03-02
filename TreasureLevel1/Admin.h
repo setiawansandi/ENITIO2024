@@ -215,24 +215,24 @@ class Admin_OLED{
       display.display();
     }
 
-    void display_CheckingCollection(int alatar_collection, 
-                              int drachen_collection, 
-                              int eva_collection, 
-                              int invicta_collection){
+    void display_CheckingCollection(int invicta_collection, int dynari_collection, int ephilia_collection, 
+                            int akrona_collection, int solaris_collection){
         display.clearDisplay();
         display.setTextColor(SSD1306_BLACK, SSD1306_WHITE); // Draw 'inverse' text
         display.setCursor(0, 0);
-        display.println(F("  Collections by CLAN  ")); 
+        display.println(F(" Collections by CLAN ")); 
         
         display.setTextColor(SSD1306_WHITE); // Draw 'inverse' text
-        display.setCursor(0, 10);
-        display.print("Alatar: "), display.println(alatar_collection);
-        display.setCursor(0, 20);
-        display.print("Drachen: "), display.println(drachen_collection);
-        display.setCursor(0, 30);
-        display.print("Eva: "), display.println(eva_collection);
-        display.setCursor(0, 40);
+        display.setCursor(0, 12);
         display.print("Invicta: "), display.println(invicta_collection);
+        display.setCursor(0, 21);
+        display.print("Dynari: "), display.println(dynari_collection);
+        display.setCursor(0, 30);
+        display.print("Ephilia: "), display.println(ephilia_collection);
+        display.setCursor(0, 39);
+        display.print("Akrona: "), display.println(akrona_collection);
+        display.setCursor(0, 48);
+        display.print("Solaris: "), display.println(solaris_collection);
 
         display.setCursor(10, 56);
         display.setTextColor(SSD1306_BLACK, SSD1306_WHITE);
@@ -538,11 +538,13 @@ class Admin {
                 }
                 else if(isCheckingCollection){
                   handleJoystickCheckingCollection();
-                  int alatar_collection = EEPROM.read(ALATAR_add);
-                  int drachen_collection = EEPROM.read(DRACHEN_add);
-                  int eva_collection = EEPROM.read(EVA_add);
                   int invicta_collection = EEPROM.read(INVICTA_add);
-                  Admin_OLED.display_CheckingCollection(alatar_collection, drachen_collection, eva_collection, invicta_collection);
+                  int dynari_collection = EEPROM.read(DYNARI_add);
+                  int ephilia_collection = EEPROM.read(EPHILIA_add);
+                  int akrona_collection = EEPROM.read(AKRONA_add);
+                  int solaris_collection = EEPROM.read(SOLARIS_add);
+                  Admin_OLED.display_CheckingCollection(invicta_collection, dynari_collection, ephilia_collection, 
+                            akrona_collection, solaris_collection);
                 }
                 else {
                     handleJoystickMain();

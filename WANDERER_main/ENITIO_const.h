@@ -9,6 +9,7 @@ const int SnakeGameProcess = 3 ;
 const int MusicProcess = 4 ; 
 const int AdminProcess = 5 ;
 const int CreditProcess = 6 ;
+const int MACAddressProcess = 7;
 
 #define NAV_WAIT 4000
 
@@ -58,5 +59,3 @@ int failed_kill_CLAN[50] = {};
 int failed_kill_ID[50] = {};
 int current_failed_save_pointer = 0;
 int current_failed_read_pointer = 0;
-
-
