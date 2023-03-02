@@ -6,12 +6,13 @@
 #include "ENITIO_EspNOW.h"
 #include "ENITIO_OLED.h"
 #include "ENITIO_player_bluetooth.h"
-
 #include "MainMenu.h"
 #include "Profile.h"
 #include "TreasureHuntPlayer.h"
 #include "Admin.h"
 #include "Credits.h"
+#include "MACAddress.h"
+#define LED_BUILTIN 2
 
 TaskHandle_t backgroundTask;
 
@@ -77,6 +78,8 @@ void setup() {
 
       Serial.println(my_MAC_address);
 
+      pinMode(LED_BUILTIN, OUTPUT);
+
       xTaskCreatePinnedToCore(
                       backgroundTaskCode,   /* Task function. */
                       "backgroundTask",     /* name of task. */
@@ -91,8 +94,12 @@ void loop() {
   // First check if ESP is connected to WiFi
   if ((WiFi.status() != WL_CONNECTED) && (millis() - last_disconnected_time > 2000)) {
     Serial.println("Lost WiFi Connection.. attempting to reconnect");
+    digitalWrite(LED_BUILTIN, HIGH); // lights up the built-in LED when the WiFi connection is lost
     dbc.startWiFiConnection();
     last_disconnected_time = millis();
+  }
+  else {
+    digitalWrite(LED_BUILTIN, LOW);
   }
   if (currentProcess == MainMenuProcess){
     My_MainMenu.MainMenuLoop();
@@ -105,8 +112,12 @@ void loop() {
   }
   else if (currentProcess == AdminProcess){
     My_Admin.AdminLoop();
-  } else if (currentProcess == CreditProcess) {
+  }
+  else if (currentProcess == CreditProcess) {
     My_Credits.CreditsLoop();
+  }
+  else if (currentProcess == MACAddressProcess) {
+    My_MACAddress.MACAddressLoop();
   }
   else {
     currentProcess = MainMenuProcess;

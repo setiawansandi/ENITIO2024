@@ -2,6 +2,7 @@
 #include <Wire.h>
 #include <Adafruit_GFX.h>
 #include <Adafruit_SSD1306.h>
+#include <WiFi.h>
 
 #define SCREEN_WIDTH 128 // OLED display width, in pixels
 #define SCREEN_HEIGHT 64 // OLED display height, in pixels
@@ -66,6 +67,7 @@ const unsigned char enitioLogo [] PROGMEM = {
 
 const int SetGLFunction = 0;
 const int FactoryResetFunction = 1;
+//const int MACAddressFunction = 2;
 const int ExitFunction = 2;
 
 void StartUpDisplay(){
@@ -99,6 +101,24 @@ void CreditsDisplay() {
     display.setCursor(0, 42);
     display.println("Edmund");
 
+    display.setCursor(10, 56);
+    display.setTextColor(SSD1306_BLACK, SSD1306_WHITE);
+    display.println("(Press to go back)"); 
+    display.display();
+}
+
+void MACAddressDisplay()
+{
+  display.clearDisplay();
+    display.setTextColor(SSD1306_BLACK, SSD1306_WHITE); // Draw 'inverse' text
+    display.setCursor(0, 0);
+    display.println(F(" Device MAC Address ")); 
+    display.setTextColor(SSD1306_WHITE);
+    display.setTextSize(1); // Draw SIZE
+    display.setCursor(0, 22);
+    // char mac_str[18];
+    // sprintf(mac_str, "MAC: %02X:%02X:%02X:%02X:%02X:%02X", my_MAC_address[0], my_MAC_address[1], my_MAC_address[2], my_MAC_address[3], my_MAC_address[4], my_MAC_address[5]);
+    display.println(my_MAC_address);
     display.setCursor(10, 56);
     display.setTextColor(SSD1306_BLACK, SSD1306_WHITE);
     display.println("(Press to go back)"); 
@@ -216,7 +236,10 @@ class Admin_OLED{
       display.println("Register Role");
       display.setCursor(10, 22);
       display.println("Factory Reset");
-
+      //display.setCursor(10,32);
+      //char mac_str[18];
+      //sprintf(mac_str, "MAC: %02X:%02X:%02X:%02X:%02X:%02X", my_MAC_address[0], my_MAC_address[1], my_MAC_address[2], my_MAC_address[3], my_MAC_address[4], my_MAC_address[5]);
+      //display.println(mac_str);
       display.setCursor(10, 42);
       display.println("Back to Main Menu");
 
@@ -231,7 +254,12 @@ class Admin_OLED{
         display.setCursor(2, 22);
         display.println(">");
         break;
-
+        
+      //case MACAddressFunction:
+        //display.setCursor(2, 32);
+        //display.println(">");
+        //break;
+        
       case ExitFunction:
         display.setCursor(2, 42);
         display.println(">");
@@ -390,6 +418,16 @@ class MainMenu_OLED {
           display.setTextColor(SSD1306_WHITE);
           display.print(F(" >"));
           break;
+
+        case MACAddressProcess:
+          display.setCursor(15, 56);
+          display.print(F("< "));
+          display.setTextColor(SSD1306_BLACK, SSD1306_WHITE);
+          display.print(F("MAC Address"));
+          display.setTextColor(SSD1306_WHITE);
+          display.print(F(" >"));
+          break;
+         
       }
       display.display();
     }
