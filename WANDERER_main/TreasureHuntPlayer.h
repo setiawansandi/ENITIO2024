@@ -54,12 +54,12 @@ class TreasureHuntPlayer
 
     bool infectedWithVirus = 0;
 
-    int num_bonus6HP = 5;
-    int num_bonus1MaxEn = 5;
+    int num_bonus6HP = 0;
+    int num_bonus1MaxEn = 0;
     int num_bonus1Multiplier = 0;
     int num_fiveminx2EnRegen = 0;
-    int num_bomb = 5;
-    int num_poison = 5;
+    int num_bomb = 0;
+    int num_poison = 0;
 
     bool is_x2EnRegen = false;
 
