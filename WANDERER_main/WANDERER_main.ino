@@ -122,6 +122,9 @@ void loop() {
     case CreditProcess:
       My_Credits.CreditsLoop();
       break;
+    case MACAddressProcess:
+      My_MACAddress.MACAddressLoop();
+      break;
     default:
       currentProcess = MainMenuProcess;
       break;
