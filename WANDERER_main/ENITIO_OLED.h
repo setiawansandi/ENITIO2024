@@ -66,6 +66,7 @@ const unsigned char enitioLogo [] PROGMEM = {
 
 const int SetGLFunction = 0;
 const int FactoryResetFunction = 1;
+//const int MACAddressFunction = 2;
 const int ExitFunction = 2;
 
 void StartUpDisplay(){
@@ -216,6 +217,10 @@ class Admin_OLED{
       display.println("Register Role");
       display.setCursor(10, 22);
       display.println("Factory Reset");
+      //display.setCursor(10, 32);
+      //char mac_str[18];
+      //sprintf(mac_str, "MAC: %02X:%02X:%02X:%02X:%02X:%02X", my_MAC_address[0], my_MAC_address[1], my_MAC_address[2], my_MAC_address[3], my_MAC_address[4], my_MAC_address[5]);
+      //display.println(mac_str);
 
       display.setCursor(10, 42);
       display.println("Back to Main Menu");
@@ -231,7 +236,12 @@ class Admin_OLED{
         display.setCursor(2, 22);
         display.println(">");
         break;
-
+      
+      //case MACAddressFunction:
+        //display.setCursor(2, 32);
+        //display.println(">");
+        //break;
+        
       case ExitFunction:
         display.setCursor(2, 42);
         display.println(">");
@@ -648,6 +658,7 @@ class TreasureHunt_OLED {
                             int num_bonus1MULTIPLIER,
                             int num_fiveminx2EnRegen,
                             int num_bomb,
+                            int num_poison,
                             String noti,
                             int PowerUpNav){
 
@@ -695,7 +706,7 @@ class TreasureHunt_OLED {
         break;
 
       case bonus1MULTIPLIER:
-        display.println(("     Bonus 1 MULTIPLIER    ")); 
+        display.println(("  Bonus 1 MULTIPLIER    ")); 
         display.setCursor(0, 36);
         display.print(("You have "));    
         display.print(num_bonus1MULTIPLIER);
@@ -730,6 +741,19 @@ class TreasureHunt_OLED {
         display.setCursor(0, 56);
         display.println("    Press to use!    ");
         break;
+
+      case poison:
+        display.println(("        Poison!!       ")); 
+        display.setCursor(0, 22);
+        display.println(("     Lethal Attack!    ")); 
+        display.setCursor(0, 36);
+        display.print(("You have "));    
+        display.print(num_poison);
+        display.println((" of this!"));   
+        display.setTextColor(SSD1306_BLACK, SSD1306_WHITE);
+        display.setCursor(0, 56);
+        display.println("    Press to use!    ");
+        break;  
 
       case 0:
         display.println(("  Use Left and Right ")); 

@@ -13,26 +13,30 @@
 #include "Admin.h"
 #include "Credits.h"
 
+#define LED_BUILTIN 2
+
 TaskHandle_t backgroundTask;
 
 
-void backgroundTaskCode(void * pvParameters){
-  for ( ; ; ) {
-    if (currentProcess == TreasureHuntProcess){
-      if (!PLAYER.gameStarted){
-        game_started_buffer = dbc.hasGameStarted();
-      }
-      else{
-        PLAYER.gameBackgroundProcess();
-      }
+void backgroundTaskCode(void *pvParameters) {
+    TickType_t xLastWakeTime = xTaskGetTickCount();
+
+    for (;;) {
+        if (currentProcess == TreasureHuntProcess) {
+            if (!PLAYER.gameStarted) {
+                game_started_buffer = dbc.hasGameStarted();
+            } else {
+                PLAYER.gameBackgroundProcess();
+            }
+        } else {
+            vTaskDelayUntil(&xLastWakeTime, pdMS_TO_TICKS(10));
+        }
     }
-    else{
-      delay(50);
-    }
-  }
 };
 
 void setup() {
+
+  pinMode(LED_BUILTIN, OUTPUT);
       // initialize serial
       Serial.begin(115200);
       EEPROM.begin(EEPROM_SIZE);
@@ -88,27 +92,35 @@ void setup() {
 }
 
 void loop() {
-  // First check if ESP is connected to WiFi
-  if ((WiFi.status() != WL_CONNECTED) && (millis() - last_disconnected_time > 2000)) {
-    Serial.println("Lost WiFi Connection.. attempting to reconnect");
-    dbc.startWiFiConnection();
-    last_disconnected_time = millis();
+  static unsigned long last_wifi_check_time = 0;
+  const unsigned long wifi_check_interval = 5000; // check WiFi connection every 5 seconds
+  
+  if (millis() - last_wifi_check_time > wifi_check_interval) {
+    if (WiFi.status() != WL_CONNECTED) {
+      Serial.println("Lost WiFi Connection.. attempting to reconnect");
+      dbc.startWiFiConnection();
+    }
+    last_wifi_check_time = millis();
   }
-  if (currentProcess == MainMenuProcess){
-    My_MainMenu.MainMenuLoop();
-  }
-  else if (currentProcess == TreasureHuntProcess){
-    PLAYER.gameMainLoop();
-  }
-  else if (currentProcess == ProfileProcess){
-    My_Profile.ProfileLoop();
-  }
-  else if (currentProcess == AdminProcess){
-    My_Admin.AdminLoop();
-  } else if (currentProcess == CreditProcess) {
-    My_Credits.CreditsLoop();
-  }
-  else {
-    currentProcess = MainMenuProcess;
+
+  switch (currentProcess) {
+    case MainMenuProcess:
+      My_MainMenu.MainMenuLoop();
+      break;
+    case TreasureHuntProcess:
+      PLAYER.gameMainLoop();
+      break;
+    case ProfileProcess:
+      My_Profile.ProfileLoop();
+      break;
+    case AdminProcess:
+      My_Admin.AdminLoop();
+      break;
+    case CreditProcess:
+      My_Credits.CreditsLoop();
+      break;
+    default:
+      currentProcess = MainMenuProcess;
+      break;
   }
 }

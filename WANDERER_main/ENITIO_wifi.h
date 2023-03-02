@@ -147,25 +147,25 @@ class DBConnection {
     public:
         void startWiFiConnection() {
             WiFi.begin(HOME_WIFI_SSID, HOME_WIFI_PASSWORD);
-            // WiFi.begin(ssid, WPA2_AUTH_PEAP, EAP_ANONYMOUS_IDENTITY, EAP_IDENTITY, EAP_PASSWORD);
+            //WiFi.begin(ssid, WPA2_AUTH_PEAP, EAP_ANONYMOUS_IDENTITY, EAP_IDENTITY, EAP_PASSWORD);
         }
         bool connectToWiFi() {
-            // returns True if connected, False if timeout
-            Serial.print("Connecting to Wi-Fi");
-            startWiFiConnection();
-            int counter = 0;
-            while (WiFi.status() != WL_CONNECTED) {
-                Serial.print(".");
-                delay(500);
-                counter++;
-                if (counter >= 20) {
-                    // timeout
-                    return false;
-                }
-            };
-            Serial.print("Connected with IP: "); Serial.println(WiFi.localIP());
-            return true;
-        };
+          Serial.print("Connecting to Wi-Fi");
+
+          // Attempt to connect to Wi-Fi
+          startWiFiConnection();
+          for (int i = 0; i < 20; i++) {
+            if (WiFi.status() == WL_CONNECTED) {
+              Serial.print("Connected with IP: ");
+              Serial.println(WiFi.localIP());
+              return true;
+            }
+            delay(500);
+            Serial.print(".");
+          }
+          // Timeout
+          return false;
+        }
 
         bool registerWanderer(int CLAN, String mac_addr) {
             // String url = DATABASE_URL + "register";

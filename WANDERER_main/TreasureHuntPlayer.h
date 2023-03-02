@@ -26,6 +26,7 @@ class TreasureHuntPlayer
     int Multiplier;
 
     action_id action;
+    bool poisonActive = false;
 
     unsigned long lastActionReceived = 0;
 
@@ -53,11 +54,12 @@ class TreasureHuntPlayer
 
     bool infectedWithVirus = 0;
 
-    int num_bonus6HP = 0;
-    int num_bonus1MaxEn = 0;
+    int num_bonus6HP = 5;
+    int num_bonus1MaxEn = 5;
     int num_bonus1Multiplier = 0;
     int num_fiveminx2EnRegen = 0;
-    int num_bomb = 0;
+    int num_bomb = 5;
+    int num_poison = 5;
 
     bool is_x2EnRegen = false;
 
@@ -159,6 +161,7 @@ class TreasureHuntPlayer
         num_bonus1Multiplier = EEPROM.read(PLAYER_num_bonus1MULTIPLIER_add);
         num_fiveminx2EnRegen = EEPROM.read(PLAYER_num_fiveminx2EnRegen_add);
         num_bomb = EEPROM.read(PLAYER_num_bomb_add);
+        num_poison = EEPROM.read(PLAYER_num_poison_add);
       }
     }
 
@@ -189,7 +192,12 @@ class TreasureHuntPlayer
         case heal:
           this_action_multiplier = HEAL_MULTIPLIER; // player heals through pushing down of joystick.
           break;
-        
+
+        case poisonID:
+          command_digits.digit0 = attack;
+          this_action_multiplier = PARTICIPANT_MaxHP;
+          break;
+
         default:
           this_action_multiplier = 0;
           break;
@@ -206,6 +214,11 @@ class TreasureHuntPlayer
         Player_IR.send(send_signal, 1);
 
         start_receiving_feedback = millis();
+
+        if ((_isGL) && (action == heal)) {
+          HP --;
+          EEPROM.write(PLAYER_HP_add, HP);
+        }
 
         En--;
         EEPROM.write(PLAYER_EN_add, En);
@@ -255,8 +268,7 @@ class TreasureHuntPlayer
           Multiplier = 1;
           EEPROM.write(PLAYER_MULTIPLIER_add, Multiplier);
         }
-        
-    
+        poisonActive = false;
       }
       else {
         permNoti = "";
@@ -343,7 +355,11 @@ class TreasureHuntPlayer
         switch (joystick_pos)
         {
         case up:
-          action = attack;
+          if (poisonActive) {
+            action = poisonID;
+          } else {
+            action = attack;
+          }
           Player_joystick.set_state();
           break;
         
@@ -364,8 +380,8 @@ class TreasureHuntPlayer
           }
           else {
             PowerUpNav-- ;
-            if (PowerUpNav > 5) PowerUpNav -= 6;
-            if (PowerUpNav < 0) PowerUpNav += 6;
+            if (PowerUpNav > 6) PowerUpNav -= 7;
+            if (PowerUpNav < 0) PowerUpNav += 7;
           }
           Player_joystick.set_state();
           break;
@@ -379,8 +395,8 @@ class TreasureHuntPlayer
           }
           else {
             PowerUpNav++ ;
-            if (PowerUpNav > 5) PowerUpNav -= 6;
-            if (PowerUpNav < 0) PowerUpNav += 6;
+            if (PowerUpNav > 6) PowerUpNav -= 7;
+            if (PowerUpNav < 0) PowerUpNav += 7;
           }
           Player_joystick.set_state();
           break;
@@ -431,6 +447,7 @@ class TreasureHuntPlayer
     }
 
     void handlePowerUp(int powerup){
+      if (HP > 0) {
       switch (powerup)
       {
       case bonus6HP:
@@ -479,11 +496,21 @@ class TreasureHuntPlayer
           temp_bomb_killed = 0;
           active_bomb = true;
         }
-      
+        break;
+
+      case poison:
+        if (num_poison > 0){
+          num_poison -- ;
+          poisonActive = true;
+          EEPROM.write(PLAYER_num_poison_add, num_poison);
+        }
+        break;
+
       default:
         break;
       }
       PowerUpNav = 0;
+      }
     }
 
     void handleAction(int CLAN_, int ID_, int action_, int MULTIPLIER_){
@@ -515,6 +542,7 @@ class TreasureHuntPlayer
           last_received_heal = tempNoti_start;
         }
         break;
+      
 
       case revive:
         if(HP == 0) {
@@ -525,7 +553,18 @@ class TreasureHuntPlayer
         last_received_heal = tempNoti_start;
         }
         break;
-        
+
+      case poisonID:
+        if(HP > 0) {
+          HP = max(HP - PARTICIPANT_MaxHP, 0);
+          EEPROM.write(PLAYER_HP_add, HP);
+          Serial.printf("Attacked. Current HP: %d \n", HP);
+          tempNoti = "       Poisoned      ";
+          tempNoti_start = millis();
+          feedback_attack(CLAN_, ID_);
+          Player_Buzzer.sound(NOTE_E3);
+        }
+        break;  
       
       default:
         break;
@@ -568,7 +607,6 @@ class TreasureHuntPlayer
             tempNoti = " U Opened L2 Treasure";
             tempNoti_start = millis();
             numL2Treasure ++ ;
-            EEPROM.write(PLAYER_numL2Treasure_add, numL2Treasure);
           }
           else {
             tempNoti = " L2 Treasure Damaged ";
@@ -579,9 +617,9 @@ class TreasureHuntPlayer
 
       case 2:
         if ((feedbackData.attacker_CLAN == CLAN) && (feedbackData.attacker_ID == ID)){
-          Serial.print("L1 Treasure Collected Power Up:"); Serial.println(feedbackData.is_attackee_killed);
+          Serial.print("L1 Treasure Collected Power Up:"); Serial.println(feedbackData.powerup_received);
           numL1Treasure++;
-          switch (feedbackData.is_attackee_killed)
+          switch (feedbackData.powerup_received)
           {
           case bonus6HP:
             num_bonus6HP ++ ;
@@ -612,7 +650,13 @@ class TreasureHuntPlayer
             EEPROM.write(PLAYER_num_bomb_add, num_bomb);
             tempNoti = "  PowerUp: A Bomb!!  ";
             break;
-          
+
+          case poison:
+            num_poison ++ ;
+            EEPROM.write(PLAYER_num_poison_add, num_poison);
+            tempNoti = " PowerUp: A Poison!!  ";
+            break;
+                        
           default:
             break;
           }
@@ -622,7 +666,7 @@ class TreasureHuntPlayer
       
       case 4:
         if ((feedbackData.attacker_CLAN == CLAN) && (feedbackData.attacker_ID == ID)){
-          if (feedbackData.is_attackee_killed == true) {
+          if (feedbackData.powerup_received == true) {
             temp_bomb_killed += 1;
             temp_bomb_attacked += 1;
             Multiplier++;
@@ -649,6 +693,7 @@ class TreasureHuntPlayer
         infectedWithVirus = 0;
         last_received_heal = tempNoti_start;
         break;
+        
       
       default:
         break;
@@ -657,13 +702,10 @@ class TreasureHuntPlayer
 
     void handleBombed(feedback_message feedbackData){
       if (HP > 0) {
-        if (feedbackData.attacker_CLAN != CLAN){
-          HP = max(HP - BOMB_HP_DEDUCTION, 0);
-          tempNoti = "   You are Bombed!!  ";
-          Player_Buzzer.sound(NOTE_E3);
-          tempNoti_start = millis();
-          feedback_bomb(feedbackData.attacker_CLAN, feedbackData.attacker_ID);
-        }
+         HP = std::max(HP - BOMB_HP_DEDUCTION, 0);
+        std::tie(tempNoti, tempNoti_start) = std::make_pair("   You are Bombed!!  ", millis());
+        Player_Buzzer.sound(NOTE_E3);
+        feedback_bomb(feedbackData.attacker_CLAN, feedbackData.attacker_ID);
       }
     }
       
@@ -745,6 +787,7 @@ class TreasureHuntPlayer
                                               num_bonus1Multiplier,
                                               num_fiveminx2EnRegen,
                                               num_bomb,
+                                              num_poison,
                                               noti_to_display,
                                               PowerUpNav);
           break;
@@ -797,6 +840,7 @@ class TreasureHuntPlayer
         update_player_state();
         update_display();
         update_sound();
+        EEPROM.commit();
       }
   };
 
@@ -845,6 +889,7 @@ class TreasureHuntPlayer
                   EEPROM.write(PLAYER_num_bomb_add, num_bomb);
                   break;
                 
+
                 default:
                   break;
                 }

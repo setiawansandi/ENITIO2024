@@ -33,6 +33,7 @@ const int PLAYER_num_bonus1MaxEn_add = 15;
 const int PLAYER_num_bonus1MULTIPLIER_add = 16;
 const int PLAYER_num_fiveminx2EnRegen_add = 17;
 const int PLAYER_num_bomb_add = 18;
+const int PLAYER_num_poison_add = 19;
 
 
 int EN_RECOVER_DURATION;
@@ -50,6 +51,7 @@ int BOMB_HP_DEDUCTION;
 int KILL_UPDATE_SERVER_INTERVAL;
 int revival_MULTIPLIER;
 int HEAL_MULTIPLIER;
+
 
 int failed_kill_feedback = 0;
 int failed_kill_CLAN[50] = {};

@@ -6,7 +6,8 @@ typedef struct feedback_message {
   int attacker_OG;
   int attacker_ID; 
   int attackee_OG; // or Treasure ID
-  int is_attackee_killed;
+  bool is_attackee_killed
+  int powerup_received;
 } feedback_message;
 
 int EspNOW_received = 0;

@@ -14,7 +14,8 @@ typedef enum {
     attack = 1,
     collect = 2,
     heal = 3,
-    revive = 4
+    revive = 4,
+    poisonID = 5,
 } action_id ;
 
 typedef enum {
@@ -32,6 +33,7 @@ typedef enum {
     bonus1MULTIPLIER = 3,
     fiveminx2EnRegen = 4,
     bomb = 5,
+    poison = 6,
 } power_up; 
 
 #endif
