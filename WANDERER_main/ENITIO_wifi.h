@@ -80,8 +80,8 @@ struct FailedFeedbackStatistics {
 class DBConnection {
     private:
         String DATABASE_URL = "https://enitiotreasurehunt.link/";
-        String DATABASE_DEBUG_URL = "http://192.168.0.114:5000/";
-        bool DEBUG = false;
+        String DATABASE_DEBUG_URL = "http://enitiotreasurehunt.link/";
+        bool DEBUG = true;
         String GET_Request(String route) {
             HTTPClient http;
             String url;
@@ -89,7 +89,7 @@ class DBConnection {
             if (!DEBUG) {
                 WiFiClientSecure https_client;
                 https_client.setCACert(root_ca);
-                https_client.setInsecure();
+                // https_client.setInsecure();
                 url = DATABASE_URL + route;
                 http.begin(https_client, url.c_str());
             } else {
@@ -97,7 +97,6 @@ class DBConnection {
                 Serial.print("DEBUG GET "); Serial.println(url);
                 http.begin(url.c_str());
             }
-            
             int httpResponseCode = http.GET();
             String payload = "{}";
         
