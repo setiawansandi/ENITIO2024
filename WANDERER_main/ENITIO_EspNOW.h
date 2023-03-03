@@ -6,7 +6,8 @@ typedef struct esp_now_msg {
   int attacker_CLAN;
   int attacker_ID; 
   int attackee_CLAN; // or Treasure ID
-  int is_attackee_killed;
+  bool is_attackee_killed;
+  int powerup_received;
 } feedback_message;
 
 int EspNOW_received = 0;
@@ -131,51 +132,38 @@ class EspNOW {
       return data;
     }
 
-    void ScanForBombTarget() {
-      WiFi.scanNetworks();
+      void ScanForBombTarget() {
+      WiFi.scanNetworks(false, false, false, 100);
       int8_t scanResults = WiFi.scanComplete();
       //reset slaves
       memset(bomb_targets, 0, sizeof(bomb_targets));
       target_count = 0;
-      Serial.println("");
+      Serial.println();
       if (scanResults == 0) {
         Serial.println("No WiFi devices in AP Mode found");
-      } else {
-        Serial.print("Found "); Serial.print(scanResults); Serial.println(" devices ");
-        for (int i = 0; i < scanResults; ++i) {
-          // Print SSID and RSSI for each device found
-
-          String BSSIDstr = WiFi.BSSIDstr(i);
-          int mac[6];
-          Serial.println(BSSIDstr);
-          
-          if (6 == sscanf(BSSIDstr.c_str(), "%x:%x:%x:%x:%x:%x",  &mac[0], &mac[1], &mac[2], &mac[3], &mac[4], &mac[5])) {
-            if ((mac[0] == 4) && (mac[1] == 8) && (mac[2] == 1) && ((mac[5] == 1) || (mac[5] == 0))){
-              for (int ii = 0; ii < 6; ++ii ) {
-                bomb_targets[target_count].peer_addr[ii] = (uint8_t) mac[ii];
-              }
-              bomb_targets[target_count].channel = 0; // pick a channel
-              bomb_targets[target_count].encrypt = 0; // no encryption
-              target_count++;
-            }
-          }
-          if (target_count >= NUM_BOMBS_TARGET) break;
+        return;
+      }
+      Serial.print("Found "); Serial.print(scanResults); Serial.println(" devices ");
+      for (int i = 0; i < scanResults && target_count < NUM_BOMBS_TARGET; ++i) {
+        uint8_t* mac = WiFi.BSSID(i);
+        if (mac[0] == 0x04 && mac[1] == 0x08 && mac[2] == 0x01 && (mac[5] == 0x00 || mac[5] == 0x01)) {
+          memcpy(bomb_targets[target_count].peer_addr, mac, 6);
+          bomb_targets[target_count].channel = 0; // pick a channel
+          bomb_targets[target_count].encrypt = 0; // no encryption
+          target_count++;
         }
       }
-    
+      WiFi.scanDelete();
       if (target_count > 0) {
         Serial.print(target_count); Serial.println(" Target(s) found, processing..");
       } else {
         Serial.println("No Target Found, trying again.");
       }
-    
-      // clean up ram
-      WiFi.scanDelete();
     }
 
-    void SendBombToAllTargets(int attacker_CLAN, int attacker_ID){
-      int i;
-      for (i = 0; i < target_count; i++){
+        void SendBombToAllTargets(int attacker_CLAN, int attacker_ID){
+        int i;
+        for (i = 0; i < target_count; i++){
         if (esp_now_add_peer(&bomb_targets[i]) != ESP_OK){
           Serial.println("Failed to add peer");
           return;
@@ -196,16 +184,12 @@ class EspNOW {
         else {
           Serial.println("Error sending the data");
         }
-        delay(100);
-      }
-      for (i = 0; i < target_count; i++){
+        delay(10);
         esp_now_del_peer(bomb_targets[i].peer_addr);
       }
       num_bombed = target_count;
       target_count = 0;
     }
-
-    
 };
 
 EspNOW Player_EspNOW;

@@ -9,6 +9,7 @@ const int SnakeGameProcess = 3 ;
 const int MusicProcess = 4 ; 
 const int AdminProcess = 5 ;
 const int CreditProcess = 6 ;
+const int MACAddressProcess = 7;
 
 #define NAV_WAIT 4000
 
@@ -33,6 +34,7 @@ const int PLAYER_num_bonus1MaxEn_add = 15;
 const int PLAYER_num_bonus1MULTIPLIER_add = 16;
 const int PLAYER_num_fiveminx2EnRegen_add = 17;
 const int PLAYER_num_bomb_add = 18;
+const int PLAYER_num_poison_add = 19;
 
 
 int EN_RECOVER_DURATION;
@@ -51,10 +53,9 @@ int KILL_UPDATE_SERVER_INTERVAL;
 int revival_MULTIPLIER;
 int HEAL_MULTIPLIER;
 
+
 int failed_kill_feedback = 0;
 int failed_kill_CLAN[50] = {};
 int failed_kill_ID[50] = {};
 int current_failed_save_pointer = 0;
 int current_failed_read_pointer = 0;
-
-

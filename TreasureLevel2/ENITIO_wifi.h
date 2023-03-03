@@ -13,6 +13,7 @@
 #define EAP_PASSWORD  ""
 #define HOME_WIFI_SSID ""
 #define HOME_WIFI_PASSWORD ""
+
 const char *ssid = "NTUSECURE";
 int wifi_reconnect_counter = 0;
 int HTTP_TIMEOUT = 30 * 1000;
@@ -49,6 +50,7 @@ struct GAME_CONSTANTS {
     int TREASURE_LEVEL2_ACTION_RECV_WAIT;
     int TREASURE_LEVEL2_RECOVER_PERIOD;
     int TREASURE_LEVEL2_VIRUS_INFECTION_TIME;
+    int TREASURE_POISON_THRESHOLD;
     int HTTP_TIMEOUT;
 };
 
@@ -139,14 +141,15 @@ class DBConnection {
             game_const.TREASURE_LEVEL2_ACTION_RECV_WAIT = JSON.stringify(json_obj["TREASURE_LEVEL2_ACTION_RECV_WAIT"]).toInt();
             game_const.TREASURE_LEVEL2_RECOVER_PERIOD = JSON.stringify(json_obj["TREASURE_LEVEL2_RECOVER_DURATION"]).toInt();
             game_const.TREASURE_LEVEL2_VIRUS_INFECTION_TIME = JSON.stringify(json_obj["TREASURE_LEVEL2_VIRUS_BROADCAST_DURATION"]).toInt();
+            game_const.TREASURE_POISON_THRESHOLD = JSON.stringify(json_obj["TREASURE_POISON_THRESHOLD"]).toInt();
             return game_const;
         };
     
     public:
         bool connectToWiFi() {
             // returns True if connected, False if timeout
-            // WiFi.begin(HOME_WIFI_SSID, HOME_WIFI_PASSWORD);
-            WiFi.begin(ssid, WPA2_AUTH_PEAP, EAP_ANONYMOUS_IDENTITY, EAP_IDENTITY, EAP_PASSWORD);
+            WiFi.begin(HOME_WIFI_SSID, HOME_WIFI_PASSWORD);
+            //WiFi.begin(ssid, WPA2_AUTH_PEAP, EAP_ANONYMOUS_IDENTITY, EAP_IDENTITY, EAP_PASSWORD);
             Serial.print("Connecting to Wi-Fi");
             int counter = 0;
             while (WiFi.status() != WL_CONNECTED) {

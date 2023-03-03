@@ -114,12 +114,14 @@ int TREASURE_VIRUS_THRESHOLD;
 int TREASURE_LEVEL2_ACTION_RECV_WAIT;
 int TREASURE_LEVEL2_RECOVER_PERIOD;
 int TREASURE_LEVEL2_VIRUS_INFECTION_TIME;
+int TREASURE_POISON_THRESHOLD;
 
 class TreasureLevel2
 {
   private:
     int HP;
-    bool _isVirus;
+    bool _isVirus = false;
+    bool _isPoison = false;
 
     unsigned long lastRecoveredTime = 0;
     unsigned long lastActionReceived = 0;
@@ -130,8 +132,9 @@ class TreasureLevel2
     int CLAN_, ID_, En_, MULTIPLIER_, action_; 
 
     void setup_initial_state(){
-      if (id > TREASURE_VIRUS_THRESHOLD) _isVirus = true;
-      else _isVirus = false;
+      if (id > TREASURE_POISON_THRESHOLD) _isPoison = true;
+      else if (id > TREASURE_VIRUS_THRESHOLD) _isVirus = true;
+    
 
       if (EEPROM.read(ENABLE_add) == 0){
       EEPROM.write(ENABLE_add, 1);
@@ -236,6 +239,7 @@ class TreasureLevel2
         Serial.println("Box Shutting down...");
       }
 
+
       // upload to server
       int curr_upload_fail_counter = wifi_timeout_or_refused_counter;
       String player_mac_address = dbc.setTreasureAsOpened(TreasureLevel2_Bluetooth.getTreasureName(), CLAN_, ID_);
@@ -336,9 +340,13 @@ class TreasureLevel2
         display.println("  Congratulations!!  ");
 
         display.setCursor(0, 30);
-        if (!_isVirus) {
+        if (!(_isVirus || _isPoison)) {
           display.println("   It's a Treasure!  ");
-        }
+         }
+        else if (_isPoison) {
+            display.println("   It's Poison!  ");
+          }
+        
         else{
           display.println("    It's a Virus!   ");
         }   
@@ -468,6 +476,7 @@ void setup() {
   TREASURE_LEVEL2_RECOVER_PERIOD = game_consts.TREASURE_LEVEL2_RECOVER_PERIOD;
   TREASURE_LEVEL2_VIRUS_INFECTION_TIME = game_consts.TREASURE_LEVEL2_VIRUS_INFECTION_TIME;
   TREASURE_VIRUS_THRESHOLD = game_consts.TREASURE_VIRUS_THRESHOLD;
+  TREASURE_POISON_THRESHOLD = game_consts.TREASURE_POISON_THRESHOLD;
   
   xTaskCreatePinnedToCore(
                       backgroundTaskCode,   /* Task function. */
