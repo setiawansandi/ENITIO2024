@@ -92,14 +92,14 @@ void CreditsDisplay() {
     display.setTextColor(SSD1306_WHITE);
     display.setTextSize(1); // Draw SIZE
     display.setCursor(0, 12);
-    display.println("Quan Tran");
+    display.println("Quan Tran   Ming Huan");
     
     display.setCursor(0, 22);
-    display.println("Kah Leong");
+    display.println("Kah Leong    Shirsho");
     display.setCursor(0, 32);
-    display.println("Siddhangana");
+    display.println("Siddhangana    Yash");
     display.setCursor(0, 42);
-    display.println("Edmund");
+    display.println("Edmund      Yan Sheng");
 
     display.setCursor(10, 56);
     display.setTextColor(SSD1306_BLACK, SSD1306_WHITE);
