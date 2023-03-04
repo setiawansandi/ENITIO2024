@@ -74,36 +74,6 @@ class TreasureHuntPlayer
   public:
     bool gameStarted = 0;
     bool deviceReady = 0;
-    // void reset(){
-    //   HP = 12;
-    //   MaxHP = 12;
-    //   En = 5; // energy
-    //   MaxEn = 5;
-    //   Multiplier = 3;
-
-    //   tempNoti = "";
-    //   permNoti = "";
-  
-    //   Nav_start = 0;
-    //   tempNoti_start = 0;
-    //   last_max_en_decay = 0;
-    //   last_en_recover = 0;
-    //   last_hp_decay = 0;
-  
-    //   start_receiving_feedback = 0;
-  
-    //   numKilled = 0;
-    //   numL1Treasure = 0;
-    //   numL2Treasure = 0;
-  
-    //   LastL1TreasureCollected = -1;
-  
-    //   infectedWithVirus = 0;
-  
-    //   gameStarted = 0 ;
-    //   game_started_buffer = 0;
-    // }
-
     
     void setup_initial_state(int id, int clan, bool isGL) {
       ID = id;
@@ -172,7 +142,8 @@ class TreasureHuntPlayer
       if ((action != do_nothing) && (En > 0)) {
         uint16_hex_digits address_digits, command_digits;
 
-        address_digits.digit0 = ID;
+        address_digits.digit0 = ID % 16;
+        address_digits.digit0 = ID / 16;
         address_digits.digit2 = CLAN;
 
         command_digits.digit0 = action;
@@ -215,7 +186,7 @@ class TreasureHuntPlayer
 
         start_receiving_feedback = millis();
 
-        if ((_isGL) && (action == heal)) {
+        if ((EEPROM.read(isGL_add)) && (action == heal)) {
           HP --;
           EEPROM.write(PLAYER_HP_add, HP);
         }
@@ -302,7 +273,7 @@ class TreasureHuntPlayer
                 last_hp_decay = currTime;
             };
             permNoti = "    You Are Infected!   ";
-        } else if (!_isGL){
+        } else if (!EEPROM.read(isGL_add)){
             // currently not infected with virus AND is not healer
             // check if nearby devices are transmitting virus
             if (Player_Bluetooth.isThereVirus && (currTime - last_received_heal >= VIRUS_IMMUNITY_DURATION) && (currTime - last_lucky_not_infected >= LUCKY_NOT_INFECTED_DURATION)) {
@@ -364,7 +335,7 @@ class TreasureHuntPlayer
           break;
         
         case down:
-          if (!_isGL) 
+          if (!EEPROM.read(isGL_add)) 
             action = collect;
           else
             action = heal;
@@ -816,10 +787,29 @@ class TreasureHuntPlayer
           Serial.println("Game has started! Starting initialisation processes...");
           int CLAN = EEPROM.read(CLAN_add);
           bool isGL = EEPROM.read(isGL_add);
-          int id = dbc.getPlayerID(CLAN, my_MAC_address);
+          // int id = dbc.getPlayerID(CLAN, my_MAC_address);
+          String id_constants_json = dbc.getPlayerIDandGameConstantsJSON(CLAN, my_MAC_address);
+          int id = dbc.getPlayerIDFromJSON(id_constants_json);
           EEPROM.write(ID_add, id);
-          Serial.println(id);
-          Serial.printf("[INITIALISE] Current CLAN: %d %d\n", CLAN, EEPROM.read(CLAN_add));
+
+          GAME_CONSTANTS game_consts = dbc.retrieveGameConstantsFromJSONArray(id_constants_json);
+          HTTP_TIMEOUT = game_consts.HTTP_TIMEOUT;
+          EN_RECOVER_DURATION = game_consts.EN_RECOVER_DURATION;
+          VIRUS_DECAY_DURATION = game_consts.VIRUS_DECAY_DURATION;
+          VIRUS_IMMUNITY_DURATION = game_consts.VIRUS_IMMUNITY_DURATION;
+          VIRUS_INFECTION_PROBABILITY = game_consts.VIRUS_INFECTION_PROBABILITY;
+          PARTICIPANT_MaxHP = game_consts.PARTICIPANT_MaxHP;
+          GL_MaxHP = game_consts.GL_MaxHP;
+          PARTICIPANT_MaxEn = game_consts.PARTICIPANT_MaxEn;
+          GL_MaxEn = game_consts.GL_MaxEn;
+          INITIAL_MULTIPLIER = game_consts.INITIAL_MULTIPLIER;
+          HEAL_MULTIPLIER = game_consts.HEAL_MULTIPLIER;
+          MAX_ATTACK_MULTIPLIER = game_consts.MAX_ATTACK_MULTIPLIER;
+          MAX_COLLECT_MULTIPLIER = game_consts.MAX_COLLECT_MULTIPLIER;
+          BOMB_HP_DEDUCTION = game_consts.BOMB_HP_DEDUCTION;
+          KILL_UPDATE_SERVER_INTERVAL = game_consts.KILL_UPDATE_SERVER_INTERVAL;
+
+          Serial.printf("[INITIALISE] Current CLAN: %d ID %d\n", CLAN, EEPROM.read(ID_add));
           setup_initial_state(id, CLAN, isGL); // initialize Player
           Player_Bluetooth.initialise();
           deviceReady = 1;

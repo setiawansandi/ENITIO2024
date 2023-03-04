@@ -43,13 +43,7 @@ class Admin {
                             break;
 
                         case SetGLFunction:
-                            if (PLAYER.gameStarted) {
-                                Admin_OLED.RejectRegisterGLDisplay();
-                                delay(1500);
-                            }
-                            else {
-                                isSettingGL = true;
-                            }
+                            isSettingGL = true;
                             break;
 
                         case ExitFunction:
@@ -221,8 +215,20 @@ class Admin {
 
                     case button:
                         EEPROM.write(isGL_add, isGLNav);
-                        EEPROM.commit();
                         Admin_OLED.ConfirmSettingGLDisplay(isGLNav);
+                        if (isGLNav) {
+                            // set to GL HP and Energy
+                            EEPROM.write(PLAYER_HP_add, GL_MaxHP);
+                            EEPROM.write(PLAYER_EN_add, GL_MaxEn);
+                            EEPROM.write(PLAYER_MaxHP_add, GL_MaxHP);
+                            EEPROM.write(PLAYER_MaxEn_add, GL_MaxEn);
+                        } else {
+                            EEPROM.write(PLAYER_HP_add, PARTICIPANT_MaxHP);
+                            EEPROM.write(PLAYER_EN_add, PARTICIPANT_MaxEn);
+                            EEPROM.write(PLAYER_MaxHP_add, PARTICIPANT_MaxHP);
+                            EEPROM.write(PLAYER_MaxEn_add, PARTICIPANT_MaxEn);
+                        }
+                        EEPROM.commit();
                         isGLNav = 1;
                         isSettingGL = false;
                         delay(1500);
