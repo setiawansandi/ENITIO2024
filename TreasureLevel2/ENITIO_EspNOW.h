@@ -45,15 +45,16 @@ class EspNOW {
       broadcastAddress[5] = 1;
     }
   
-   void send_data(int attackee_type, int attacker_CLAN, int attacker_ID, int attackee_CLAN, int is_attackee_killed){
+   void send_data(int attackee_type, int attacker_CLAN, int attacker_ID, int attackee_CLAN, bool is_attackee_killed, int powerup_id){
             // Register peer
       feedbackData.attackee_type = attackee_type;
       feedbackData.attacker_CLAN = attacker_CLAN;
       feedbackData.attacker_ID = attacker_ID;
       feedbackData.attackee_CLAN = attackee_CLAN;
       feedbackData.is_attackee_killed = is_attackee_killed;
-  
-      getDeviceMACAddress(attacker_CLAN, attacker_ID);
+      feedbackData.powerup_received = powerup_id;
+      getDeviceMACAddress(attacker_CLAN,attacker_ID);
+     
       
       memcpy(peerInfo.peer_addr, broadcastAddress, 6);
       peerInfo.channel = 0;  

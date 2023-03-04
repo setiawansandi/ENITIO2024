@@ -143,7 +143,7 @@ class TreasureHuntPlayer
         uint16_hex_digits address_digits, command_digits;
 
         address_digits.digit0 = ID % 16;
-        address_digits.digit0 = ID / 16;
+        address_digits.digit1 = ID / 16;
         address_digits.digit2 = CLAN;
 
         command_digits.digit0 = action;
@@ -578,6 +578,14 @@ class TreasureHuntPlayer
             tempNoti = " U Opened L2 Treasure";
             tempNoti_start = millis();
             numL2Treasure ++ ;
+            if (feedbackData.powerup_received == 6) {
+              num_poison ++ ;
+              EEPROM.write(PLAYER_num_poison_add, num_poison);
+              tempNoti = " PowerUp: A Poison!!  ";              
+            }
+            
+            break;
+        
           }
           else {
             tempNoti = " L2 Treasure Damaged ";
@@ -620,12 +628,6 @@ class TreasureHuntPlayer
             num_bomb ++ ;
             EEPROM.write(PLAYER_num_bomb_add, num_bomb);
             tempNoti = "  PowerUp: A Bomb!!  ";
-            break;
-
-          case poison:
-            num_poison ++ ;
-            EEPROM.write(PLAYER_num_poison_add, num_poison);
-            tempNoti = " PowerUp: A Poison!!  ";
             break;
                         
           default:

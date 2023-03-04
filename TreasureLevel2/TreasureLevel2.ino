@@ -22,6 +22,7 @@
 #define B_ON 255
 
 int id;
+int num_poison;
 
 // Declaration for an SSD1306 display connected to I2C (SDA, SCL pins)
 // The pins for I2C are defined by the Wire-library. 
@@ -116,12 +117,11 @@ int TREASURE_LEVEL2_RECOVER_PERIOD;
 int TREASURE_LEVEL2_VIRUS_INFECTION_TIME;
 int TREASURE_POISON_THRESHOLD;
 
-class TreasureLevel2
-{
+class TreasureLevel2 {
   private:
     int HP;
     bool _isVirus = false;
-    bool _isPoison = false;
+    bool _isPoison = true;
 
     unsigned long lastRecoveredTime = 0;
     unsigned long lastActionReceived = 0;
@@ -140,7 +140,9 @@ class TreasureLevel2
       EEPROM.write(ENABLE_add, 1);
       EEPROM.write(HP_add, TREASURE_LEVEL2_INITIAL_HP);
       EEPROM.commit(); 
-      HP = TREASURE_LEVEL2_INITIAL_HP;}
+      HP = TREASURE_LEVEL2_INITIAL_HP;
+      }
+      
       else{
         HP = EEPROM.read(HP_add);
         if (HP == 0) {
@@ -163,7 +165,10 @@ class TreasureLevel2
 
     void feedback_collectL2(int CLAN_, int ID_){
       bool killed = (HP == 0);
-      TreasureLevel2_EspNOW.send_data(3, CLAN_, ID_, id, killed);
+      int powerup_received;
+      if (killed && _isPoison) powerup_received = 6;
+      else powerup_received = 0;
+      TreasureLevel2_EspNOW.send_data(3, CLAN_, ID_, id, killed, powerup_received);
     } ;
 
     void receiveAction() {
@@ -216,7 +221,7 @@ class TreasureLevel2
          // do nothing
       }    
     }
-
+    
     void handle_Collected() {
       interim_collected_display();
       TreasureLevel2_NeoPixel.off_FRONT();
@@ -238,7 +243,6 @@ class TreasureLevel2
         TreasureLevel2_Bluetooth.stopAdvertisingService(pVirusService);
         Serial.println("Box Shutting down...");
       }
-
 
       // upload to server
       int curr_upload_fail_counter = wifi_timeout_or_refused_counter;
@@ -371,7 +375,7 @@ class TreasureLevel2
     }
       
     void display_game_finished(){};
-};
+    };
 
 TreasureLevel2 Treasure;
 bool gameStarted = 0;
@@ -389,6 +393,7 @@ int get_game_state(){
         Treasure.setup_initial_state();
         TreasureLevel2_Bluetooth.startAdvertisingService(pAvailableService);
         initiateTreasureDone = 1;
+        
      }
      return gameStarted;
    } else 
