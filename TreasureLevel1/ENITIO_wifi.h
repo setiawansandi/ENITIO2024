@@ -52,8 +52,8 @@ struct GAME_CONSTANTS {
 class DBConnection {
     private:
         String DATABASE_URL = "https://enitiotreasurehunt.link/";
-        String DATABASE_DEBUG_URL = "http://192.168.0.114:5000/";
-        bool DEBUG = false;
+        String DATABASE_DEBUG_URL = "https://enitiotreasurehunt.link/";
+        bool DEBUG = true;
         String GET_Request(String route) {
             HTTPClient http;
             String url;

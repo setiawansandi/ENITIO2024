@@ -3,10 +3,10 @@
 typedef struct feedback_message {
   int msg_type = 1;
   int attackee_type; // 1 for player, 2 for Lvl 1 Treasure, 3 for Lvl 2 Treasure
-  int attacker_OG;
+  int attacker_CLAN;
   int attacker_ID; 
   int attackee_CLAN; // or Treasure ID
-  bool is_attackee_killed
+  bool is_attackee_killed;
   int powerup_received;
 } feedback_message;
 
@@ -36,11 +36,11 @@ class EspNOW {
       // esp_now_register_recv_cb(OnDataRecv);
     }
 
-    void getDeviceMACAddress(int attacker_OG, int attacker_ID){
+    void getDeviceMACAddress(int attacker_CLAN, int attacker_ID){
       broadcastAddress[0] = 4;
       broadcastAddress[1] = 8;
       broadcastAddress[2] = 1;
-      broadcastAddress[3] = attacker_OG;
+      broadcastAddress[3] = attacker_CLAN;
       broadcastAddress[4] = attacker_ID;
       broadcastAddress[5] = 1;
 //
@@ -52,15 +52,15 @@ class EspNOW {
 //      broadcastAddress[5] = 255;
     }
   
-   void send_data(int attackee_type, int attacker_OG, int attacker_ID, int attackee_CLAN, int is_attackee_killed){
+   void send_data(int attackee_type, int attacker_CLAN, int attacker_ID, int attackee_CLAN, int is_attackee_killed){
       // Register peer
       feedbackData.attackee_type = attackee_type;
-      feedbackData.attacker_OG = attacker_OG;
+      feedbackData.attacker_CLAN = attacker_CLAN;
       feedbackData.attacker_ID = attacker_ID;
       feedbackData.attackee_CLAN = attackee_CLAN;
       feedbackData.is_attackee_killed = is_attackee_killed;
   
-      getDeviceMACAddress(attacker_OG, attacker_ID);
+      getDeviceMACAddress(attacker_CLAN, attacker_ID);
       
       memcpy(peerInfo.peer_addr, broadcastAddress, 6);
       peerInfo.channel = 0;  
@@ -102,7 +102,7 @@ class EspNOW {
       else {
           Serial.println("Delivery Failed");
         // failed_kill_feedback ++ ;
-        // failed_kill_OG[current_failed_save_pointer] = mac_addr[3];
+        // failed_kill_CLAN[current_failed_save_pointer] = mac_addr[3];
         // failed_kill_ID[current_failed_save_pointer] = mac_addr[4];
         // current_failed_save_pointer ++ ;
         // if(current_failed_save_pointer >= 50) current_failed_save_pointer -= 50;
