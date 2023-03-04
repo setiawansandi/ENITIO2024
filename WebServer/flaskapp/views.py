@@ -61,9 +61,9 @@ def get_player_id(clan_id, mac_addr):
             
             if both_true:
                 # Assign ID
-                largest_participant_id_player = db.session.execute(db.select(Player).filter_by(clan_id=clan_id).order_by(Player.participant_id.desc())).scalar_one_or_none()
-                if largest_participant_id_player and largest_participant_id_player.participant_id is not None:
-                    player_id = largest_participant_id_player.participant_id + 1
+                largest_participant_id_player = db.session.execute(db.select(Player).filter_by(clan_id=clan_id).order_by(Player.participant_id.desc())).first()
+                if largest_participant_id_player and largest_participant_id_player[0].participant_id is not None:
+                    player_id = largest_participant_id_player[0].participant_id + 1
                 else:
                     player_id = 1  # No other players in OG
                 player.participant_id = player_id
@@ -189,7 +189,7 @@ def get_all_treasure_status():
         t_id = treasure.id
         collection_logs = db.session.execute(db.select(Level1TreasureCollectors).filter_by(level1_treasure_id=t_id)).scalars()
         num_collected = len(collection_logs)
-        result[treasure.name] = "Level1Treasure - Collected {} times".format(num_collected)
+        result[treasure.name] = "Level1Treasure ({}) - Collected {} times".format(treasure.location, num_collected)
 
     return jsonify(result)
 

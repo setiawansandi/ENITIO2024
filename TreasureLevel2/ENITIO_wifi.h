@@ -57,8 +57,8 @@ struct GAME_CONSTANTS {
 class DBConnection {
     private:
         String DATABASE_URL = "https://enitiotreasurehunt.link/";
-        String DATABASE_DEBUG_URL = "http://192.168.0.114:5000/";
-        bool DEBUG = false;
+        String DATABASE_DEBUG_URL = "http://enitiotreasurehunt.link/";
+        bool DEBUG = true;
         String GET_Request(String route) {
             HTTPClient http;
             String url;
@@ -172,6 +172,7 @@ class DBConnection {
         }
 
         String setTreasureAsOpened(String treasureName, int CLAN, int participant_id) {
+            connectToWiFi();
             String url = "treasure/2/" + treasureName + "/" + String(CLAN) + "/" + String(participant_id);
             String jsonArray = GET_Request(url);
             return retrieveParameterFromJSONArray("mac_address", jsonArray);
