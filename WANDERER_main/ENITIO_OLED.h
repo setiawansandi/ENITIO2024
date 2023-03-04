@@ -92,7 +92,7 @@ void CreditsDisplay() {
     display.setTextColor(SSD1306_WHITE);
     display.setTextSize(1); // Draw SIZE
     display.setCursor(0, 12);
-    display.println("Quan Tran   Ming Huan");
+    display.println("Quan Tran   Ming Yuan");
     
     display.setCursor(0, 22);
     display.println("Kah Leong    Shirsho");
