@@ -119,33 +119,6 @@ class DBConnection {
             return JSON.stringify(json_obj[parameter]);
         };
 
-        GAME_CONSTANTS retrieveGameConstantsFromJSONArray(String json_array) {
-            JSONVar json_obj = JSON.parse(json_array);
-            GAME_CONSTANTS game_const;
-            if (JSON.typeof(json_obj) == "undefined") {
-                Serial.println("Parsing input failed!");
-                return game_const;
-            }
-            game_const.EN_RECOVER_DURATION = JSON.stringify(json_obj["EN_RECOVER_DURATION"]).toInt();
-            game_const.VIRUS_DECAY_DURATION = JSON.stringify(json_obj["VIRUS_DECAY_DURATION"]).toInt();
-            game_const.VIRUS_IMMUNITY_DURATION = JSON.stringify(json_obj["VIRUS_IMMUNITY_DURATION"]).toInt();
-            game_const.VIRUS_INFECTION_PROBABILITY = JSON.stringify(json_obj["VIRUS_INFECTION_PROBABILITY"]).toInt();
-            game_const.PARTICIPANT_MaxHP = JSON.stringify(json_obj["PARTICIPANT_MaxHP"]).toInt();
-            game_const.GL_MaxHP = JSON.stringify(json_obj["GL_MaxHP"]).toInt();
-            game_const.PARTICIPANT_MaxEn = JSON.stringify(json_obj["PARTICIPANT_MaxEn"]).toInt();
-            game_const.GL_MaxEn = JSON.stringify(json_obj["GL_MaxEn"]).toInt();
-            game_const.INITIAL_MULTIPLIER = JSON.stringify(json_obj["INITIAL_MULTIPLIER"]).toInt();
-            game_const.HEAL_MULTIPLIER = JSON.stringify(json_obj["HEAL_MULTIPLIER"]).toInt();
-            game_const.revival_MULTIPLIER = JSON.stringify(json_obj["REVIVAL_MULTIPLIER"]).toInt();
-            game_const.MAX_ATTACK_MULTIPLIER = JSON.stringify(json_obj["MAX_ATTACK_MULTIPLIER"]).toInt();
-            game_const.MAX_COLLECT_MULTIPLIER = JSON.stringify(json_obj["MAX_COLLECT_MULTIPLIER"]).toInt();
-            game_const.BOMB_HP_DEDUCTION = JSON.stringify(json_obj["BOMB_HP_DEDUCTION"]).toInt();
-            game_const.KILL_UPDATE_SERVER_INTERVAL = JSON.stringify(json_obj["SERVER_UPDATE_INTERVAL"]).toInt();
-            game_const.HTTP_TIMEOUT = JSON.stringify(json_obj["HTTP_TIMEOUT"]).toInt();
-
-            return game_const;
-        };
-
         FailedFeedbackStatistics retrieveStatisticsFromJSONArray(String json_array) {
             JSONVar json_obj = JSON.parse(json_array);
             FailedFeedbackStatistics feedback_stats;
@@ -198,7 +171,7 @@ class DBConnection {
 
           // Attempt to connect to Wi-Fi
           startWiFiConnection();
-          for (int i = 0; i < 20; i++) {
+          for (int i = 0; i < 10; i++) {
             if (WiFi.status() == WL_CONNECTED) {
               Serial.print("Connected with IP: ");
               Serial.println(WiFi.localIP());
@@ -208,21 +181,34 @@ class DBConnection {
             Serial.print(".");
           }
           // Timeout
+          Serial.println("Connection Timed Out.");
           return false;
         }
 
         bool registerWanderer(int CLAN, String mac_addr) {
+            bool connectedToWiFi = connectToWiFi();
+            if (!connectedToWiFi) {
+                Serial.println("Rebooting...");
+                ESP.restart();
+            }
+
             String url = "register";
             String httpRequestData = "{\"clan\": " + String(CLAN) + ", \"mac_address\": \"" + mac_addr + "\" }";
             Serial.println(httpRequestData);
-             String jsonArray = POST_Request(url, httpRequestData.c_str());
-            // String url = DATABASE_URL + "register&clan=" + String(CLAN) + "&mac_address=" + mac_addr;
-            // String jsonArray = GET_Request(url.c_str());
+            String jsonArray = POST_Request(url, httpRequestData.c_str());
             Serial.println(jsonArray);
             return jsonArray != "{\"result\":\"OK\"}";
         };
 
         bool hasGameStarted() {
+            if (WiFi.status() != WL_CONNECTED) {
+                bool connectedToWiFi = connectToWiFi();
+                if (!connectedToWiFi) {
+                    Serial.print("WiFi not connected, so unable to retrieve game status. ");
+                    Serial.println("Override gameStatus variable to force the game to start.");
+                    return false;
+                }
+            }
             String url = "game_status";
             String jsonArray = GET_Request(url);
             String gameStatus = retrieveParameterFromJSONArray("has_game_started", jsonArray);
@@ -230,31 +216,95 @@ class DBConnection {
         }
 
         int getPlayerID(int CLAN, String mac_addr) {
+            if (WiFi.status() != WL_CONNECTED) {
+                bool connectedToWiFi = connectToWiFi();
+                if (!connectedToWiFi) {
+                    Serial.print("WiFi not connected, so unable to retrieve playerID. ");
+                    return false;
+                }
+            }
             Serial.println("Retrieving Participant ID from server...");
             String url = "player_id/" + String(CLAN) + "/" + mac_addr;
-            // String url = DATABASE_URL + "player_id&clan=" + String(CLAN) + "&mac_address=" + mac_addr;
             String jsonArray = GET_Request(url);
             Serial.println(jsonArray);
             return retrieveParameterFromJSONArray("player_id", jsonArray).toInt();
         };
 
         GAME_CONSTANTS getGameConstants() {
+            if (WiFi.status() != WL_CONNECTED) {
+                bool connectedToWiFi = connectToWiFi();
+                if (!connectedToWiFi) {
+                    Serial.print("WiFi not connected, so unable to retrieve constants. ");
+                    GAME_CONSTANTS game_const;
+                    return game_const;
+                }
+            }
             String url = "get_game_constants";
             String jsonArray = GET_Request(url);
-            // Serial.println(jsonArray);
             return retrieveGameConstantsFromJSONArray(jsonArray);
         };
 
+        String getPlayerIDandGameConstantsJSON(int CLAN, String mac_addr) {
+            if (WiFi.status() != WL_CONNECTED) {
+                bool connectedToWiFi = connectToWiFi();
+                if (!connectedToWiFi) {
+                    Serial.print("WiFi not connected, so unable to retrieve playerID. ");
+                    return "";
+                }
+            }
+            Serial.println("Retrieving Participant ID from server...");
+            String url = "player_id/" + String(CLAN) + "/" + mac_addr;
+            String jsonArray = GET_Request(url);
+            Serial.println(jsonArray);
+            return jsonArray;
+        }
+
+        int getPlayerIDFromJSON(String jsonArray) {
+            return retrieveParameterFromJSONArray("player_id", jsonArray).toInt();
+        }
+
+        GAME_CONSTANTS retrieveGameConstantsFromJSONArray(String json_array) {
+            JSONVar json_obj = JSON.parse(json_array);
+            GAME_CONSTANTS game_const;
+            if (JSON.typeof(json_obj) == "undefined") {
+                Serial.println("Parsing input failed!");
+                return game_const;
+            }
+            game_const.EN_RECOVER_DURATION = JSON.stringify(json_obj["EN_RECOVER_DURATION"]).toInt();
+            game_const.VIRUS_DECAY_DURATION = JSON.stringify(json_obj["VIRUS_DECAY_DURATION"]).toInt();
+            game_const.VIRUS_IMMUNITY_DURATION = JSON.stringify(json_obj["VIRUS_IMMUNITY_DURATION"]).toInt();
+            game_const.VIRUS_INFECTION_PROBABILITY = JSON.stringify(json_obj["VIRUS_INFECTION_PROBABILITY"]).toInt();
+            game_const.PARTICIPANT_MaxHP = JSON.stringify(json_obj["PARTICIPANT_MaxHP"]).toInt();
+            game_const.GL_MaxHP = JSON.stringify(json_obj["GL_MaxHP"]).toInt();
+            game_const.PARTICIPANT_MaxEn = JSON.stringify(json_obj["PARTICIPANT_MaxEn"]).toInt();
+            game_const.GL_MaxEn = JSON.stringify(json_obj["GL_MaxEn"]).toInt();
+            game_const.INITIAL_MULTIPLIER = JSON.stringify(json_obj["INITIAL_MULTIPLIER"]).toInt();
+            game_const.HEAL_MULTIPLIER = JSON.stringify(json_obj["HEAL_MULTIPLIER"]).toInt();
+            game_const.revival_MULTIPLIER = JSON.stringify(json_obj["REVIVAL_MULTIPLIER"]).toInt();
+            game_const.MAX_ATTACK_MULTIPLIER = JSON.stringify(json_obj["MAX_ATTACK_MULTIPLIER"]).toInt();
+            game_const.MAX_COLLECT_MULTIPLIER = JSON.stringify(json_obj["MAX_COLLECT_MULTIPLIER"]).toInt();
+            game_const.BOMB_HP_DEDUCTION = JSON.stringify(json_obj["BOMB_HP_DEDUCTION"]).toInt();
+            game_const.KILL_UPDATE_SERVER_INTERVAL = JSON.stringify(json_obj["SERVER_UPDATE_INTERVAL"]).toInt();
+            game_const.HTTP_TIMEOUT = JSON.stringify(json_obj["HTTP_TIMEOUT"]).toInt();
+
+            return game_const;
+        };
+
         FailedFeedbackStatistics sendGameStatistics(int CLAN, int ID, int kills, int num_level1_treasure, int num_level2_treasure) {
+            if (WiFi.status() != WL_CONNECTED) {
+                bool connectedToWiFi = connectToWiFi();
+                if (!connectedToWiFi) {
+                    Serial.print("WiFi not connected, so unable to retrieve playerID. ");
+                    FailedFeedbackStatistics feedback_stats;
+                    return feedback_stats;
+                }
+            }
             String url = "player_score";
             String httpRequestData = "{\"clan\": " + String(CLAN) + ", \"id\": " + String(ID) + ", \"num_kills\": " + String(kills);
             httpRequestData = httpRequestData + ", \"level1\": " + String(num_level1_treasure) + ", \"level2\": " + String(num_level2_treasure);
             httpRequestData = httpRequestData + "}";
             Serial.println(httpRequestData);
             String jsonArray = POST_Request(url, httpRequestData.c_str());
-            // String url = DATABASE_URL + "player_score&clan=" + String(CLAN) + "&id=" + String(ID) + "&num_kills=" + String(kills);
-            // url = url + "&level1=" + String(num_level1_treasure) + "&level2=" + String(num_level2_treasure);
-            // String jsonArray = GET_Request(url.c_str());
             Serial.println(jsonArray);
             return retrieveStatisticsFromJSONArray(jsonArray);
         };

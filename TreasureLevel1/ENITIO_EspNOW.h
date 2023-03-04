@@ -5,7 +5,7 @@ typedef struct feedback_message {
   int attackee_type; // 1 for player, 2 for Lvl 1 Treasure, 3 for Lvl 2 Treasure
   int attacker_OG;
   int attacker_ID; 
-  int attackee_OG; // or Treasure ID
+  int attackee_CLAN; // or Treasure ID
   bool is_attackee_killed
   int powerup_received;
 } feedback_message;
@@ -52,12 +52,12 @@ class EspNOW {
 //      broadcastAddress[5] = 255;
     }
   
-   void send_data(int attackee_type, int attacker_OG, int attacker_ID, int attackee_OG, int is_attackee_killed){
+   void send_data(int attackee_type, int attacker_OG, int attacker_ID, int attackee_CLAN, int is_attackee_killed){
       // Register peer
       feedbackData.attackee_type = attackee_type;
       feedbackData.attacker_OG = attacker_OG;
       feedbackData.attacker_ID = attacker_ID;
-      feedbackData.attackee_OG = attackee_OG;
+      feedbackData.attackee_CLAN = attackee_CLAN;
       feedbackData.is_attackee_killed = is_attackee_killed;
   
       getDeviceMACAddress(attacker_OG, attacker_ID);

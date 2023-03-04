@@ -163,8 +163,8 @@ class DBConnection {
             return retrieveParameterFromJSONArray("has_game_started", jsonArray).toInt();
         }
 
-        String setTreasureAsOpened(String treasureName, int og, int participant_id) {
-            String url = "treasure/1/" + treasureName + "/" + String(og) + "/" + String(participant_id);
+        String setTreasureAsOpened(String treasureName, int CLAN, int participant_id) {
+            String url = "treasure/1/" + treasureName + "/" + String(CLAN) + "/" + String(participant_id);
             String jsonArray = GET_Request(url);
             return retrieveParameterFromJSONArray("mac_address", jsonArray);
         };
@@ -186,10 +186,10 @@ class DBConnection {
             return retrieveGameConstantsFromJSONArray(jsonArray);
         };
 
-        bool uploadFailedFeedback(String treasureName, int og, int participant_id) {
-            String url = "treasurefeedback/" + treasureName + "/" + String(og) + "/" + String(participant_id);
+        bool uploadFailedFeedback(String treasureName, int CLAN, int participant_id) {
+            String url = "treasurefeedback/" + treasureName + "/" + String(CLAN) + "/" + String(participant_id);
              String jsonArray = GET_Request(url);
-//            String httpRequestData = "{\"OG\": " + String(og) + ", \"ID\": " + String(participant_id) + "}";
+//            String httpRequestData = "{\"CLAN\": " + String(CLAN) + ", \"ID\": " + String(participant_id) + "}";
 //            String jsonArray = POST_Request(url.c_str(), httpRequestData.c_str());
             Serial.println(jsonArray);
             return jsonArray != "{}";
