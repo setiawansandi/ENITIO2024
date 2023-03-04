@@ -172,6 +172,7 @@ class DBConnection {
         }
 
         String setTreasureAsOpened(String treasureName, int CLAN, int participant_id) {
+            connectToWiFi();
             String url = "treasure/2/" + treasureName + "/" + String(CLAN) + "/" + String(participant_id);
             String jsonArray = GET_Request(url);
             return retrieveParameterFromJSONArray("mac_address", jsonArray);

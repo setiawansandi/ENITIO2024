@@ -52,7 +52,7 @@ struct GAME_CONSTANTS {
 class DBConnection {
     private:
         String DATABASE_URL = "https://enitiotreasurehunt.link/";
-        String DATABASE_DEBUG_URL = "https://enitiotreasurehunt.link/";
+        String DATABASE_DEBUG_URL = "http://enitiotreasurehunt.link/";
         bool DEBUG = true;
         String GET_Request(String route) {
             HTTPClient http;
@@ -169,14 +169,16 @@ class DBConnection {
             return retrieveParameterFromJSONArray("mac_address", jsonArray);
         };
 
-        bool sendGameStatistics(String treasureName, int alatar, int drachen, int eva, int invicta) {
+        bool sendGameStatistics(String treasureName, int invicta, int dynari, int ephilia, int akrona, int solaris) {
+          connectToWiFi();
             String url = "treasure_score";
-            String httpRequestData = "{\"treasureName\": " + treasureName + ", \"alatar\": " + String(alatar) + ", \"drachen\": " + String(drachen);
-            httpRequestData = httpRequestData + ", \"eva\": " + String(eva) + ", \"invicta\": " + String(invicta);
+            String httpRequestData = "{\"treasureName\": " + treasureName + ", \"invicta\": " + String(invicta) + ", \"dynari\": " + String(dynari);
+            httpRequestData = httpRequestData + ", \"ephilia\": " + String(ephilia) + ", \"akrona\": " + String(akrona) + ", \"solaris\": " + String(solaris);
             httpRequestData = httpRequestData + "}";
             Serial.println(httpRequestData);
             String jsonArray = POST_Request(url, httpRequestData.c_str());
             Serial.println(jsonArray);
+            WiFi.disconnect(true);
             return jsonArray != "{}";
         };
 

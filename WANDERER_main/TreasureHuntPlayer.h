@@ -133,6 +133,8 @@ class TreasureHuntPlayer
         num_bomb = EEPROM.read(PLAYER_num_bomb_add);
         num_poison = EEPROM.read(PLAYER_num_poison_add);
       }
+
+      WiFi.disconnect(true);
     }
 
     void sendAction() {
