@@ -315,8 +315,7 @@ class DBConnection {
                 bool connectedToWiFi = connectToWiFi();
                 if (!connectedToWiFi) {
                     Serial.print("WiFi not connected, so unable to send feedback");
-                    FailedFeedbackStatistics feedback_stats;
-                    return feedback_stats;
+                    return false;
                 }
             }
             String url = "player_kill/" + String(CLAN) + "/" + String(participant_id);
