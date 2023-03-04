@@ -62,6 +62,7 @@ class EspNOW {
       feedbackData.powerup_received = powerup_received;
   
       getDeviceMACAddress(attacker_CLAN, attacker_ID);
+
       
       memcpy(peerInfo.peer_addr, broadcastAddress, 6);
       peerInfo.channel = 0;  

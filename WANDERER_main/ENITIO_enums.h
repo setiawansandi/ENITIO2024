@@ -28,6 +28,7 @@ typedef enum {
 } joystick_pos ; 
 
 typedef enum {
+    nothing = 0,
     bonus6HP = 1,
     bonus1MaxEn = 2,
     bonus1MULTIPLIER = 3,
