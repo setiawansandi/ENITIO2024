@@ -135,6 +135,7 @@ class TreasureHuntPlayer
       }
 
       WiFi.disconnect(true);
+      Player_EspNOW.enable();
     }
 
     void sendAction() {
@@ -145,7 +146,7 @@ class TreasureHuntPlayer
         uint16_hex_digits address_digits, command_digits;
 
         address_digits.digit0 = ID % 16;
-        address_digits.digit0 = ID / 16;
+        address_digits.digit1 = ID / 16;
         address_digits.digit2 = CLAN;
 
         command_digits.digit0 = action;

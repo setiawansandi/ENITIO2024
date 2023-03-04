@@ -177,7 +177,12 @@ def get_all_treasure_status():
     level2_treasures = db.session.execute(db.select(Level2Treasure)).scalars()
     for treasure in level2_treasures:
         collected_player = treasure.collected_by
-        result[treasure.name] = "Level2Treasure " if treasure.is_treasure else "Level2Virus "
+        if treasure.treasure_type == 0:
+            result[treasure.name] = "Level2Treasure "
+        elif treasure.treasure_type == 1:
+            result[treasure.name] = "Level2Virus "
+        elif treasure.treasure_type == 2:
+            result[treasure.name] = "Level2Poison "
         result[treasure.name] += "({}) ".format(treasure.location)
         if collected_player:
             result[treasure.name] += "Collected by CLAN {} ID {}".format(collected_player.clan_id, collected_player.participant_id)
@@ -187,7 +192,7 @@ def get_all_treasure_status():
     level1_treasures = db.session.execute(db.select(Level1Treasure)).scalars()
     for treasure in level1_treasures:
         t_id = treasure.id
-        collection_logs = db.session.execute(db.select(Level1TreasureCollectors).filter_by(level1_treasure_id=t_id)).scalars()
+        collection_logs = db.session.execute(db.select(Level1TreasureCollectors).filter_by(level1_treasure_id=t_id)).all()
         num_collected = len(collection_logs)
         result[treasure.name] = "Level1Treasure ({}) - Collected {} times".format(treasure.location, num_collected)
 

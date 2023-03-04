@@ -1,7 +1,6 @@
 #include <WiFi.h>
 #include "esp_wpa2.h" //wpa2 library for connections to Enterprise networks
 #include <HTTPClient.h>
-#include <WiFiClientSecure.h>
 #include <Arduino_JSON.h>
 #include <esp_now.h>
 
@@ -18,30 +17,6 @@ const char *ssid = "NTUSECURE";
 int wifi_reconnect_counter = 0;
 int HTTP_TIMEOUT = 30 * 1000;
 int wifi_timeout_or_refused_counter = 0;
-
-const char* root_ca PROGMEM = \
-"-----BEGIN CERTIFICATE-----\n" \
-"MIIDljCCAn6gAwIBAgIQNVdBpOD85JGeYm6zWCKCmjANBgkqhkiG9w0BAQsFADBI\n" \
-"MRswGQYDVQQDDBJFU0VUIFNTTCBGaWx0ZXIgQ0ExHDAaBgNVBAoME0VTRVQsIHNw\n" \
-"b2wuIHMgci4gby4xCzAJBgNVBAYTAlNLMB4XDTIzMDIyNzE1NTU1N1oXDTIzMDUy\n" \
-"ODE1NTU1NlowIjEgMB4GA1UEAxMXZW5pdGlvdHJlYXN1cmVodW50LmxpbmswggEi\n" \
-"MA0GCSqGSIb3DQEBAQUAA4IBDwAwggEKAoIBAQDXIa37ToQjxiy8koxWUw0Rpzdv\n" \
-"/11odPGgIbMGpT05DD/UNK9CaxTfJLw3ftT4EEcPHFzavvTXG7uJ6OOtXfi0WIbf\n" \
-"fgiKD/ve8ch6oc9Vqp7HbFWZ0cg3JKFwkGw5MF2JO6vTkzbzht97dj4UAj5FMh8d\n" \
-"EGPFMR7plbf8P5RGuQCdzrPk+i3/6N/jo6bSCYr1hqxCMQgeGkTLFr+F7I7emkdQ\n" \
-"JcOfaqAcJalnKS39PDqf44bhza2xz2cxKllgS4fxCKJQH/ApyTaHDMLHPlhMNStj\n" \
-"uf6WDs6c1K8XIj5AmGYvFxuRyhzmcbdAG2hv3WyPGjcDAeu53LK/wejj/h05AgMB\n" \
-"AAGjgaEwgZ4wCwYDVR0PBAQDAgWgMB0GA1UdDgQWBBQtHxvNJX/jCsJbVPZZFiai\n" \
-"0ndfqTAfBgNVHSMEGDAWgBR1fBmAqE/V8PIcSLwG0TBEt6AnrTAdBgNVHSUEFjAU\n" \
-"BggrBgEFBQcDAQYIKwYBBQUHAwIwDAYDVR0TAQH/BAIwADAiBgNVHREEGzAZghdl\n" \
-"bml0aW90cmVhc3VyZWh1bnQubGluazANBgkqhkiG9w0BAQsFAAOCAQEAuThNYcXz\n" \
-"VVMGPYNICi/puKYGxkiS019soTbIwRjq3dNKcWF4sB/ba2OjioM7UCnJ1TE9uEGO\n" \
-"vkjj7gbSIcJakfv0idFrj5i3q9Kgo3bnpqcm+LdpEo6+FvR+Lra+ptxG8lqj1p4l\n" \
-"luth4Pf6Sf1Ck2iPgjIoTDtdO/xW+0oF2pG9dEAFnHMabjS6F+CpR126SHv80gcW\n" \
-"D86l8F9Z5/r7mTwGv2K5B6OiTuxV1UkbxRfHlzosVkRTu1nvOKxuwS/6do1spy6F\n" \
-"IZXVoS81d2f+4CTAnwDLajUUcL27i/UD+nVhHaR2vs+WQcZ2FrIlXVsoXdlgr+ko\n" \
-"nDWRvXqKgJnnMA==\n" \
-"-----END CERTIFICATE-----\n";
 
 struct GAME_CONSTANTS {
     int TREASURE_LEVEL2_INITIAL_HP;
@@ -64,11 +39,7 @@ class DBConnection {
             String url;
             http.setTimeout(HTTP_TIMEOUT);
             if (!DEBUG) {
-                WiFiClientSecure https_client;
-                https_client.setCACert(root_ca);
-                https_client.setInsecure();
                 url = DATABASE_URL + route;
-                http.begin(https_client, url.c_str());
             } else {
                 url = DATABASE_DEBUG_URL + route;
                 Serial.print("DEBUG GET "); Serial.println(url);
@@ -102,11 +73,7 @@ class DBConnection {
             http.setTimeout(HTTP_TIMEOUT);
             String url;
             if (!DEBUG) {
-                WiFiClientSecure https_client;
-                https_client.setCACert(root_ca);
-                https_client.setInsecure();
                 url = DATABASE_URL + route;
-                http.begin(https_client, url.c_str());
             } else {
                 url = DATABASE_DEBUG_URL + route;
                 Serial.print("DEBUG POST "); Serial.println(url);

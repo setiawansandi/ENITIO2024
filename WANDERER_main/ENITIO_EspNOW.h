@@ -59,12 +59,14 @@ class EspNOW {
   
    void send_data(int msg_type, int attackee_type, int attacker_CLAN, int attacker_ID, int attackee_CLAN, int is_attackee_killed){
             // Register peer
+       WiFi.disconnect();
       feedbackData.msg_type = msg_type;
       feedbackData.attackee_type = attackee_type;
       feedbackData.attacker_CLAN = attacker_CLAN;
       feedbackData.attacker_ID = attacker_ID;
       feedbackData.attackee_CLAN = attackee_CLAN;
       feedbackData.is_attackee_killed = is_attackee_killed;
+      feedbackData.powerup_received = 0;
   
       getDeviceMACAddress(attacker_CLAN, attacker_ID);
       
@@ -83,11 +85,22 @@ class EspNOW {
       Serial.print("Current MAC Address:"); Serial.println(WiFi.macAddress());
        
       if (result == ESP_OK) {
-        Serial.println("Sent with success");
+        Serial.println("Success");
+      } else if (result == ESP_ERR_ESPNOW_NOT_INIT) {
+        // How did we get so far!!
+        Serial.println("ESPNOW not Init.");
+      } else if (result == ESP_ERR_ESPNOW_ARG) {
+        Serial.println("Invalid Argument");
+      } else if (result == ESP_ERR_ESPNOW_INTERNAL) {
+        Serial.println("Internal Error");
+      } else if (result == ESP_ERR_ESPNOW_NO_MEM) {
+        Serial.println("ESP_ERR_ESPNOW_NO_MEM");
+      } else if (result == ESP_ERR_ESPNOW_NOT_FOUND) {
+        Serial.println("Peer not found.");
+      } else {
+        Serial.println("Not sure what happened");
       }
-      else {
-        Serial.println("Error sending the data");
-      }
+      
 
       esp_now_del_peer(broadcastAddress);
 
@@ -193,4 +206,3 @@ class EspNOW {
 };
 
 EspNOW Player_EspNOW;
-
