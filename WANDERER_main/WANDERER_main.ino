@@ -38,53 +38,50 @@ void backgroundTaskCode(void *pvParameters) {
 void setup() {
 
   pinMode(LED_BUILTIN, OUTPUT);
-      // initialize serial
-      Serial.begin(115200);
-      EEPROM.begin(EEPROM_SIZE);
+  // initialize serial
+  Serial.begin(115200);
+  EEPROM.begin(EEPROM_SIZE);
 
-      // clearEEPROM();
+  // check OLED display
+  if(!display.begin(SSD1306_SWITCHCAPVCC, SCREEN_ADDRESS)) {
+    Serial.println(F("SSD1306 allocation failed"));
+    for(;;); // Don't proceed, loop forever
+  }
 
-      // check OLED display
-      if(!display.begin(SSD1306_SWITCHCAPVCC, SCREEN_ADDRESS)) {
-        Serial.println(F("SSD1306 allocation failed"));
-        for(;;); // Don't proceed, loop forever
-      }
-
-      StartUpDisplay();
+  StartUpDisplay();
       
-      // initialize Joystick 
-      Player_joystick.initialize();
+  // initialize Joystick 
+  Player_joystick.initialize();
 
-      // initialize IR
-      Player_IR.enable();
+  // initialize IR
+  Player_IR.enable();
       
-      Player_EspNOW.enable();
+  Player_EspNOW.enable();
 
-      dbc.connectToWiFi();
-      my_MAC_address = WiFi.macAddress();
+  my_MAC_address = WiFi.macAddress();
 
-      GAME_CONSTANTS game_consts = dbc.getGameConstants();
-      HTTP_TIMEOUT = game_consts.HTTP_TIMEOUT;
-      EN_RECOVER_DURATION = game_consts.EN_RECOVER_DURATION;
-      VIRUS_DECAY_DURATION = game_consts.VIRUS_DECAY_DURATION;
-      VIRUS_IMMUNITY_DURATION = game_consts.VIRUS_IMMUNITY_DURATION;
-      VIRUS_INFECTION_PROBABILITY = game_consts.VIRUS_INFECTION_PROBABILITY;
-      PARTICIPANT_MaxHP = game_consts.PARTICIPANT_MaxHP;
-      GL_MaxHP = game_consts.GL_MaxHP;
-      PARTICIPANT_MaxEn = game_consts.PARTICIPANT_MaxEn;
-      GL_MaxEn = game_consts.GL_MaxEn;
-      INITIAL_MULTIPLIER = game_consts.INITIAL_MULTIPLIER;
-      HEAL_MULTIPLIER = game_consts.HEAL_MULTIPLIER;
-      MAX_ATTACK_MULTIPLIER = game_consts.MAX_ATTACK_MULTIPLIER;
-      MAX_COLLECT_MULTIPLIER = game_consts.MAX_COLLECT_MULTIPLIER;
-      BOMB_HP_DEDUCTION = game_consts.BOMB_HP_DEDUCTION;
-      KILL_UPDATE_SERVER_INTERVAL = game_consts.KILL_UPDATE_SERVER_INTERVAL;
+  //  here is a set of fixed constants
+  HTTP_TIMEOUT = 15000;
+  EN_RECOVER_DURATION = 5000;
+  VIRUS_DECAY_DURATION = 30000;
+  VIRUS_IMMUNITY_DURATION = 120000;
+  VIRUS_INFECTION_PROBABILITY = 30;
+  PARTICIPANT_MaxHP = 12;
+  GL_MaxHP = 50;
+  PARTICIPANT_MaxEn = 5;
+  GL_MaxEn = 50;
+  INITIAL_MULTIPLIER = 1;
+  HEAL_MULTIPLIER = 4;
+  MAX_ATTACK_MULTIPLIER = 3;
+  MAX_COLLECT_MULTIPLIER = 10;
+  BOMB_HP_DEDUCTION = 6;
+  KILL_UPDATE_SERVER_INTERVAL = 120000;
+    
+  Serial.print("Actual MAC Address: "); Serial.println(my_MAC_address);
 
-      Serial.println(my_MAC_address);
+  pinMode(LED_BUILTIN, OUTPUT);
 
-      pinMode(LED_BUILTIN, OUTPUT);
-
-      xTaskCreatePinnedToCore(
+  xTaskCreatePinnedToCore(
                       backgroundTaskCode,   /* Task function. */
                       "backgroundTask",     /* name of task. */
                       10000,       /* Stack size of task */

@@ -70,6 +70,10 @@ def get_player_id(clan_id, mac_addr):
                 db.session.commit()
             
         result["player_id"] = player_id
+
+        variables = db.session.execute(db.select(GameStatus)).scalars()
+        for var in variables:
+            result[var.name] = int(var.value)
         return jsonify(result)
 
     abort(404)
