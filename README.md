@@ -7,7 +7,7 @@ The repository includes C++ codes for different ESP32 modules (players, treasure
 ## Credit
 Tran Anh Quan
 
-Ming Huan
+Ming Yuan
 
 Chan Kah Leong
 
