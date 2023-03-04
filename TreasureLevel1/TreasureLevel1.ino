@@ -209,7 +209,7 @@ class TreasureLevel1
       unsigned long currTime = millis();
       // randomSeed(currTime);
       int powerup_ID = random(1,6);
-       TreasureLevel1_EspNOW.send_data(2, CLAN_, ID_, ID, powerup_ID);
+       TreasureLevel1_EspNOW.send_data(2, CLAN_, ID_, ID, true, powerup_ID);
 
 //       while(!last_send_status){
 //         delay(200);

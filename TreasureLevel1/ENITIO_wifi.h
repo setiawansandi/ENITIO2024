@@ -173,7 +173,7 @@ class DBConnection {
           connectToWiFi();
             String url = "treasure_score";
             String httpRequestData = "{\"treasureName\": " + treasureName + ", \"invicta\": " + String(invicta) + ", \"dynari\": " + String(dynari);
-            httpRequestData = httpRequestData + ", \"ephilia\": " + String(ephilia) + ", \"akrona\": " + String(akrona) + ", \"solaris\": " + String(solaris)
+            httpRequestData = httpRequestData + ", \"ephilia\": " + String(ephilia) + ", \"akrona\": " + String(akrona) + ", \"solaris\": " + String(solaris);
             httpRequestData = httpRequestData + "}";
             Serial.println(httpRequestData);
             String jsonArray = POST_Request(url, httpRequestData.c_str());
