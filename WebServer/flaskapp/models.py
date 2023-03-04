@@ -104,3 +104,21 @@ def populate_constants_table():
             db.session.add(var)
     
     db.session.commit()
+
+def populate_treasures_table():
+    with open("instance/treasure_locations.csv") as f:
+        content = f.readlines()[1:]  # remove header row
+        for row in content:
+            if not row:
+                continue
+            row = row.strip()  # remove \n at the end
+            name, level, treasure_type, location = row.split(",")
+            level = int(level.strip())
+            treasure_type = int(treasure_type.strip())
+            if level == 1:
+                t = Level1Treasure(name, location)
+            elif level == 2:
+                t = Level2Treasure(name, location, treasure_type)
+            db.session.add(t)
+    
+    db.session.commit()

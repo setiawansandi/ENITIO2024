@@ -231,7 +231,6 @@ class TreasureLevel1
       // can_upload_fail = 0;
       int player_identifier = CLAN_ * pow(16, 2) + ID_;
       Serial.printf("TREASURE%d opened by CLAN %d ID %d\n", ID, CLAN_, ID_);
-      String player_mac_address = dbc.setTreasureAsOpened("TREASURE" + String(ID), CLAN_, ID_);
       // this code to save the info of the CLAN collected the treasure
 
       this_recover_duration = TREASURE_LEVEL1_RECOVER_DURATION*random(1,9);
@@ -263,7 +262,7 @@ class TreasureLevel1
         break;
       }
       EEPROM.commit();
-
+      dbc.setTreasureAsOpened("TREASURE" + String(ID), CLAN_, ID_);
       // can_upload_fail = 1;
     };
 
@@ -386,6 +385,7 @@ int get_game_state(){
       TreasureLevel1_NeoPixel.displayRGB_TOP(R_ON, G_ON, B_ON);
       Treasure.init_treasure();
       setUpDone = 1;
+      WiFi.disconnect(true);
      }
      return gameStarted;
    } else return 1;
@@ -461,14 +461,6 @@ void setup() {
 }
 
 void loop() {
-  // First check if ESP is connected to WiFi
-  if (WiFi.status() != WL_CONNECTED) {
-    bool isWiFiConnected = dbc.connectToWiFi();
-    if (!isWiFiConnected) {
-        // timeout
-        ESP.restart();
-    }
-  }
   switch (setUpDone){
     case 0:
       if(!AdminFunction){

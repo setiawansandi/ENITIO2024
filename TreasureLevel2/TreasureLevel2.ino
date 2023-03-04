@@ -241,6 +241,7 @@ class TreasureLevel2
 
 
       // upload to server
+      dbc.connectToWiFi();
       int curr_upload_fail_counter = wifi_timeout_or_refused_counter;
       String player_mac_address = dbc.setTreasureAsOpened(TreasureLevel2_Bluetooth.getTreasureName(), CLAN_, ID_);
       int new_upload_fail_counter = wifi_timeout_or_refused_counter;
@@ -389,6 +390,7 @@ int get_game_state(){
         Treasure.setup_initial_state();
         TreasureLevel2_Bluetooth.startAdvertisingService(pAvailableService);
         initiateTreasureDone = 1;
+        WiFi.disconnect(true);d
      }
      return gameStarted;
    } else 

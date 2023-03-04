@@ -294,7 +294,7 @@ class DBConnection {
             if (WiFi.status() != WL_CONNECTED) {
                 bool connectedToWiFi = connectToWiFi();
                 if (!connectedToWiFi) {
-                    Serial.print("WiFi not connected, so unable to retrieve playerID. ");
+                    Serial.print("WiFi not connected, so unable to send statistics");
                     FailedFeedbackStatistics feedback_stats;
                     return feedback_stats;
                 }
@@ -307,12 +307,22 @@ class DBConnection {
             String jsonArray = POST_Request(url, httpRequestData.c_str());
             Serial.println(jsonArray);
             return retrieveStatisticsFromJSONArray(jsonArray);
+            WiFi.disconnect(true);
         };
 
         bool uploadFailedFeedback(int CLAN, int participant_id) {
+            if (WiFi.status() != WL_CONNECTED) {
+                bool connectedToWiFi = connectToWiFi();
+                if (!connectedToWiFi) {
+                    Serial.print("WiFi not connected, so unable to send feedback");
+                    FailedFeedbackStatistics feedback_stats;
+                    return feedback_stats;
+                }
+            }
             String url = "player_kill/" + String(CLAN) + "/" + String(participant_id);
             String jsonArray = GET_Request(url.c_str());
             return jsonArray != "{}";
+            WiFi.disconnect(true);
         }
 };
 
