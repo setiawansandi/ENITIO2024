@@ -190,12 +190,14 @@ class TreasureHuntPlayer
         start_receiving_feedback = millis();
 
         if ((EEPROM.read(isGL_add)) && (action == heal)) {
-          HP --;
+          HP--;
           EEPROM.write(PLAYER_HP_add, HP);
         }
 
         En--;
         EEPROM.write(PLAYER_EN_add, En);
+        Serial.print("CURRENT MAC ADDRESS: ");
+        Serial.println(WiFi.macAddress());
       }
     };
 
@@ -217,7 +219,7 @@ class TreasureHuntPlayer
   
            lastActionReceived = currTime;
 
-           if (((CLAN_ != CLAN) && (action_ == attack)) || ((action_ == heal) && (CLAN_ == CLAN) && (ID_ != ID)) || (action_ == heal) || (action_ == revive)) 
+           if (((CLAN_ != CLAN) && (action_ == attack)) || ((action_ == heal) && (CLAN_ == CLAN) && (ID_ != ID)) || ((action_ == heal) && (CLAN_ != CLAN)) || (action_ == revive)) 
                 handleAction(CLAN_, ID_, action_, MULTIPLIER_);
            }
         }
@@ -844,7 +846,7 @@ class TreasureHuntPlayer
       if (!infectedWithVirus && deviceReady == 1){
         Player_Bluetooth.scan();
         unsigned long currTime = millis();
-        if (currTime - last_update_kills_to_server > KILL_UPDATE_SERVER_INTERVAL) {
+        /*if (currTime - last_update_kills_to_server > KILL_UPDATE_SERVER_INTERVAL) {
             FailedFeedbackStatistics this_stats ;
             this_stats = dbc.sendGameStatistics(CLAN, ID, numKilled, numL1Treasure, numL2Treasure);
             int unrecognized_kills = this_stats.num_kills;
@@ -905,9 +907,9 @@ class TreasureHuntPlayer
             current_failed_read_pointer ++ ;
             if(current_failed_read_pointer > 50) current_failed_read_pointer -= 50 ;
             failed_kill_feedback --;
-          }
-        }
-         else delay(50);
+          } 
+        } 
+         else delay(50); */
       }
       else{
         delay(50);
