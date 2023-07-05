@@ -91,15 +91,16 @@ void CreditsDisplay() {
 
     display.setTextColor(SSD1306_WHITE);
     display.setTextSize(1); // Draw SIZE
-    display.setCursor(0, 12);
+    display.setCursor(0, 10);
     display.println("Quan Tran   Ming Yuan");
-    
-    display.setCursor(0, 22);
-    display.println("Kah Leong    Shirsho");
-    display.setCursor(0, 32);
-    display.println("Siddhangana    Yash");
-    display.setCursor(0, 42);
+    display.setCursor(0, 19);
+    display.println("Kah Leong     Shirsho");
+    display.setCursor(0, 28);
+    display.println("Siddhangana      Yash");
+    display.setCursor(0, 37);
     display.println("Edmund      Yan Sheng");
+    display.setCursor(0, 46);
+    display.println("              Winston");
 
     display.setCursor(10, 56);
     display.setTextColor(SSD1306_BLACK, SSD1306_WHITE);
@@ -379,24 +380,6 @@ class MainMenu_OLED {
           display.print(F(" >"));
           break;
 
-        case SnakeGameProcess:
-          display.setCursor(40, 56);
-          display.print(F("< "));
-          display.setTextColor(SSD1306_BLACK, SSD1306_WHITE);
-          display.print(F("Snake"));
-          display.setTextColor(SSD1306_WHITE);
-          display.print(F(" >"));
-          break;
-
-        case MusicProcess:
-          display.setCursor(40, 56);
-          display.print(F("< "));
-          display.setTextColor(SSD1306_BLACK, SSD1306_WHITE);
-          display.print(F("Music"));
-          display.setTextColor(SSD1306_WHITE);
-          display.print(F(" >"));
-          break;
-
         case AdminProcess:
           display.setCursor(40, 56);
           display.print(F("< "));
@@ -536,38 +519,6 @@ class Profile_OLED {
       display.println(F("   Please wait ...   ")); 
       display.display();
     }
-
-    // void display_isGLregisteringPage(int isGL_pointer){
-    //   display.clearDisplay();
-    //   // change text display here
-    //   display.setTextSize(1);
-    //   display.setTextColor(SSD1306_BLACK, SSD1306_WHITE);
-
-    //   display.setCursor(0,0);
-    //   // menu title
-    //   display.println(" Are you a GL?       ");
-    //   //---------------------------------
-
-    //   display.setTextColor(SSD1306_WHITE);
-
-    //   display.setCursor(10, 12);
-      
-    //   display.println("NO");
-
-    //   display.setCursor(10, 22);
-      
-    //   display.println("YES");
-      
-    //   // prints the cursor to highlight menu items
-    //   display.setCursor(2, (isGL_pointer * 10) + 12);
-    //   display.println(">");
-
-    //   display.setCursor(14, 56);
-    //   display.setTextColor(SSD1306_BLACK, SSD1306_WHITE);
-    //   display.println("(Press to choose)"); 
-
-    //   display.display();
-    // }
 };
 
 Profile_OLED Profile_OLED;

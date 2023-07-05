@@ -50,10 +50,6 @@ class PlayerBluetooth {
                         Serial.println(device.toString().c_str());
                         isThereVirus = true;
                         virus_device_counter++;
-                    } else if (device.isAdvertisingService(availableServiceUUID)) {
-                        // available treasure nearby
-                        Serial.println("BLE Server Available");
-                        Serial.println(device.toString().c_str());
                     }
                 }
             }

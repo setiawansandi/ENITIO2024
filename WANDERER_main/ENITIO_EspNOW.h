@@ -22,6 +22,7 @@ int recv_data_pointer = 0;
 int recv_data_read_pointer = 0;
 
 bool send_Status = 1 ;
+int current_channel;
 
 class EspNOW {
   private:
@@ -45,7 +46,7 @@ class EspNOW {
       Serial.println("OK");
       esp_now_register_send_cb(OnDataSent);
       esp_now_register_recv_cb(OnDataRecv);
-      Serial.print(WiFi.channel());
+      Serial.print("WiFi Channel: "); Serial.println(WiFi.channel());
     }
 
     void getDeviceMACAddress(int attacker_CLAN, int attacker_ID){
@@ -57,22 +58,26 @@ class EspNOW {
       broadcastAddress[5] = 1;
     }
   
-   void send_data(int msg_type, int attackee_type, int attacker_CLAN, int attacker_ID, int attackee_CLAN, int is_attackee_killed){
-            // Register peer
-       WiFi.disconnect();
+   void send_data(int msg_type, int attackee_type, int attacker_CLAN, int attacker_ID, int attackee_CLAN, int is_attackee_killed, int attacker_channel){
+      // Register peer
       feedbackData.msg_type = msg_type;
       feedbackData.attackee_type = attackee_type;
       feedbackData.attacker_CLAN = attacker_CLAN;
       feedbackData.attacker_ID = attacker_ID;
       feedbackData.attackee_CLAN = attackee_CLAN;
       feedbackData.is_attackee_killed = is_attackee_killed;
-      feedbackData.powerup_received = 0;
+      feedbackData.powerup_received = 0;    // because WANDERers cannot send powerups to other devices
   
       getDeviceMACAddress(attacker_CLAN, attacker_ID);
       
       memcpy(peerInfo.peer_addr, broadcastAddress, 6);
-      peerInfo.channel = 0;  
+      peerInfo.channel = attacker_channel;  
       peerInfo.encrypt = false;
+
+      // change WiFi channel to the receiver's WiFi channel
+      // There might be problems if ESP32 is sending data halfway, check later
+      current_channel = WiFi.channel();  // so that we can switch back later
+      dbc.changeWiFiChannel(attacker_channel);
         
       // Add peer     
       if (esp_now_add_peer(&peerInfo) != ESP_OK){
@@ -82,7 +87,6 @@ class EspNOW {
       
       // Send message via ESP-NOW
       esp_err_t result = esp_now_send(broadcastAddress, (uint8_t *) &feedbackData, sizeof(feedbackData));
-      Serial.print("Current MAC Address:"); Serial.println(WiFi.macAddress());
        
       if (result == ESP_OK) {
         Serial.println("Success");
@@ -101,9 +105,6 @@ class EspNOW {
         Serial.println("Not sure what happened");
       }
       
-
-      esp_now_del_peer(broadcastAddress);
-
       if((!send_Status) && is_attackee_killed){
         failed_kill_feedback ++ ;
         failed_kill_CLAN[current_failed_save_pointer] = attacker_CLAN;
@@ -136,6 +137,10 @@ class EspNOW {
           Serial.println("Delivery Failed");
           send_Status = 0 ;
         }
+
+        Serial.println("Changing Back to original channel");
+        dbc.changeWiFiChannel(current_channel);
+        esp_now_del_peer(broadcastAddress);
     }
 
     feedback_message get_feedback_received(){

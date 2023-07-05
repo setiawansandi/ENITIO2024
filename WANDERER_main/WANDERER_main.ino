@@ -36,9 +36,6 @@ void backgroundTaskCode(void *pvParameters) {
 };
 
 void setup() {
-
-  pinMode(LED_BUILTIN, OUTPUT);
-  // initialize serial
   Serial.begin(115200);
   EEPROM.begin(EEPROM_SIZE);
 
@@ -116,4 +113,3 @@ void loop() {
       break;
   }
 }
-

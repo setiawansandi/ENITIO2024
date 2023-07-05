@@ -134,14 +134,16 @@ class TreasureHuntPlayer
         num_poison = EEPROM.read(PLAYER_num_poison_add);
       }
 
-      WiFi.disconnect(true);
+      WiFi.disconnect();
+      // change to correct channel, according to clan
+      dbc.changeWiFiChannel(dbc.getClanWiFiChannel(CLAN));
       Player_EspNOW.enable();
     }
 
     void sendAction() {
       // format of the IR signal (16-bit hexadecimal, i.e. 4 digits)
       // address: 0x0<CLAN><ID - 2 bit>  (ID is 2 bits as there maybe more than 16 people in one CLAN)
-      // command: 0x00<MULTIPLIER><Action>
+      // command: 0x0<Current WiFi Channel><MULTIPLIER><Action>
       if ((action != do_nothing) && (En > 0)) {
         uint16_hex_digits address_digits, command_digits;
 
@@ -149,6 +151,7 @@ class TreasureHuntPlayer
         address_digits.digit1 = ID / 16;
         address_digits.digit2 = CLAN;
 
+        command_digits.digit2 = WiFi.channel();
         command_digits.digit0 = action;
 
         int this_action_multiplier;
@@ -202,7 +205,7 @@ class TreasureHuntPlayer
     };
 
     void receiveAction() {
-      int CLAN_, ID_, En_, MULTIPLIER_, action_; // underscore denotes details of IR signal sender
+      int CLAN_, ID_, En_, MULTIPLIER_, action_, channel_; // underscore denotes details of IR signal sender
       unsigned long currTime = millis();
       if (Player_IR.available()) {
          ir_signal IRsignal_ = Player_IR.read();
@@ -211,6 +214,7 @@ class TreasureHuntPlayer
            CLAN_ = IRsignal_.address.digit2;
            ID_ = IRsignal_.address.digit0 + (IRsignal_.address.digit1 << 4);
 
+           channel_ = IRsignal_.command.digit2;
            MULTIPLIER_ = IRsignal_.command.digit1;
            action_ = IRsignal_.command.digit0;
 
@@ -220,7 +224,7 @@ class TreasureHuntPlayer
            lastActionReceived = currTime;
 
            if (((CLAN_ != CLAN) && (action_ == attack)) || ((action_ == heal) && (CLAN_ == CLAN) && (ID_ != ID)) || ((action_ == heal) && (CLAN_ != CLAN)) || (action_ == revive)) 
-                handleAction(CLAN_, ID_, action_, MULTIPLIER_);
+                handleAction(CLAN_, ID_, action_, MULTIPLIER_, channel_);
            }
         }
       }
@@ -231,11 +235,6 @@ class TreasureHuntPlayer
         EEPROM.write(PLAYER_EN_add, En);
         permNoti = "    You Are Killed!     ";
         unsigned long currTime = millis();
-        // if (currTime - last_max_en_decay >= MAX_EN_DECAY_DURATION){
-        //   MaxEn = max(MaxEn - 1, 1);
-        //   EEPROM.write(PLAYER_MaxEn_add, MaxEn);
-        //   last_max_en_decay = currTime;
-        // }
         if (infectedWithVirus) {
             Player_Bluetooth.stopSpreadingVirus();
             infectedWithVirus = 0;
@@ -489,8 +488,8 @@ class TreasureHuntPlayer
       }
     }
 
-    void handleAction(int CLAN_, int ID_, int action_, int MULTIPLIER_){
-      Serial.println(action_);
+    void handleAction(int CLAN_, int ID_, int action_, int MULTIPLIER_, int channel_){
+      Serial.print("Action ID: "); Serial.println(action_);
       switch (action_)
       {
       case attack:
@@ -500,7 +499,7 @@ class TreasureHuntPlayer
           Serial.printf("Attacked. Current HP: %d \n", HP);
           tempNoti = "       Attacked      ";
           tempNoti_start = millis();
-          feedback_attack(CLAN_, ID_);
+          feedback_attack(CLAN_, ID_, channel_);
           Player_Buzzer.sound(NOTE_E3);
         }
         break;
@@ -537,7 +536,7 @@ class TreasureHuntPlayer
           Serial.printf("Attacked. Current HP: %d \n", HP);
           tempNoti = "       Poisoned      ";
           tempNoti_start = millis();
-          feedback_attack(CLAN_, ID_);
+          feedback_attack(CLAN_, ID_, channel_);
           Player_Buzzer.sound(NOTE_E3);
         }
         break;  
@@ -547,14 +546,14 @@ class TreasureHuntPlayer
       }
     }
 
-    void feedback_attack(int CLAN_, int ID_){
+    void feedback_attack(int CLAN_, int ID_, int channel_){
       bool killed = (HP == 0);
-      Player_EspNOW.send_data(1, 1, CLAN_, ID_, CLAN, killed);
+      Player_EspNOW.send_data(1, 1, CLAN_, ID_, CLAN, killed, channel_);
     } ;
 
     void feedback_bomb(int CLAN_, int ID_){
       bool killed = (HP == 0);
-      Player_EspNOW.send_data(1, 4, CLAN_, ID_, CLAN, killed);
+      Player_EspNOW.send_data(1, 4, CLAN_, ID_, CLAN, killed, 1); // TODO: Specify WiFi Channel
     }
 
     void handleFeedbackMsg(feedback_message feedbackData){

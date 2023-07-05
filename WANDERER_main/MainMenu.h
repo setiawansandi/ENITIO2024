@@ -13,16 +13,16 @@ class MainMenu {
                 {
                 case left:
                     lastProcessNav--;
-                    if (lastProcessNav > 7) lastProcessNav -= 8;
-                    if (lastProcessNav < 0) lastProcessNav += 8;
+                    if (lastProcessNav > 5) lastProcessNav -= 6;
+                    if (lastProcessNav < 0) lastProcessNav += 6;
                     Nav_start = millis();
                     Player_joystick.set_state();
                     break;
 
                 case right:
                     lastProcessNav++;
-                    if (lastProcessNav > 7) lastProcessNav -= 8;
-                    if (lastProcessNav < 0) lastProcessNav += 8;
+                    if (lastProcessNav > 5) lastProcessNav -= 6;
+                    if (lastProcessNav < 0) lastProcessNav += 6;
                     Nav_start = millis();
                     Player_joystick.set_state();
                     break;

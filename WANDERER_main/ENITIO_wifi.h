@@ -289,6 +289,31 @@ class DBConnection {
             String jsonArray = GET_Request(url.c_str());
             return jsonArray != "{}";
             WiFi.disconnect(true);
+        };
+
+        void changeWiFiChannel(int targetChannelID) {
+            Serial.print("Current WiFi Channel: "); Serial.println(WiFi.channel());
+            esp_wifi_set_promiscuous(true);
+            esp_wifi_set_channel(targetChannelID, WIFI_SECOND_CHAN_NONE);
+            esp_wifi_set_promiscuous(false);
+            Serial.print("NEW WiFi Channel: "); Serial.println(WiFi.channel());
+        }
+
+        int getClanWiFiChannel(int CLAN) {
+            switch(CLAN) {
+                case INVICTA:
+                    return 1;
+                case DYNARI:
+                    return 6;
+                case EPHILIA:
+                    return 6;
+                case AKRONA:
+                    return 11;
+                case SOLARIS:
+                    return 11;
+                default:
+                    return 1;
+            }
         }
 };
 
