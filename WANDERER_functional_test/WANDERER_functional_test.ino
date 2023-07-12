@@ -31,7 +31,7 @@ Adafruit_SSD1306 display(SCREEN_WIDTH, SCREEN_HEIGHT, &Wire, OLED_RESET);
 
 unsigned long last_LED_flash_time = 0;
 bool current_LED_state = 0;
-int LED_flash_interval = 2000;
+int LED_flash_interval = 500;
 int test_xValue = 0;
 int test_yValue = 0;
 int test_btnState = 0;
@@ -63,7 +63,7 @@ void send_test_IR_message() {
   address_digits.digit0 = 0;
   address_digits.digit1 = 1;
   address_digits.digit2 = 2;
-  address_digits.digit3 = 3;
+  address_digits.digit3 = 4;
 
   command_digits.digit0 = 1;
   command_digits.digit1 = 2;
@@ -103,8 +103,10 @@ void receive_IR_messages(unsigned long currTime) {
 
 void test_loop() {
   unsigned long currTime = millis();
-  if ((currTime - last_LED_flash_time) > LED_flash_interval) {
-    // toggle_LED(currTime);
+  if (current_LED_state && (currTime - last_LED_flash_time) > LED_flash_interval) {
+    toggle_LED(currTime);
+  } else if (!current_LED_state && (currTime - last_LED_flash_time) > 4 * LED_flash_interval){
+    toggle_LED(currTime);
   }
 
   // update local states of joystick

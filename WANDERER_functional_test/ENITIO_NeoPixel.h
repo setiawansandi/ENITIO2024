@@ -23,10 +23,13 @@ class NeoPixel {
         // END of Trinket-specific code.
 
         pixelsTOP.begin(); // INITIALIZE NeoPixel strip object (REQUIRED)
+        pixelsTOP.setBrightness(30);
         pixelsFRONT.begin();
+        pixelsFRONT.setBrightness(30);
 
         off_FRONT();
         off_TOP();
+        
     }
 
     void displayRGB_TOP(int R, int G, int B){
