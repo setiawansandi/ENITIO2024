@@ -14,8 +14,6 @@
 #include "MACAddress.h"
 #define LED_BUILTIN 2
 
-#define LED_BUILTIN 2
-
 TaskHandle_t backgroundTask;
 
 

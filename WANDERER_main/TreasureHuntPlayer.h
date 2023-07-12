@@ -136,7 +136,9 @@ class TreasureHuntPlayer
 
       WiFi.disconnect();
       // change to correct channel, according to clan
-      dbc.changeWiFiChannel(dbc.getClanWiFiChannel(CLAN));
+      int clan_channel = dbc.getClanWiFiChannel(CLAN);
+      Serial.print("[INITIALISE] Changing to WiFi "); Serial.println(clan_channel);
+      dbc.changeWiFiChannel(clan_channel);
       Player_EspNOW.enable();
     }
 
@@ -186,7 +188,7 @@ class TreasureHuntPlayer
         send_signal.address = address_digits;
         send_signal.command = command_digits;
 
-        Serial.printf("%d %d %d %d %d %d %d %d \n", address_digits.digit3, address_digits.digit2, address_digits.digit1, address_digits.digit0, \
+        Serial.printf("SEND %d %d %d %d | %d %d %d %d \n", address_digits.digit3, address_digits.digit2, address_digits.digit1, address_digits.digit0, \
                                                     command_digits.digit3, command_digits.digit2, command_digits.digit1, command_digits.digit0);
         Player_IR.send(send_signal, 1);
 
@@ -209,7 +211,7 @@ class TreasureHuntPlayer
       unsigned long currTime = millis();
       if (Player_IR.available()) {
          ir_signal IRsignal_ = Player_IR.read();
-          Serial.printf("%d %d %d\n", currTime, lastActionReceived, ACTION_RECV_WAIT);
+          Serial.printf("SIG RECV ON %d %d %d\n", currTime, lastActionReceived, ACTION_RECV_WAIT);
          if (currTime - lastActionReceived > ACTION_RECV_WAIT) {
            CLAN_ = IRsignal_.address.digit2;
            ID_ = IRsignal_.address.digit0 + (IRsignal_.address.digit1 << 4);
@@ -219,7 +221,7 @@ class TreasureHuntPlayer
            action_ = IRsignal_.command.digit0;
 
     
-           Serial.printf("%d %d %d %d %d %d %d %d \n", IRsignal_.address.digit3, IRsignal_.address.digit2, IRsignal_.address.digit1, IRsignal_.address.digit0, IRsignal_.command.digit3, IRsignal_.command.digit2, IRsignal_.command.digit1, IRsignal_.command.digit0);
+           Serial.printf("RECV %d %d %d %d | %d %d %d %d \n", IRsignal_.address.digit3, IRsignal_.address.digit2, IRsignal_.address.digit1, IRsignal_.address.digit0, IRsignal_.command.digit3, IRsignal_.command.digit2, IRsignal_.command.digit1, IRsignal_.command.digit0);
   
            lastActionReceived = currTime;
 

@@ -292,11 +292,17 @@ class DBConnection {
         };
 
         void changeWiFiChannel(int targetChannelID) {
-            Serial.print("Current WiFi Channel: "); Serial.println(WiFi.channel());
-            esp_wifi_set_promiscuous(true);
-            esp_wifi_set_channel(targetChannelID, WIFI_SECOND_CHAN_NONE);
-            esp_wifi_set_promiscuous(false);
-            Serial.print("NEW WiFi Channel: "); Serial.println(WiFi.channel());
+            int currentChannel = WiFi.channel();
+            Serial.print("Current WiFi Channel: "); Serial.println(currentChannel);
+            if (currentChannel != targetChannelID) {
+                esp_wifi_set_promiscuous(true);
+                esp_wifi_set_channel(targetChannelID, WIFI_SECOND_CHAN_NONE);
+                esp_wifi_set_promiscuous(false);
+                Serial.print("NEW WiFi Channel: "); Serial.println(WiFi.channel());
+            } else {
+                Serial.println("Target on same channel, no change required");
+            }
+            
         }
 
         int getClanWiFiChannel(int CLAN) {
