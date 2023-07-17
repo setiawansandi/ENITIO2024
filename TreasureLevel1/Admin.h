@@ -182,36 +182,18 @@ class Admin_OLED{
       display.setTextColor(SSD1306_BLACK, SSD1306_WHITE); // Draw 'inverse' text
       display.setCursor(0, 0);
       display.println(F(" Setting Treasure ID ")); 
-      if (!gameStarted){
-        display.setTextColor(SSD1306_WHITE);
-        display.setCursor(0, 12);
-        display.print("Old ID: ");
-        display.println(previousID);
-        display.setCursor(0, 22);
+      display.setTextColor(SSD1306_WHITE);
+      display.setCursor(0, 12);
+      display.print("Old ID: ");
+      display.println(previousID);
 
+      display.setCursor(0, 40);
+      display.print("New ID: "); 
+      display.setTextColor(SSD1306_BLACK, SSD1306_WHITE);
+      display.println(currentIDnum); 
 
-        display.setCursor(0, 40);
-        display.print("New ID: "); 
-        display.setTextColor(SSD1306_BLACK, SSD1306_WHITE);
-        display.println(currentIDnum); 
-
-        display.setTextColor(SSD1306_WHITE);
-        display.setCursor(0, 50);
-      }
-      else{
-        display.setTextColor(SSD1306_WHITE);
-        display.setCursor(0, 12);
-        display.print("ID: ");
-        display.println(previousID);
-        display.setCursor(0, 22);
-
-        display.setCursor(0, 40);
-        display.print("Game Started!!"); 
-
-        display.setCursor(10, 56);
-        display.setTextColor(SSD1306_BLACK, SSD1306_WHITE);
-        display.println("(Press to go back)"); 
-      }
+      display.setTextColor(SSD1306_WHITE);
+      display.setCursor(0, 50);
       display.display();
     }
 
@@ -469,41 +451,25 @@ class Admin {
         void handleJoystickSettingID(){
             joystick_pos joystick_pos = TreasureLevel1_joystick.read_Joystick();
             if (TreasureLevel1_joystick.get_state() == 0) {
-                if (!gameStarted) {
-                    switch (joystick_pos){
-                        case down:
-                            currentIDnum = max(currentIDnum - 1, 0);
-                            TreasureLevel1_joystick.set_state();
-                            break;
+                switch (joystick_pos){
+                    case down:
+                        currentIDnum = max(currentIDnum - 1, 0);
+                        TreasureLevel1_joystick.set_state();
+                        break;
 
-                        case up:
-                            currentIDnum = min(currentIDnum + 1, ID_BOUND);
-                            TreasureLevel1_joystick.set_state();
-                            break;
+                    case up:
+                        currentIDnum = min(currentIDnum + 1, ID_BOUND);
+                        TreasureLevel1_joystick.set_state();
+                        break;
 
-                        case button:
-                            ID = currentIDnum;
-                            EEPROM.write(ID_add, ID);
-                            EEPROM.commit();
-                            Admin_OLED.ConfirmSettingIDDisplay(currentIDnum);
-                            currentIDnum = 0;
-                            isSettingID = false;
-                            delay(1500);
-                            TreasureLevel1_joystick.set_state();
-                            break;
-
-                        case idle:
-                          break;
-
-                        default:
-                            TreasureLevel1_joystick.set_state();
-                            break;
-                    }
-                }
-                else {
-                  switch (joystick_pos){
                     case button:
+                        ID = currentIDnum;
+                        EEPROM.write(ID_add, ID);
+                        EEPROM.commit();
+                        Admin_OLED.ConfirmSettingIDDisplay(currentIDnum);
+                        currentIDnum = 0;
                         isSettingID = false;
+                        delay(1500);
                         TreasureLevel1_joystick.set_state();
                         break;
 
@@ -513,7 +479,6 @@ class Admin {
                     default:
                         TreasureLevel1_joystick.set_state();
                         break;
-                  }
                 }
             }
         }
