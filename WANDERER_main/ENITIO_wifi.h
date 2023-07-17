@@ -288,7 +288,7 @@ class DBConnection {
             String url = "player_kill/" + String(CLAN) + "/" + String(participant_id);
             String jsonArray = GET_Request(url.c_str());
             return jsonArray != "{}";
-            WiFi.disconnect(true);
+            WiFi.disconnect();
         };
 
         void changeWiFiChannel(int targetChannelID) {

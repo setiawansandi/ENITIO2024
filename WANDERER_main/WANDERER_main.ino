@@ -5,7 +5,6 @@
 #include "ENITIO_buzzer.h"
 #include "ENITIO_EspNOW.h"
 #include "ENITIO_OLED.h"
-#include "ENITIO_player_bluetooth.h"
 #include "MainMenu.h"
 #include "Profile.h"
 #include "TreasureHuntPlayer.h"
@@ -70,19 +69,19 @@ void setup() {
   MAX_ATTACK_MULTIPLIER = 3;
   MAX_COLLECT_MULTIPLIER = 10;
   BOMB_HP_DEDUCTION = 6;
-  KILL_UPDATE_SERVER_INTERVAL = 120000;
+  KILL_UPDATE_SERVER_INTERVAL = 10 * 60 * 1000;  // 10 mins
     
   Serial.print("Actual MAC Address: "); Serial.println(my_MAC_address);
 
   pinMode(LED_BUILTIN, OUTPUT);
 
   xTaskCreatePinnedToCore(
-                      backgroundTaskCode,   /* Task function. */
-                      "backgroundTask",     /* name of task. */
-                      10000,       /* Stack size of task */
-                      NULL,        /* parameter of the task */
-                      2,           /* priority of the task */
-                      &backgroundTask,      /* Task handle to keep track of created task */
+                      backgroundTaskCode,   // Task function. 
+                      "backgroundTask",     // name of task. 
+                      10000,       // Stack size of task
+                      NULL,        // parameter of the task
+                      2,           // priority of the task
+                      &backgroundTask,      // Task handle to keep track of created task
                       0);
 }
 

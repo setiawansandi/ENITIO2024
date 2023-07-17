@@ -4,7 +4,6 @@
 #include <EEPROM.h>
 #include "ENITIO_ir.h"
 #include "ENITIO_enums.h"
-#include "ENITIO_bluetooth.h"
 #include "ENITIO_EspNOW.h"
 #include "ENITIO_NeoPixel.h"
 #include "ENITIO_joystick.h"
@@ -149,8 +148,6 @@ class TreasureLevel2 {
         CLAN_ = EEPROM.read(collectedCLAN_add);
         }
       }
-
-      TreasureLevel2_Bluetooth.initialise(id);
       
       if (HP == 0) {
         TreasureLevel2_NeoPixel.off_FRONT();
@@ -163,34 +160,35 @@ class TreasureLevel2 {
       
     }
 
-    void feedback_collectL2(int CLAN_, int ID_){
+    void feedback_collectL2(int CLAN_, int ID_, int channel_){
       bool killed = (HP == 0);
       int powerup_received;
       if (killed && _isPoison) powerup_received = 6;
       else powerup_received = 0;
-      TreasureLevel2_EspNOW.send_data(3, CLAN_, ID_, id, killed, powerup_received);
+      TreasureLevel2_EspNOW.send_data(3, CLAN_, ID_, id, killed, powerup_received, channel_);
     } ;
 
     void receiveAction() {
+      int channel_;
       if (HP > 0) {
         unsigned long currTime = millis();
         if (TreasureLevel2_IR.available()) {
            ir_signal IRsignal_ = TreasureLevel2_IR.read();
 
            if (currTime - lastActionReceived > TREASURE_LEVEL2_ACTION_RECV_WAIT) {
+             Serial.printf("RECV %d %d %d %d | %d %d %d %d \n", IRsignal_.address.digit3, IRsignal_.address.digit2, IRsignal_.address.digit1, IRsignal_.address.digit0, IRsignal_.command.digit3, IRsignal_.command.digit2, IRsignal_.command.digit1, IRsignal_.command.digit0);
              CLAN_ = IRsignal_.address.digit2;
              ID_ = IRsignal_.address.digit0 + (IRsignal_.address.digit1 << 4);
 
+             channel_ = IRsignal_.command.digit2;
              MULTIPLIER_ = IRsignal_.command.digit1;
              action_ = IRsignal_.command.digit0;
         
-             Serial.printf("%d %d %d %d %d\n", action_, MULTIPLIER_, ID_, CLAN_, HP);
-
              lastActionReceived = currTime;
       
              if (action_ == collect) {
                HP = max(HP-MULTIPLIER_, 0);
-               feedback_collectL2(CLAN_, ID_);
+               feedback_collectL2(CLAN_, ID_, channel_);
                EEPROM.write(HP_add, HP);
                EEPROM.commit(); 
                Serial.printf("Current HP: %d\n", HP);
@@ -226,28 +224,19 @@ class TreasureLevel2 {
       interim_collected_display();
       TreasureLevel2_NeoPixel.off_FRONT();
       TreasureLevel2_NeoPixel.off_TOP();
+      
       // no need to feedback everytime the player collecting the Treasure. Only feedback to the server and to the player when the treasure is fully collected, ie. HP == 0
-      TreasureLevel2_Bluetooth.stopAdvertisingService(pAvailableService);
-      delay(2000);
-      Serial.print("TREASURE NAME:"); Serial.println(TreasureLevel2_Bluetooth.getTreasureName());
       Serial.printf("CLAN: %d ID: %d\n", CLAN_, ID_);
       // this code to save the info of the player collected the treasure to resend if required
       EEPROM.write(collectedCLAN_add, CLAN_);
       EEPROM.write(collectedID_add, ID_);
       EEPROM.commit(); 
-      // broadcast virus here ...
-      if (_isVirus) {
-        Serial.println("Broadcasting Virus...");
-        TreasureLevel2_Bluetooth.startAdvertisingService(pVirusService);
-        delay(TREASURE_LEVEL2_VIRUS_INFECTION_TIME);
-        TreasureLevel2_Bluetooth.stopAdvertisingService(pVirusService);
-        Serial.println("Box Shutting down...");
-      }
 
       // upload to server
       dbc.connectToWiFi();
       int curr_upload_fail_counter = wifi_timeout_or_refused_counter;
-      String player_mac_address = dbc.setTreasureAsOpened(TreasureLevel2_Bluetooth.getTreasureName(), CLAN_, ID_);
+      String treasureName = "TREASURE" + String(id);
+      String player_mac_address = dbc.setTreasureAsOpened(treasureName, CLAN_, ID_);
       int new_upload_fail_counter = wifi_timeout_or_refused_counter;
       if (new_upload_fail_counter == curr_upload_fail_counter) {
         EEPROM.write(uploadSuccess_add, 1);
@@ -261,7 +250,8 @@ class TreasureLevel2 {
             int curr_upload_fail_counter = wifi_timeout_or_refused_counter;
             CLAN_ = EEPROM.read(collectedCLAN_add);
             ID_ = EEPROM.read(collectedID_add);
-            String player_mac_address = dbc.setTreasureAsOpened(TreasureLevel2_Bluetooth.getTreasureName(), CLAN_, ID_);
+            String treasureName = "TREASURE" + String(id);
+            String player_mac_address = dbc.setTreasureAsOpened(treasureName, CLAN_, ID_);
             int new_upload_fail_counter = wifi_timeout_or_refused_counter;
             if (new_upload_fail_counter == curr_upload_fail_counter) {
                 EEPROM.write(uploadSuccess_add, 1);
@@ -390,11 +380,10 @@ int get_game_state(){
    if (!gameStarted) {
      gameStarted = dbc.hasGameStarted();
      if (gameStarted) {
-        // start BLE functions
         Treasure.setup_initial_state();
-        TreasureLevel2_Bluetooth.startAdvertisingService(pAvailableService);
         initiateTreasureDone = 1;
-        
+        WiFi.disconnect();
+        TreasureLevel2_EspNOW.enable();
      }
      return gameStarted;
    } else 
@@ -466,8 +455,6 @@ void setup() {
   EEPROM.begin(EEPROM_SIZE);
   id = EEPROM.read(ID_add);
 
-  TreasureLevel2_EspNOW.enable();
-
   bool isWiFiConnected = dbc.connectToWiFi();
   while (!isWiFiConnected) {
     Serial.println("Reconnecting..");
@@ -495,17 +482,6 @@ void setup() {
 }
 
 void loop() {
-  // First check if ESP is connected to WiFi
-  if (WiFi.status() != WL_CONNECTED) {
-    bool isWiFiConnected = dbc.connectToWiFi();
-    if (!isWiFiConnected) {
-        // timeout
-        ESP.restart();
-    }
-  }
-  if (wifi_timeout_or_refused_counter >= 3) {
-    ESP.restart();
-  }
   switch (initiateTreasureDone){
     case 0:
       if(!AdminFunction){

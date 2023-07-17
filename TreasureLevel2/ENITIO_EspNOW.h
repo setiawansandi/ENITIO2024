@@ -11,6 +11,7 @@ typedef struct feedback_message {
 } feedback_message;
 
 int EspNOW_received = 0;
+int current_channel;
 feedback_message EspNOW_recvData;
 
 class EspNOW {
@@ -45,8 +46,11 @@ class EspNOW {
       broadcastAddress[5] = 1;
     }
   
-   void send_data(int attackee_type, int attacker_CLAN, int attacker_ID, int attackee_CLAN, bool is_attackee_killed, int powerup_id){
-            // Register peer
+   void send_data(int attackee_type, int attacker_CLAN, int attacker_ID, int attackee_CLAN, bool is_attackee_killed, int powerup_id, int attacker_channel){
+      // delete old peer
+      esp_now_del_peer(broadcastAddress);
+      
+      // Register peer
       feedbackData.attackee_type = attackee_type;
       feedbackData.attacker_CLAN = attacker_CLAN;
       feedbackData.attacker_ID = attacker_ID;
@@ -57,8 +61,14 @@ class EspNOW {
      
       
       memcpy(peerInfo.peer_addr, broadcastAddress, 6);
-      peerInfo.channel = 0;  
+      Serial.printf("Attacker Channel is %d\n", attacker_channel);
+      peerInfo.channel = attacker_channel;  
       peerInfo.encrypt = false;
+
+      // change WiFi channel to the receiver's WiFi channel
+      // There might be problems if ESP32 is sending data halfway, check later
+      current_channel = WiFi.channel();  // so that we can switch back later
+      dbc.changeWiFiChannel(attacker_channel);
         
       // Add peer     
       if (esp_now_add_peer(&peerInfo) != ESP_OK){
@@ -75,8 +85,6 @@ class EspNOW {
       else {
         Serial.println("Error sending the data");
       }
-      
-      esp_now_del_peer(broadcastAddress);
     }
 
     void disable(){
@@ -91,6 +99,9 @@ class EspNOW {
     static void OnDataSent(const uint8_t *mac_addr, esp_now_send_status_t status) {
       Serial.print("\r\nLast Packet Send Status:\t");
       Serial.println(status == ESP_NOW_SEND_SUCCESS ? "Delivery Success" : "Delivery Fail");
+
+      Serial.println("Changing Back to original channel");
+      dbc.changeWiFiChannel(current_channel);
     }
 
     feedback_message get_feedback_received(){

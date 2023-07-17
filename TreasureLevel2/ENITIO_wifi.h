@@ -3,6 +3,7 @@
 #include <HTTPClient.h>
 #include <Arduino_JSON.h>
 #include <esp_now.h>
+#include <esp_wifi.h>
 
 // WiFi Based on https://github.com/martinius96/ESP32-eduroam/blob/master/2022/eduroam/eduroam.ino
 
@@ -150,6 +151,20 @@ class DBConnection {
             String jsonArray = GET_Request(url);
             return retrieveGameConstantsFromJSONArray(jsonArray);
         };
+
+        void changeWiFiChannel(int targetChannelID) {
+            int currentChannel = WiFi.channel();
+            Serial.print("Current WiFi Channel: "); Serial.println(currentChannel);
+            if (currentChannel != targetChannelID) {
+                esp_wifi_set_promiscuous(true);
+                esp_wifi_set_channel(targetChannelID, WIFI_SECOND_CHAN_NONE);
+                esp_wifi_set_promiscuous(false);
+                Serial.print("NEW WiFi Channel: "); Serial.println(WiFi.channel());
+            } else {
+                Serial.println("Target on same channel, no change required");
+            }
+            
+        }
 };
 
 DBConnection dbc;

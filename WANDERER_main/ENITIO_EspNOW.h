@@ -21,7 +21,7 @@ feedback_message EspNOW_recvData[recv_msg_buffer_size] = {};
 int recv_data_pointer = 0;
 int recv_data_read_pointer = 0;
 
-bool send_Status = 1 ;
+bool uploadFailedESPNOW = 0;
 int current_channel;
 
 class EspNOW {
@@ -37,7 +37,6 @@ class EspNOW {
     int num_bombed = 0;
     
     void enable() {
-      // WiFi.mode(WIFI_STA);
       WiFi.mode(WIFI_AP_STA);
       if (esp_now_init() != ESP_OK) {
         Serial.println("Error initializing ESP-NOW");
@@ -59,6 +58,9 @@ class EspNOW {
     }
   
    void send_data(int msg_type, int attackee_type, int attacker_CLAN, int attacker_ID, int attackee_CLAN, int is_attackee_killed, int attacker_channel){
+      // delete old peer
+      esp_now_del_peer(broadcastAddress);
+      
       // Register peer
       feedbackData.msg_type = msg_type;
       feedbackData.attackee_type = attackee_type;
@@ -67,6 +69,7 @@ class EspNOW {
       feedbackData.attackee_CLAN = attackee_CLAN;
       feedbackData.is_attackee_killed = is_attackee_killed;
       feedbackData.powerup_received = 0;    // because WANDERers cannot send powerups to other devices
+      uploadFailedESPNOW = is_attackee_killed;
   
       getDeviceMACAddress(attacker_CLAN, attacker_ID);
       
@@ -104,14 +107,6 @@ class EspNOW {
       } else {
         Serial.println("Not sure what happened");
       }
-      
-      if((!send_Status) && is_attackee_killed){
-        failed_kill_feedback ++ ;
-        failed_kill_CLAN[current_failed_save_pointer] = attacker_CLAN;
-        failed_kill_ID[current_failed_save_pointer] = attacker_ID;
-        current_failed_save_pointer ++ ;
-        if(current_failed_save_pointer >= 50) current_failed_save_pointer -= 50;
-      }
     }
 
     void disable(){
@@ -131,16 +126,19 @@ class EspNOW {
       Serial.print("\r\nLast Packet Send Status:\t");
       if (status == ESP_NOW_SEND_SUCCESS){
         Serial.println("Delivery Success");
-        send_Status = 1 ;
+      } else {
+        Serial.println("Delivery Failed");
+        if (uploadFailedESPNOW) {
+          failed_kill_feedback ++ ;
+          failed_kill_CLAN[current_failed_save_pointer] = mac_addr[3];
+          failed_kill_ID[current_failed_save_pointer] = mac_addr[4];
+          current_failed_save_pointer ++ ;
+          if(current_failed_save_pointer >= 50) current_failed_save_pointer -= 50;
         }
-      else {
-          Serial.println("Delivery Failed");
-          send_Status = 0 ;
-        }
+      }
 
-        Serial.println("Changing Back to original channel");
-        dbc.changeWiFiChannel(current_channel);
-        esp_now_del_peer(broadcastAddress);
+      Serial.println("Changing Back to original channel");
+      dbc.changeWiFiChannel(current_channel);
     }
 
     feedback_message get_feedback_received(){

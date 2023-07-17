@@ -52,8 +52,6 @@ class TreasureHuntPlayer
     int numL1Treasure = 0;
     int numL2Treasure = 0;
 
-    bool infectedWithVirus = 0;
-
     int num_bonus6HP = 0;
     int num_bonus1MaxEn = 0;
     int num_bonus1Multiplier = 0;
@@ -237,10 +235,6 @@ class TreasureHuntPlayer
         EEPROM.write(PLAYER_EN_add, En);
         permNoti = "    You Are Killed!     ";
         unsigned long currTime = millis();
-        if (infectedWithVirus) {
-            Player_Bluetooth.stopSpreadingVirus();
-            infectedWithVirus = 0;
-        }
         if (Multiplier > 1) {
           Multiplier = 1;
           EEPROM.write(PLAYER_MULTIPLIER_add, Multiplier);
@@ -269,38 +263,6 @@ class TreasureHuntPlayer
             EEPROM.write(PLAYER_EN_add, En);
             last_en_recover = currTime;
           }
-        }
-
-        // Check if player is infected with virus
-        if (infectedWithVirus) {
-            if (currTime - last_hp_decay >= VIRUS_DECAY_DURATION) {
-                HP = max(HP - 1, 0);
-                EEPROM.write(PLAYER_HP_add, HP);
-                last_hp_decay = currTime;
-            };
-            permNoti = "    You Are Infected!   ";
-        } else if (!EEPROM.read(isGL_add)){
-            // currently not infected with virus AND is not healer
-            // check if nearby devices are transmitting virus
-            if (Player_Bluetooth.isThereVirus && (currTime - last_received_heal >= VIRUS_IMMUNITY_DURATION) && (currTime - last_lucky_not_infected >= LUCKY_NOT_INFECTED_DURATION)) {
-                // randomSeed(currTime);
-                int virus_infection_num = random(100);
-                Serial.print("Virus infection prob number: ");
-                Serial.println(virus_infection_num);
-                if (virus_infection_num < VIRUS_INFECTION_PROBABILITY){
-                  infectedWithVirus = true;
-                  HP--;
-                  EEPROM.write(PLAYER_HP_add, HP);
-                  last_hp_decay = currTime;
-                  Player_Bluetooth.startSpreadingVirus();
-                  permNoti = "    You Are Infected!   ";
-                  Player_Buzzer.sound(NOTE_C4);
-                  tempNoti_start = millis();
-                }
-                else {
-                  last_lucky_not_infected = currTime;
-                }
-            }
         }
       }
       EEPROM.commit();
@@ -512,10 +474,6 @@ class TreasureHuntPlayer
           EEPROM.write(PLAYER_HP_add, HP);
           tempNoti = "        Healed       ";
           tempNoti_start = millis();
-          if (infectedWithVirus) {
-              Player_Bluetooth.stopSpreadingVirus();
-          }
-          infectedWithVirus = 0;
           last_received_heal = tempNoti_start;
         }
         break;
@@ -666,10 +624,6 @@ class TreasureHuntPlayer
         EEPROM.write(PLAYER_HP_add, HP);
         tempNoti = "        Healed       ";
         tempNoti_start = millis();
-        if (infectedWithVirus) {
-            Player_Bluetooth.stopSpreadingVirus();
-        }
-        infectedWithVirus = 0;
         last_received_heal = tempNoti_start;
         break;
         
@@ -819,7 +773,6 @@ class TreasureHuntPlayer
 
           Serial.printf("[INITIALISE] Current CLAN: %d ID %d\n", CLAN, EEPROM.read(ID_add));
           setup_initial_state(id, CLAN, isGL); // initialize Player
-          Player_Bluetooth.initialise();
           deviceReady = 1;
         }
         return gameStarted;
@@ -844,11 +797,16 @@ class TreasureHuntPlayer
   };
 
   void gameBackgroundProcess(){
-      if (!infectedWithVirus && deviceReady == 1){
-        Player_Bluetooth.scan();
+      if (deviceReady == 1){
         unsigned long currTime = millis();
-        /*if (currTime - last_update_kills_to_server > KILL_UPDATE_SERVER_INTERVAL) {
-            FailedFeedbackStatistics this_stats ;
+        /*
+         * Considering 250 devices on at the same time, and each request takes 2-3s for roundtrip. 
+         * If we were to stagger the upload periods of all devices, that will take 250 * 3 = 750s === 12 mins
+         * We can accept a small room of overlap, hence we set a upload period of 10 mins. 
+         */
+        if (currTime - last_update_kills_to_server > KILL_UPDATE_SERVER_INTERVAL) {
+            Serial.println("Sending Game Statistics to Server...");
+            FailedFeedbackStatistics this_stats;
             this_stats = dbc.sendGameStatistics(CLAN, ID, numKilled, numL1Treasure, numL2Treasure);
             int unrecognized_kills = this_stats.num_kills;
             int unrecognized_powerups = this_stats.num_powerups;
@@ -910,7 +868,8 @@ class TreasureHuntPlayer
             failed_kill_feedback --;
           } 
         } 
-         else delay(50); */
+        Serial.println("Upload Done");
+         else delay(50);
       }
       else{
         delay(50);

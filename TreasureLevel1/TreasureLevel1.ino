@@ -1,21 +1,3 @@
-// upload this code whenever you want to start testing
-// comment out the clearEEPROM() function when used on real game
-
-// int failed_kill_feedback = 0;
-// int failed_kill_CLAN[50] = {};
-// int failed_kill_ID[50] = {};
-// int current_failed_save_pointer = 0;
-// int current_failed_read_pointer = 0;
-
-// bool can_upload_fail = 1;
-
-#include <EEPROM.h>
-#include "ENITIO_ir.h"
-#include "ENITIO_enums.h"
-#include "ENITIO_ESPNOW.h"
-#include "ENITIO_NeoPixel.h"
-#include "ENITIO_joystick.h"
-
 #include <SPI.h>
 #include <Wire.h>
 #include <Adafruit_GFX.h>
@@ -58,6 +40,26 @@ Adafruit_SSD1306 display(SCREEN_WIDTH, SCREEN_HEIGHT, &Wire, OLED_RESET);
 
 bool AdminFunction = false;
 int ID;
+
+int failed_kill_feedback = 0;
+int failed_kill_CLAN[50] = {};
+int failed_kill_ID[50] = {};
+int current_failed_save_pointer = 0;
+int current_failed_read_pointer = 0;
+bool uploadInProgress = 0;  // boolean required to ensure treasure doesn't recover while WiFi is transmitting
+bool can_upload_fail = 1;
+
+// stub functions
+void StartUpDisplay();
+void clearEEPROM();
+
+#include <EEPROM.h>
+#include "ENITIO_ir.h"
+#include "ENITIO_enums.h"
+#include "ENITIO_ESPNOW.h"
+#include "ENITIO_NeoPixel.h"
+#include "ENITIO_joystick.h"
+#include "Admin.h"
 
 const unsigned char enitioLogo [] PROGMEM = { 
   0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x06, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 
@@ -168,11 +170,11 @@ class TreasureLevel1
 
     int this_recover_duration = TREASURE_LEVEL1_RECOVER_DURATION;
     unsigned long lastOpenedTime = 0;
-     unsigned long lastActionReceived = 0;
+    unsigned long lastActionReceived = 0;
 
   public:
     
-    int CLAN_, ID_, En_, MULTIPLIER_, action_; 
+    int CLAN_, ID_, En_, MULTIPLIER_, action_, channel_; 
 
     void init_treasure(){
       EEPROM.write(ENABLE_add, 1);
@@ -183,39 +185,30 @@ class TreasureLevel1
     void receiveAction() {
       int currStatus = EEPROM.read(ENABLE_add);
       if (TreasureLevel1_IR.available()) {
-         ir_signal IRsignal_ = TreasureLevel1_IR.read();
-         unsigned long currTime = millis();
-
-         if ((currStatus == 1) && (currTime - lastActionReceived > TREASURE_LEVEL1_ACTION_RECV_WAIT)){
+        ir_signal IRsignal_ = TreasureLevel1_IR.read();
+        unsigned long currTime = millis();
+        if ((currStatus == 1) && (currTime - lastActionReceived > TREASURE_LEVEL1_ACTION_RECV_WAIT)){
+          Serial.printf("RECV %d %d %d %d | %d %d %d %d \n", IRsignal_.address.digit3, IRsignal_.address.digit2, IRsignal_.address.digit1, IRsignal_.address.digit0, IRsignal_.command.digit3, IRsignal_.command.digit2, IRsignal_.command.digit1, IRsignal_.command.digit0);
           CLAN_ = IRsignal_.address.digit2;
-         ID_ = IRsignal_.address.digit0 + (IRsignal_.address.digit1 << 4);
+          ID_ = IRsignal_.address.digit0 + (IRsignal_.address.digit1 << 4);
 
-  
-           MULTIPLIER_ = IRsignal_.command.digit1;
-           action_ = IRsignal_.command.digit0;
-           lastActionReceived = currTime;
-      
-           Serial.printf("%d %d %d %d \n", action_, MULTIPLIER_, ID_, CLAN_);
+          channel_ = IRsignal_.command.digit2;
+          MULTIPLIER_ = IRsignal_.command.digit1;
+          action_ = IRsignal_.command.digit0;
+          lastActionReceived = currTime;
     
-           if (action_ == collect) {
+          if (action_ == collect) {
             lastOpenedTime = millis();
             handle_Collected();
-           }
           }
-         }
-      };
+        }
+       }
+    };
 
-    void feedback_collectL1(int CLAN_, int ID_){
+    void feedback_collectL1(int CLAN_, int ID_, int channel_){
       unsigned long currTime = millis();
-      // randomSeed(currTime);
       int powerup_ID = random(1,6);
-       TreasureLevel1_EspNOW.send_data(2, CLAN_, ID_, ID, true, powerup_ID);
-
-//       while(!last_send_status){
-//         delay(200);
-//         TreasureLevel1_EspNOW.send_data(2, CLAN_, ID_, ID, powerup_ID);
-//       }
-
+       TreasureLevel1_EspNOW.send_data(2, CLAN_, ID_, ID, true, powerup_ID, channel_);
     } ;
 
     void handle_Collected() {
@@ -225,14 +218,11 @@ class TreasureLevel1
       TreasureLevel1_NeoPixel.off_FRONT();
       TreasureLevel1_NeoPixel.off_TOP();
 
-
-      feedback_collectL1(CLAN_, ID_);
-      delay(2000);
-      // can_upload_fail = 0;
-      int player_identifier = CLAN_ * pow(16, 2) + ID_;
       Serial.printf("TREASURE%d opened by CLAN %d ID %d\n", ID, CLAN_, ID_);
+      feedback_collectL1(CLAN_, ID_, channel_);
+      int player_identifier = CLAN_ * pow(16, 2) + ID_;
+      
       // this code to save the info of the CLAN collected the treasure
-
       this_recover_duration = TREASURE_LEVEL1_RECOVER_DURATION*random(1,9);
 
       EEPROM.write(ENABLE_add, 2);
@@ -263,7 +253,6 @@ class TreasureLevel1
       }
       EEPROM.commit();
       dbc.setTreasureAsOpened("TREASURE" + String(ID), CLAN_, ID_);
-      // can_upload_fail = 1;
     };
 
     void recover() {
@@ -271,7 +260,7 @@ class TreasureLevel1
         int currStatus = EEPROM.read(ENABLE_add);
         unsigned int currTime = millis();
 
-        if (currStatus == 2 && currTime - lastOpenedTime > this_recover_duration) {
+        if (currStatus == 2 && currTime - lastOpenedTime > this_recover_duration && !uploadInProgress) {
             Serial.println("Reopening Treasure..");
             EEPROM.write(ENABLE_add, 1);
             HP = TREASURE_LEVEL1_INITIAL_HP;
@@ -371,6 +360,7 @@ void clearEEPROM(){
   }
   EEPROM.commit();
 }
+
 bool setUpDone = 0;
 int get_game_state(){
       // retrieve game state from server
@@ -385,41 +375,44 @@ int get_game_state(){
       TreasureLevel1_NeoPixel.displayRGB_TOP(R_ON, G_ON, B_ON);
       Treasure.init_treasure();
       setUpDone = 1;
-      WiFi.disconnect(true);
+      WiFi.disconnect();
+      TreasureLevel1_EspNOW.enable();
      }
      return gameStarted;
    } else return 1;
 }
 
-#include "Admin.h"
-
 TaskHandle_t backgroundTask;
 
 void backgroundTaskCode(void * pvParameters){
   for ( ; ; ) {
-      // if ((failed_kill_feedback > 0) && can_upload_fail){
-      //   int i;
-      //   for (i = 0; i < failed_kill_feedback; i++){
-      //     int this_ID = failed_kill_ID[current_failed_read_pointer];
-      //     int this_CLAN = failed_kill_CLAN[current_failed_read_pointer];
-      //     Serial.println(this_ID);
-      //     Serial.println(this_CLAN);
-      //     dbc.uploadFailedFeedback("TREASURE" + String(ID), this_CLAN, this_ID);
-      //     current_failed_read_pointer ++ ;
-      //     if(current_failed_read_pointer > 50) current_failed_read_pointer -= 50 ;
-      //     failed_kill_feedback --;
-      //   }
-      // }
       get_game_state();
+      if (gameStarted && can_upload_fail && failed_kill_feedback > 0) {
+          Serial.println("Initiating Failed ESPNOW Feedback Upload...");
+          uploadInProgress = 1;  // prevent Treasure from recovering
+          dbc.connectToWiFi();
+          for (int i = failed_kill_feedback; i > 0; i--) {
+              int this_ID = failed_kill_ID[current_failed_read_pointer];
+              int this_CLAN = failed_kill_CLAN[current_failed_read_pointer];
+              Serial.printf("Upload Failed ESPNOW Feedback from CLAN %d ID %d\n", this_CLAN, this_ID);
+              dbc.uploadFailedFeedback("TREASURE" + String(ID), this_CLAN, this_ID);  // if still unsuccessful, it will be ignored. TODO: Fix
+              current_failed_read_pointer++;
+              if(current_failed_read_pointer > 50) current_failed_read_pointer -= 50;
+              failed_kill_feedback--;
+          }
+          Serial.println("Failed ESPNOW Feedback completed");
+          WiFi.disconnect();
+          uploadInProgress = 0;
+      }
       delay(10000);
   }
 };
 
 void setup() {
-    if(!display.begin(SSD1306_SWITCHCAPVCC, SCREEN_ADDRESS)) {
-        Serial.println(F("SSD1306 allocation failed"));
-        for(;;); // Don't proceed, loop forever
-      }
+  if(!display.begin(SSD1306_SWITCHCAPVCC, SCREEN_ADDRESS)) {
+      Serial.println(F("SSD1306 allocation failed"));
+      for(;;); // Don't proceed, loop forever
+  }
   StartUpDisplay();
   Serial.begin(115200);
   TreasureLevel1_NeoPixel.initialize();
@@ -428,19 +421,12 @@ void setup() {
 
   TreasureLevel1_IR.enable();
   EEPROM.begin(EEPROM_SIZE);
-//  int i;
-//  for (i=0; i<EEPROM_SIZE; i++){
-//    Serial.println(EEPROM.read(i));
-//  }
-  // clearEEPROM();
-  
   ID = EEPROM.read(ID_add);
 
-  TreasureLevel1_EspNOW.enable();
   bool isWiFiConnected = dbc.connectToWiFi();
   while (!isWiFiConnected) {
-    Serial.println("Reconnecting..");
-    isWiFiConnected = dbc.connectToWiFi();
+      Serial.println("Reconnecting..");
+      isWiFiConnected = dbc.connectToWiFi();
   }
 
   GAME_CONSTANTS game_consts = dbc.getGameConstants();
@@ -457,7 +443,7 @@ void setup() {
                       2,           /* priority of the task */
                       &backgroundTask,      /* Task handle to keep track of created task */
                       0);
-  
+
 }
 
 void loop() {
@@ -466,7 +452,6 @@ void loop() {
       if(!AdminFunction){
         handleJoystick();
         Treasure.display_not_playing_yet();
-        // delay(10000);
         break;
       }
       else{

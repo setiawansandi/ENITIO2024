@@ -131,13 +131,15 @@ class DBConnection {
         }
 
         String setTreasureAsOpened(String treasureName, int CLAN, int participant_id) {
+            connectToWiFi();
             String url = "treasure/1/" + treasureName + "/" + String(CLAN) + "/" + String(participant_id);
             String jsonArray = GET_Request(url);
+            WiFi.disconnect();
             return retrieveParameterFromJSONArray("mac_address", jsonArray);
         };
 
         bool sendGameStatistics(String treasureName, int invicta, int dynari, int ephilia, int akrona, int solaris) {
-          connectToWiFi();
+            connectToWiFi();
             String url = "treasure_score";
             String httpRequestData = "{\"treasureName\": " + treasureName + ", \"invicta\": " + String(invicta) + ", \"dynari\": " + String(dynari);
             httpRequestData = httpRequestData + ", \"ephilia\": " + String(ephilia) + ", \"akrona\": " + String(akrona) + ", \"solaris\": " + String(solaris);
@@ -145,7 +147,7 @@ class DBConnection {
             Serial.println(httpRequestData);
             String jsonArray = POST_Request(url, httpRequestData.c_str());
             Serial.println(jsonArray);
-            WiFi.disconnect(true);
+            WiFi.disconnect();
             return jsonArray != "{}";
         };
 
@@ -157,11 +159,22 @@ class DBConnection {
 
         bool uploadFailedFeedback(String treasureName, int CLAN, int participant_id) {
             String url = "treasurefeedback/" + treasureName + "/" + String(CLAN) + "/" + String(participant_id);
-             String jsonArray = GET_Request(url);
-//            String httpRequestData = "{\"CLAN\": " + String(CLAN) + ", \"ID\": " + String(participant_id) + "}";
-//            String jsonArray = POST_Request(url.c_str(), httpRequestData.c_str());
+            String jsonArray = GET_Request(url);
             Serial.println(jsonArray);
             return jsonArray != "{}";
+        }
+
+        void changeWiFiChannel(int targetChannelID) {
+            int currentChannel = WiFi.channel();
+            Serial.print("Current WiFi Channel: "); Serial.println(currentChannel);
+            if (currentChannel != targetChannelID) {
+                esp_wifi_set_promiscuous(true);
+                esp_wifi_set_channel(targetChannelID, WIFI_SECOND_CHAN_NONE);
+                esp_wifi_set_promiscuous(false);
+                Serial.print("NEW WiFi Channel: "); Serial.println(WiFi.channel());
+            } else {
+                Serial.println("Target on same channel, no change required");
+            }
         }
 };
 
