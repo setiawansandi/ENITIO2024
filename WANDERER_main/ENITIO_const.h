@@ -11,7 +11,7 @@ const int MACAddressProcess = 5;
 
 #define NAV_WAIT 4000
 
-#define EEPROM_SIZE 20
+#define EEPROM_SIZE 25
 
 const int PROFILE_enable_add = 0;
 const int CLAN_add = 1;
@@ -33,7 +33,8 @@ const int PLAYER_num_bonus1MULTIPLIER_add = 16;
 const int PLAYER_num_fiveminx2EnRegen_add = 17;
 const int PLAYER_num_bomb_add = 18;
 const int PLAYER_num_poison_add = 19;
-
+const int ONLINE_mode_add = 20;
+const int PLAYER_registered_online_add = 21;
 
 int EN_RECOVER_DURATION;
 int VIRUS_DECAY_DURATION;
@@ -50,6 +51,7 @@ int BOMB_HP_DEDUCTION;
 int KILL_UPDATE_SERVER_INTERVAL;
 int revival_MULTIPLIER;
 int HEAL_MULTIPLIER;
+int WIFI_ON;
 
 
 int failed_kill_feedback = 0;

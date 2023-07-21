@@ -19,6 +19,8 @@ class Admin {
         int ConfirmingResetNav = 1;
         bool isSettingGL = false;
         int isGLNav = 1 ;
+        bool isOverwritingID = false;
+        int currentIDnum = 0;
 
     public:
         void handleJoystickMain(){
@@ -31,7 +33,7 @@ class Admin {
                         break;
 
                     case down:
-                        FunctionNav = min(FunctionNav + 1, 2);
+                        FunctionNav = min(FunctionNav + 1, 4);
                         Player_joystick.set_state();
                         break;
 
@@ -44,6 +46,14 @@ class Admin {
 
                         case SetGLFunction:
                             isSettingGL = true;
+                            break;
+
+                        case ToggleServerConnectivityFunction:
+                            handleServerConnectivityToggle();
+                            break;
+
+                        case OverwritePlayerIDFunction:
+                            isOverwritingID = true;
                             break;
 
                         case ExitFunction:
@@ -180,6 +190,9 @@ class Admin {
                         case 1:
                             StartUpDisplay();
                             clearEEPROM();
+                            // write into EEPROM Online mode again
+                            EEPROM.write(ONLINE_mode_add, 1);
+                            EEPROM.commit();
                             ESP.restart();
                             break;
                         
@@ -245,6 +258,58 @@ class Admin {
             }
         }
 
+        void handleJoystickOverwriteID(){
+            joystick_pos joystick_pos = Player_joystick.read_Joystick();
+            if (Player_joystick.get_state() == 0) {
+                int saved_clan;
+                switch (joystick_pos){
+                    case up:
+                        currentIDnum = max(currentIDnum - 1, 0);
+                        Player_joystick.set_state();
+                        break;
+
+                    case down:
+                        currentIDnum = min(currentIDnum + 1, 255);
+                        Player_joystick.set_state();
+                        break;
+
+                    case button:
+                        EEPROM.write(ID_add, currentIDnum);
+                        saved_clan = EEPROM.read(CLAN_add);
+                        Admin_OLED.ConfirmPlayerIDDisplay(saved_clan, currentIDnum);
+                        EEPROM.commit();
+                        isOverwritingID = false;
+                        delay(1500);
+                        Player_joystick.set_state();
+                        break;
+
+                    case idle:
+                        break;
+                    
+                    default:
+                        Player_joystick.set_state();
+                        break;
+                }
+            }
+        }
+
+        void handleServerConnectivityToggle() {
+          int newConnectivityMode;
+          if (EEPROM.read(ONLINE_mode_add) == 0) {
+            Serial.println("Switching from offline -> online mode");
+            newConnectivityMode = 1;
+          } else {
+            Serial.println("Switching from online -> offline mode");
+            newConnectivityMode = 0;
+          }
+          EEPROM.write(ONLINE_mode_add, newConnectivityMode);
+          EEPROM.commit();
+          WIFI_ON = newConnectivityMode;
+          Admin_OLED.ConfirmConnectivityToggle(newConnectivityMode);
+          delay(1500);
+          Player_joystick.set_state();
+        }
+
         void AdminLoop(){
             switch (verified)
             {
@@ -261,6 +326,11 @@ class Admin {
                 else if(isSettingGL){
                     handleJoystickSettingGL();
                     Admin_OLED.display_SettingGL(isGLNav);
+                }
+                else if (isOverwritingID) {
+                    handleJoystickOverwriteID();
+                    int previousID = EEPROM.read(ID_add);
+                    Admin_OLED.display_SettingID(previousID, currentIDnum);
                 }
                 else {
                     handleJoystickMain();

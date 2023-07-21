@@ -168,6 +168,9 @@ class DBConnection {
         };
 
         bool hasGameStarted() {
+            if (!WIFI_ON) {
+                return true;  // offline mode automatically starts the game
+            }
             if (WiFi.status() != WL_CONNECTED) {
                 bool connectedToWiFi = connectToWiFi();
                 if (!connectedToWiFi) {
@@ -318,6 +321,7 @@ class DBConnection {
                 case SOLARIS:
                     return 11;
                 default:
+                    Serial.println("getClanWiFiChannel: CLAN not found");
                     return 1;
             }
         }

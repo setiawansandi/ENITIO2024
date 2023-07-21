@@ -1,3 +1,4 @@
+#include <EEPROM.h>
 #include "ENITIO_enums.h"
 #include "ENITIO_const.h"
 #include "ENITIO_ir.h"
@@ -23,8 +24,10 @@ void backgroundTaskCode(void *pvParameters) {
         if (currentProcess == TreasureHuntProcess) {
             if (!PLAYER.gameStarted) {
                 game_started_buffer = dbc.hasGameStarted();
-            } else {
+            } else if (WIFI_ON) {
                 PLAYER.gameBackgroundProcess();
+            } else {
+              vTaskDelayUntil(&xLastWakeTime, pdMS_TO_TICKS(10));
             }
         } else {
             vTaskDelayUntil(&xLastWakeTime, pdMS_TO_TICKS(10));
@@ -70,6 +73,7 @@ void setup() {
   MAX_COLLECT_MULTIPLIER = 10;
   BOMB_HP_DEDUCTION = 6;
   KILL_UPDATE_SERVER_INTERVAL = 10 * 60 * 1000;  // 10 mins
+  WIFI_ON = EEPROM.read(ONLINE_mode_add);
     
   Serial.print("Actual MAC Address: "); Serial.println(my_MAC_address);
 
