@@ -39,7 +39,7 @@ class IR{
         {
             uint16_t sAddress = encode_uint16(signal.address);
             uint16_t sCommand = encode_uint16(signal.command);
-            IrSender.sendNEC(sAddress, sCommand, sRepeats);
+            IrSender.sendOnkyo(sAddress, sCommand, sRepeats);
             delay(DELAY_AFTER_SEND);
             IrReceiver.restartAfterSend();
         }

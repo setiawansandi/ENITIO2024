@@ -38,8 +38,8 @@ class DBConnection {
             } else {
                 url = DATABASE_DEBUG_URL + route;
                 Serial.print("DEBUG GET "); Serial.println(url);
-                http.begin(url.c_str());
             }
+            http.begin(url.c_str());
             
             int httpResponseCode = http.GET();
             String payload = "{}";
@@ -72,9 +72,11 @@ class DBConnection {
             } else {
                 url = DATABASE_DEBUG_URL + route;
                 Serial.print("DEBUG POST "); Serial.println(url);
-                http.begin(url.c_str());
             }
+            
+            http.begin(url.c_str());
             Serial.println(url);
+            
             http.addHeader("Content-Type", "application/json");
             int httpResponseCode = http.POST(payload);
             String responsePayload = "{}";

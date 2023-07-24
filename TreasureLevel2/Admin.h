@@ -6,10 +6,12 @@ void clearEEPROM() {
   EEPROM.commit();
 };
 
-const int FactoryResetFunction = 1;
 const int SetIDFunction = 0;
+const int FactoryResetFunction = 1;
 const int UncollectTreasureFunction = 2;
-const int ExitFunction = 3;
+const int ToggleServerConnectivityFunction = 3;
+const int ExitFunction = 4;
+
 class Admin_OLED {
   private:
 
@@ -37,8 +39,8 @@ class Admin_OLED {
 
       display.setCursor(0, 34);
 
-      if (currentIDnum <= TREASURE_VIRUS_THRESHOLD) display.println("    Type: Treasure   ");
-      else display.println("     Type: Virus     ");
+      if (currentIDnum <= TREASURE_POISON_THRESHOLD) display.println("    Type: Treasure   ");
+      else display.println("    Type: Poison    ");
 
       display.display();
     }
@@ -105,34 +107,45 @@ class Admin_OLED {
       display.println(F("        Admin        "));
 
       display.setTextColor(SSD1306_WHITE);
-      display.setCursor(10, 12);
+      display.setCursor(10, 10);
       display.println("Register ID");
-      display.setCursor(10, 22);
+      display.setCursor(10, 19);
       display.println("Factory Reset");
-      display.setCursor(10, 32);
+      display.setCursor(10, 28);
       display.println("Uncollect Treasure");
-      display.setCursor(10, 42);
+
+      display.setCursor(10, 37);
+      if (EEPROM.read(ONLINE_mode_add) == 0) {
+        display.println("Set Online Mode");
+      } else display.println("Set Offline Mode");
+
+      display.setCursor(10, 46);
       display.println("Back to Main Menu");
 
       switch (FunctionNav)
       {
         case SetIDFunction:
-          display.setCursor(2, 12);
+          display.setCursor(2, 10);
           display.println(">");
           break;
 
         case FactoryResetFunction:
-          display.setCursor(2, 22);
-          display.println(">");
-          break;
-
-        case ExitFunction:
-          display.setCursor(2, 42);
+          display.setCursor(2, 19);
           display.println(">");
           break;
 
         case UncollectTreasureFunction:
-          display.setCursor(2, 32);
+          display.setCursor(2, 28);
+          display.println(">");
+          break;
+
+        case ToggleServerConnectivityFunction:
+          display.setCursor(2, 37);
+          display.println(">");
+          break;
+
+        case ExitFunction:
+          display.setCursor(2, 46);
           display.println(">");
           break;
 
@@ -181,6 +194,21 @@ class Admin_OLED {
       display.display();
     }
 
+    void ConfirmConnectivityToggle(int connectivityState) {
+      display.clearDisplay();
+      display.setTextSize(1); // Draw SIZE
+
+      display.setTextColor(SSD1306_WHITE);
+      display.setCursor(0, 22);
+
+      display.println(" Set WANDERER Mode: ");
+
+      display.setCursor(0, 34);
+      if (connectivityState) display.println("       Online       ");
+      else display.println("       Offline      ");
+      display.display();
+    }
+
     void display_SettingID(int previousID, int currentIDnum) {
       display.clearDisplay();
       display.setTextColor(SSD1306_BLACK, SSD1306_WHITE); // Draw 'inverse' text
@@ -192,8 +220,8 @@ class Admin_OLED {
       display.println(previousID);
       display.setCursor(0, 22);
       display.print("Old Type: ");
-      if (previousID <= TREASURE_VIRUS_THRESHOLD) display.print("Treasure");
-      else display.print("Virus");
+      if (previousID <= TREASURE_POISON_THRESHOLD) display.print("Treasure");
+      else display.print("Poison");  // Virus removed
 
       display.setCursor(0, 40);
       display.print("New ID: ");
@@ -203,8 +231,8 @@ class Admin_OLED {
       display.setTextColor(SSD1306_WHITE);
       display.setCursor(0, 50);
       display.print("New Type: ");
-      if (currentIDnum <= TREASURE_VIRUS_THRESHOLD) display.print("Treasure");
-      else display.print("Virus");
+      if (currentIDnum <= TREASURE_POISON_THRESHOLD) display.print("Treasure");
+      else display.print("Poison");  // Poison removed
 
       display.display();
     }
@@ -238,7 +266,7 @@ class Admin {
             break;
 
           case down:
-            FunctionNav = min(FunctionNav + 1, 3);
+            FunctionNav = min(FunctionNav + 1, 4);
             TreasureLevel2_joystick.set_state();
             break;
 
@@ -253,17 +281,21 @@ class Admin {
                 isSettingID = true;
                 break;
 
-              case ExitFunction:
-                AdminFunction = false;
-                verified = false ;
-                FunctionNav = 0;
-                break;
-
               case UncollectTreasureFunction:
                 EEPROM.write(ENABLE_add, 1);
                 EEPROM.write(HP_add, TREASURE_LEVEL2_INITIAL_HP);
                 EEPROM.commit();
                 ESP.restart();
+                break;
+
+              case ToggleServerConnectivityFunction:
+                handleServerConnectivityToggle();
+                break;
+
+              case ExitFunction:
+                AdminFunction = false;
+                verified = false ;
+                FunctionNav = 0;
                 break;
 
               default:
@@ -392,6 +424,7 @@ class Admin {
               case 1:
                 StartUpDisplay();
                 clearEEPROM();
+                EEPROM.write(ONLINE_mode_add, 1); 
                 ESP.restart();
                 break;
 
@@ -446,6 +479,23 @@ class Admin {
       }
     }
 
+    void handleServerConnectivityToggle() {
+      int newConnectivityMode;
+      if (EEPROM.read(ONLINE_mode_add) == 0) {
+        Serial.println("Switching from offline -> online mode");
+        newConnectivityMode = 1;
+      } else {
+        Serial.println("Switching from online -> offline mode");
+        newConnectivityMode = 0;
+      }
+      EEPROM.write(ONLINE_mode_add, newConnectivityMode);
+      EEPROM.commit();
+      WIFI_ON = newConnectivityMode;
+      Admin_OLED.ConfirmConnectivityToggle(newConnectivityMode);
+      delay(1500);
+      TreasureLevel2_joystick.set_state();
+    }
+
     void AdminLoop() {
       switch (verified)
       {
@@ -463,7 +513,7 @@ class Admin {
             handleJoystickSettingID();
             int previousID = EEPROM.read(ID_add);
             Admin_OLED.display_SettingID(previousID, currentIDnum);
-          }
+          } 
           else {
             handleJoystickMain();
             Admin_OLED.display_MainAdmin(FunctionNav);

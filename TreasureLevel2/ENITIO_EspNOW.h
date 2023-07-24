@@ -24,7 +24,6 @@ class EspNOW {
     int is_waiting_for_feedback = 0;
     
     void enable() {
-      // WiFi.mode(WIFI_STA);
       WiFi.mode(WIFI_AP_STA);
       if (esp_now_init() != ESP_OK) {
         Serial.println("Error initializing ESP-NOW");
@@ -32,12 +31,9 @@ class EspNOW {
       }
       Serial.println("OK");
       esp_now_register_send_cb(OnDataSent);
-      // esp_now_register_recv_cb(OnDataRecv);
     }
 
     void getDeviceMACAddress(int attacker_CLAN, int attacker_ID){
-//      int playerIdentifier = attacker_CLAN*pow(16,2) + attacker_ID;
-//      MAC_ADDRESS target_addr = dbc.getDeviceMACAddress(playerIdentifier);
       broadcastAddress[0] = 4;
       broadcastAddress[1] = 8;
       broadcastAddress[2] = 1;
