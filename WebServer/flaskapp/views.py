@@ -61,11 +61,8 @@ def get_player_id(clan_id, mac_addr):
             
             if both_true:
                 # Assign ID
-                largest_participant_id_player = db.session.execute(db.select(Player).filter_by(clan_id=clan_id).order_by(Player.participant_id.desc())).first()
-                if largest_participant_id_player and largest_participant_id_player[0].participant_id is not None:
-                    player_id = largest_participant_id_player[0].participant_id + 1
-                else:
-                    player_id = 1  # No other players in OG
+                all_players = Player.query.filter_by(clan_id=clan_id).all()
+                player_id = len(all_players)
                 player.participant_id = player_id
                 db.session.commit()
             
@@ -304,7 +301,7 @@ def update_level1_treasure_score():
 def calculate_score():
     clan_score = dict()
     tally = dict()
-    for i in range(0, 4):
+    for i in range(0, 6):  # 5 clans + 1 buffer for PROMAX
         clan_score[i] = 0
         tally[i] = dict()
         for category in ("kills", "level1_treasure", "level2_treasure"):
@@ -340,7 +337,7 @@ def calculate_score():
 def calculate_score_from_player_side_stats():
     OG_score = dict()
     tally = dict()
-    for i in range(0, 4):
+    for i in range(0, 6):  # 5 clans + 1 buffer for PROMAX
         OG_score[i] = 0
         tally[i] = dict()
         for category in ("kills", "level1_treasure", "level2_treasure"):
