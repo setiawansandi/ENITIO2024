@@ -248,6 +248,12 @@ class TreasureLevel2 {
       }
     }
 
+    void sync_state() {
+      // ensures that if Treasure ID is changed in Admin Panel, the playing classes detect this change as well
+      if (id > TREASURE_POISON_THRESHOLD) _isPoison = true;
+      else _isPoison = false;
+    }
+
     void display_not_playing_yet() {
       display.clearDisplay();
       display.setTextSize(1); // Draw SIZE
@@ -508,6 +514,7 @@ void loop() {
       else {
         TreasureLevel2_Admin.AdminLoop();
       }
+      Treasure.sync_state();  // sync internal variables with EEPROM state
       Treasure.receiveAction();
       Treasure.recover();
       if (!WIFI_ON) Treasure.resend_treasure_collection();

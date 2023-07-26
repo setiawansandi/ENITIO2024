@@ -268,6 +268,11 @@ class TreasureHuntPlayer
       EEPROM.commit();
     }
 
+    void sync_state() {
+      ID = EEPROM.read(ID_add);
+      _isGL = EEPROM.read(isGL_add);
+    }
+
     void handleJoystick_waiting() {
       joystick_pos joystick_pos = Player_joystick.read_Joystick();
       if (Player_joystick.get_state() == 0) {
@@ -797,6 +802,7 @@ class TreasureHuntPlayer
         update_display_waiting();
       }
       else {
+        sync_state();  // sync internal variables with EEPROM state
         handleJoystickInGame();
         sendAction();
         receiveAction();
