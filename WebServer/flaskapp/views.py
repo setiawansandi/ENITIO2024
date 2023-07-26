@@ -318,7 +318,7 @@ def calculate_score():
     level2_treasures = db.session.execute(db.select(Level2Treasure)).scalars()
     for treasure in level2_treasures:
         collected_player = treasure.collected_by
-        if collected_player and treasure.is_treasure:
+        if collected_player:
             clan_id = collected_player.clan_id
             clan_score[clan_id] += 50
             tally[clan_id]["level2_treasure"] += 1
