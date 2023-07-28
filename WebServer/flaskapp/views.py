@@ -62,7 +62,7 @@ def get_player_id(clan_id, mac_addr):
             if both_true:
                 # Assign ID
                 all_players = Player.query.filter_by(clan_id=clan_id).all()
-                player_id = len(all_players)
+                player_id = len(all_players) + 1  # avoid ID = 0 as that is the dummy ID
                 player.participant_id = player_id
                 db.session.commit()
             
@@ -227,6 +227,12 @@ def delete_all_players():
     level1_collection_logs = db.session.execute(db.select(Level1TreasureCollectors)).scalars()
     for collection_log in level1_collection_logs:
         db.session.delete(collection_log)
+    
+    # re-add dummy players with ID = 0 as failsafes
+    for i in range(0, 6):
+        player = Player(clan_id=i, mac_address="00:00:00:00:00:00")
+        player.participant_id = 0
+        db.session.add(player)
 
     db.session.commit()
     return jsonify({"result": "OK"})
