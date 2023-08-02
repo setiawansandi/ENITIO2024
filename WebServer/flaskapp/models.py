@@ -92,6 +92,10 @@ class GameStatus(db.Model):
 
 
 def populate_constants_table():
+    constants = GameStatus.query.all()
+    for c in constants:
+        db.session.delete(c)
+        
     with open("instance/constants.csv") as f:
         content = f.readlines()[1:]  # remove header row
         for row in content:
@@ -106,6 +110,13 @@ def populate_constants_table():
     db.session.commit()
 
 def populate_treasures_table():
+    treasures = Level1Treasure.query.all()
+    for t in treasures:
+        db.session.delete(t)
+    treasures = Level2Treasure.query.all()
+    for t in treasures:
+        db.session.delete(t)
+
     with open("instance/treasure_locations.csv") as f:
         content = f.readlines()[1:]  # remove header row
         for row in content:
