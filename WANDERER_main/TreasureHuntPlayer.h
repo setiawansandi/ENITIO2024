@@ -8,7 +8,7 @@
 
 #define x2_En_Regen_bonus_duration 300000 // [ms]
 
-int game_started_buffer = 0;
+int game_started_buffer = 1;
 
 uint8_t newMACAddress_AP[] = {4, 8, 1, 255, 255, 0};
 uint8_t newMACAddress_STA[] = {4, 8, 1, 255, 255, 1};
@@ -24,6 +24,11 @@ class TreasureHuntPlayer
     int En; // energy
     int MaxEn;
     int Multiplier;
+
+    bool onCooldown = false; // death cooldown
+    unsigned long TimeOfDeath; // Save the death time
+    int MaxCooldown = 10; // max cooldown duration
+    int Cooldown = MaxCooldown; // for displaying the respawn time on display (in seconds)
 
     action_id action;
     bool poisonActive = false;
@@ -231,10 +236,28 @@ class TreasureHuntPlayer
 
     void update_player_state() {
       if (HP == 0) {
+        if(!onCooldown) {
+          onCooldown = true;
+          TimeOfDeath = millis();
+        }
+
+        unsigned long currTime = millis();
+        unsigned long elapsedTime = currTime - TimeOfDeath;
+        int currentCooldown = MaxCooldown - (elapsedTime / 1000);
+        if (currentCooldown <=  Cooldown && currentCooldown > 0) {
+          Cooldown = currentCooldown;
+          permNoti = "     Respawn in " + String(Cooldown) + "s     ";
+        } else {
+          onCooldown = false;
+          Cooldown = MaxCooldown;
+          TimeOfDeath = 0;
+          HP = MaxHP;
+          EEPROM.write(PLAYER_HP_add, HP);
+        }
+
         En = 0;
         EEPROM.write(PLAYER_EN_add, En);
-        permNoti = "    You Are Killed!     ";
-        unsigned long currTime = millis();
+
         if (Multiplier > 1) {
           Multiplier = 1;
           EEPROM.write(PLAYER_MULTIPLIER_add, Multiplier);
@@ -785,7 +808,28 @@ class TreasureHuntPlayer
             KILL_UPDATE_SERVER_INTERVAL = game_consts.KILL_UPDATE_SERVER_INTERVAL;
           } else {
             Serial.println("WIFI MODE DISABLED, retrieving ID and constants from hardcoded memory");
+
+            int temp_default_id = 123;
+            EEPROM.write(ID_add, temp_default_id);
+
             id = EEPROM.read(ID_add);
+
+            HTTP_TIMEOUT = 15000;
+            EN_RECOVER_DURATION = 5000;
+            VIRUS_DECAY_DURATION = 30000;
+            VIRUS_IMMUNITY_DURATION = 120000;
+            VIRUS_INFECTION_PROBABILITY = 30;
+            PARTICIPANT_MaxHP = 12;
+            GL_MaxHP = 50;
+            PARTICIPANT_MaxEn = 5;
+            GL_MaxEn = 50;
+            INITIAL_MULTIPLIER = 1;
+            HEAL_MULTIPLIER = 4;
+            MAX_ATTACK_MULTIPLIER = 3;
+            MAX_COLLECT_MULTIPLIER = 10;
+            BOMB_HP_DEDUCTION = 6;
+            KILL_UPDATE_SERVER_INTERVAL = 10 * 60 * 1000;  // 10 mins 
+            WIFI_ON = EEPROM.read(ONLINE_mode_add);
           }
 
           Serial.printf("[INITIALISE] Current CLAN: %d ID %d\n", CLAN, EEPROM.read(ID_add));
