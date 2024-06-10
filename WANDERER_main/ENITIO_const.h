@@ -35,6 +35,12 @@ const int PLAYER_num_bomb_add = 18;
 const int PLAYER_num_poison_add = 19;
 const int ONLINE_mode_add = 20;
 const int PLAYER_registered_online_add = 21;
+const int POINT_INVICTA = 22;
+const int POINT_DYNARI = 23;
+const int POINT_EPHILIA = 24;
+const int POINT_AKRONA = 25;
+const int POINT_SOLARIS = 26;
+
 
 int EN_RECOVER_DURATION;
 int VIRUS_DECAY_DURATION;
