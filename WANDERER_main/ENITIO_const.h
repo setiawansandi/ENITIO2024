@@ -58,6 +58,7 @@ int KILL_UPDATE_SERVER_INTERVAL;
 int revival_MULTIPLIER;
 int HEAL_MULTIPLIER;
 int WIFI_ON;
+int MAX_COOLDOWN; // in seconds
 
 
 int failed_kill_feedback = 0;

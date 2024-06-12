@@ -25,11 +25,6 @@ private:
   int MaxEn;
   int Multiplier;
 
-  bool onCooldown = false;    // death cooldown
-  unsigned long TimeOfDeath;  // Save the death time
-  int MaxCooldown = 10;       // max cooldown duration
-  int Cooldown = MaxCooldown; // for displaying the respawn time on display (in seconds)
-
   action_id action;
   bool poisonActive = false;
 
@@ -73,6 +68,15 @@ private:
 
   int temp_bomb_attacked = 0;
   int temp_bomb_killed = 0;
+
+  bool onCooldown = false;   
+  unsigned long TimeOfDeath;  
+
+  int scoreInvicta = 0;
+  int scoreDynari = 0;
+  int scoreEphilia = 0;
+  int scoreAkrona = 0;
+  int scoreSolaris = 0;
 
 public:
   bool gameStarted = 0;
@@ -260,17 +264,16 @@ public:
 
     unsigned long currTime = millis();
     unsigned long elapsedTime = currTime - TimeOfDeath;
-    int currentCooldown = MaxCooldown - (elapsedTime / 1000);
+    int currentCooldown = MAX_COOLDOWN - (elapsedTime / 1000);
 
-    if (currentCooldown <= Cooldown && currentCooldown > 0)
+   
+    if (currentCooldown > 0)
     {
-      Cooldown = currentCooldown;
-      permNoti = "     Respawn in " + String(Cooldown) + "s     ";
+      permNoti = "     Respawn in " + String(currentCooldown) + "s     ";
     }
     else
     {
       onCooldown = false;
-      Cooldown = MaxCooldown;
       TimeOfDeath = 0;
       HP = MaxHP;
       EEPROM.write(PLAYER_HP_add, HP);
@@ -989,6 +992,7 @@ public:
           BOMB_HP_DEDUCTION = 6;
           KILL_UPDATE_SERVER_INTERVAL = 10 * 60 * 1000; // 10 mins
           WIFI_ON = EEPROM.read(ONLINE_mode_add);
+          MAX_COOLDOWN = 10;
         }
 
         Serial.printf("[INITIALISE] Current CLAN: %d ID %d\n", CLAN, EEPROM.read(ID_add));
