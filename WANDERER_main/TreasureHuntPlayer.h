@@ -70,7 +70,7 @@ private:
   int temp_bomb_killed = 0;
 
   bool onCooldown = false;   
-  unsigned long TimeOfDeath;  
+  unsigned long TimeOfDeath;
 
   int scoreInvicta = 0;
   int scoreDynari = 0;
@@ -125,11 +125,11 @@ public:
       EEPROM.write(PLAYER_MaxHP_add, MaxHP);
       EEPROM.write(PLAYER_MaxEn_add, MaxEn);
       EEPROM.write(PLAYER_MULTIPLIER_add, Multiplier);
-      EEPROM.write(POINT_INVICTA, 0);
-      EEPROM.write(POINT_DYNARI, 0);
-      EEPROM.write(POINT_EPHILIA, 0);
-      EEPROM.write(POINT_AKRONA, 0);
-      EEPROM.write(POINT_SOLARIS, 0);
+      EEPROM.write(POINT_INVICTA_add, 0);
+      EEPROM.write(POINT_DYNARI_add, 0);
+      EEPROM.write(POINT_EPHILIA_add, 0);
+      EEPROM.write(POINT_AKRONA_add, 0);
+      EEPROM.write(POINT_SOLARIS_add, 0);
       EEPROM.commit();
     }
     else
@@ -148,6 +148,11 @@ public:
       num_fiveminx2EnRegen = EEPROM.read(PLAYER_num_fiveminx2EnRegen_add);
       num_bomb = EEPROM.read(PLAYER_num_bomb_add);
       num_poison = EEPROM.read(PLAYER_num_poison_add);
+      scoreInvicta = EEPROM.read(POINT_INVICTA_add);
+      scoreDynari = EEPROM.read(POINT_DYNARI_add);
+      scoreEphilia = EEPROM.read(POINT_EPHILIA_add);
+      scoreAkrona = EEPROM.read(POINT_AKRONA_add);
+      scoreSolaris = EEPROM.read(POINT_SOLARIS_add);
     }
 
     if (WIFI_ON)
@@ -335,6 +340,12 @@ public:
   {
     ID = EEPROM.read(ID_add);
     _isGL = EEPROM.read(isGL_add);
+    
+    MaxHP = EEPROM.read(PLAYER_MaxHP_add);
+    MaxEn = EEPROM.read(PLAYER_MaxEn_add);
+
+    if(HP > MaxHP) HP = MaxHP;
+    if(En > MaxEn) En = MaxEn;
   }
 
   void handleJoystick_waiting()
@@ -570,38 +581,32 @@ public:
       {
         HP = max(HP - MULTIPLIER_, 0);
 
-        if (HP == 0) {
-          Serial.println("HP = 0");
-          int point;
+        if (HP == 0) 
+        {
           switch(CLAN_)
           {
             case INVICTA:
-              point = EEPROM.read(POINT_INVICTA);
-              EEPROM.write(POINT_INVICTA, ++point);
+              EEPROM.write(POINT_INVICTA_add, ++scoreInvicta);
               Serial.println("INVICTA Scores!");
               break;
             
             case DYNARI:
-              point = EEPROM.read(POINT_DYNARI);
-              EEPROM.write(POINT_DYNARI, ++point);
+              EEPROM.write(POINT_DYNARI_add, ++scoreDynari);
               Serial.println("DYNARI Scores!");
               break;
 
             case EPHILIA:
-              point = EEPROM.read(POINT_EPHILIA);
-              EEPROM.write(POINT_EPHILIA, ++point);
+              EEPROM.write(POINT_EPHILIA_add, ++scoreEphilia);
               Serial.println("EPHILIA Scores!");
               break;
 
             case AKRONA:
-              point = EEPROM.read(POINT_AKRONA);
-              EEPROM.write(POINT_AKRONA, ++point);
+              EEPROM.write(POINT_AKRONA_add, ++scoreAkrona);
               Serial.println("AKRONA Scores!");
               break;
             
             case SOLARIS:
-              point = EEPROM.read(POINT_SOLARIS);
-              EEPROM.write(POINT_SOLARIS, ++point);
+              EEPROM.write(POINT_SOLARIS_add, ++scoreSolaris);
               Serial.println("SOLARIS Scores!");
               break;
             
@@ -893,7 +898,15 @@ public:
       TreasureHunt_OLED.display_infoPage(CLAN, ID, Multiplier, MaxEn, noti_to_display, lastPageNav);
       break;
     case achievementPage:
-      TreasureHunt_OLED.display_achievementPage(numKilled, numL1Treasure, numL2Treasure, noti_to_display, lastPageNav);
+      TreasureHunt_OLED.display_achievementPage_new(numKilled, 
+                                                    0, // TODO: treasure
+                                                    scoreInvicta,
+                                                    scoreDynari,
+                                                    scoreEphilia,
+                                                    scoreAkrona,
+                                                    scoreSolaris,
+                                                    noti_to_display, 
+                                                    lastPageNav);
       break;
     case powerupPage:
       TreasureHunt_OLED.display_powerupPage(num_bonus6HP,
