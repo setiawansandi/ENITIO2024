@@ -287,6 +287,7 @@ public:
 
   void update_player_state()
   {
+    // Respawn if HP is 0
     if (HP == 0)
     {
 
@@ -332,6 +333,13 @@ public:
           last_en_recover = currTime;
         }
       }
+    }
+
+    // Turn on the buzzer if treasure is collected
+    if(numL1Treasure > 0) {
+
+    } else {
+      //TODO: --numL1Treasure;
     }
     EEPROM.commit();
   }
@@ -440,8 +448,8 @@ public:
         break;
 
       case button:
-        if (!choosingPowerUp)
-        {
+        // if (!choosingPowerUp)
+        //{
           if (lastPageNav != currentPage)
             currentPage = lastPageNav;
           if (currentPage == exitPage)
@@ -450,24 +458,25 @@ public:
             currentPage = mainPage; // reset current page
             lastPageNav = currentPage;
           }
-          if (currentPage == powerupPage)
-          {
-            choosingPowerUp = true;
-            lastPageNav = mainPage;
-          }
-        }
-        else
-        {
-          if (PowerUpNav == 0)
-          {
-            currentPage = mainPage;
-            choosingPowerUp = false;
-          }
-          else
-          {
-            handlePowerUp(PowerUpNav);
-          }
-        }
+          // if (currentPage == powerupPage)
+          // {
+          //   choosingPowerUp = true;
+          //   lastPageNav = mainPage;
+          // }
+        //}
+
+        // else
+        // {
+        //   if (PowerUpNav == 0)
+        //   {
+        //     currentPage = mainPage;
+        //     choosingPowerUp = false;
+        //   }
+        //   else
+        //   {
+        //     handlePowerUp(PowerUpNav);
+        //   }
+        // }
 
         Player_joystick.set_state();
         break;
@@ -909,14 +918,16 @@ public:
                                                     lastPageNav);
       break;
     case powerupPage:
-      TreasureHunt_OLED.display_powerupPage(num_bonus6HP,
-                                            num_bonus1MaxEn,
-                                            num_bonus1Multiplier,
-                                            num_fiveminx2EnRegen,
-                                            num_bomb,
-                                            num_poison,
-                                            noti_to_display,
-                                            PowerUpNav);
+      // TreasureHunt_OLED.display_powerupPage(num_bonus6HP,
+      //                                       num_bonus1MaxEn,
+      //                                       num_bonus1Multiplier,
+      //                                       num_fiveminx2EnRegen,
+      //                                       num_bomb,
+      //                                       num_poison,
+      //                                       noti_to_display,
+      //                                       PowerUpNav);
+
+      TreasureHunt_OLED.display_inventoryPage(numL1Treasure, noti_to_display, lastPageNav);
       break;
 
     default:

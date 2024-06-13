@@ -35,7 +35,7 @@ Adafruit_SSD1306 display(SCREEN_WIDTH, SCREEN_HEIGHT, &Wire, OLED_RESET);
 
 #define R_ON 0
 #define G_ON 0
-#define B_ON 255
+#define B_ON 0 //255
 
 #define DOUBLE_CLICK_LENGTH 1000 // [ms]
 
