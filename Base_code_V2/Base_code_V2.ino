@@ -37,6 +37,10 @@ Adafruit_SSD1306 display(SCREEN_WIDTH, SCREEN_HEIGHT, &Wire, OLED_RESET);
 #define G_ON 0
 #define B_ON 0
 #define DOUBLE_CLICK_LENGTH 1000 // [ms]
+#define MainMenuProcess 0
+#define AdminProcess 1
+
+
 
 bool AdminFunction = false;
 int ID;
@@ -58,6 +62,8 @@ int SOLARIS_TREAS=0;
 int Treas_Deposit_;
 int Treas_Deposit=0;
 int action=0;
+int currentMenu = MainMenuProcess;
+int display_nav_bar=0;
 
 // stub functions
 void StartUpDisplay();
@@ -142,7 +148,19 @@ unsigned long last_clicked = 0;
 void handleJoystick() {
   joystick_pos joystick_pos = TreasureBase_joystick.read_Joystick();
   if (TreasureBase_joystick.get_state() == 0) {
-    switch (joystick_pos) {
+    switch (joystick_pos) 
+    {
+      case right:
+        display_nav_bar++;
+        display_nav_bar = min(display_nav_bar, 1); // Limit display_nav_bar to 1 for Admin
+        TreasureBase_joystick.set_state();
+        break;
+
+        case left:
+        display_nav_bar = 0; // Always show Main Menu when moving left
+        TreasureBase_joystick.set_state();
+        break;
+
       case button:
         if (clicked_once) {
           AdminFunction = true;
@@ -156,9 +174,11 @@ void handleJoystick() {
         break;
 
       case idle:
-        if (clicked_once) {
+        if (clicked_once)
+         {
           unsigned long currTime = millis();
           if (currTime - last_clicked > DOUBLE_CLICK_LENGTH) clicked_once = 0;
+          TreasureBase_joystick.get_state();
         }
         break;
 
@@ -197,18 +217,20 @@ class TreasureBase
       if (TreasureBase_IR.available()) {
         ir_signal IRsignal_ = TreasureBase_IR.read();
         unsigned long currTime = millis();
-        if ((currStatus == 1) && (currTime - lastActionReceived > TREASURE_BASE_ACTION_RECV_WAIT)) {
+        if ((currStatus == 1) && (currTime - lastActionReceived > TREASURE_BASE_ACTION_RECV_WAIT)) 
+        {
+          Serial.printf("command digit one received %d\n",IRsignal_.command.digit1);
           Serial.printf("RECV %d %d %d %d | %d %d %d %d \n", IRsignal_.address.digit3, IRsignal_.address.digit2, IRsignal_.address.digit1, IRsignal_.address.digit0, IRsignal_.command.digit3, IRsignal_.command.digit2, IRsignal_.command.digit1, IRsignal_.command.digit0);
           CLAN_ = IRsignal_.address.digit2;
           ID_ = IRsignal_.address.digit0 + (IRsignal_.address.digit1 << 4);
 
           channel_ = IRsignal_.command.digit2;
-          Treas_Deposit_= IRsignal_.command.digit1 >>4; //Extracting the upper 4 bits
-          MULTIPLIER_ = IRsignal_.command.digit1 & 0x0f;// Extracting the lower 4 bits
+          Treas_Deposit_= IRsignal_.command.digit3; //Extracting the upper 4 bits
+          MULTIPLIER_ = IRsignal_.command.digit1;// Extracting the lower 4 bits
           action_ = IRsignal_.command.digit0;
           Serial.printf("Action ID and  Treasure deposit, multiplier", action_);
           Serial.println(" ");
-          Serial.printf("Treasure Deposit %d", Treas_Deposit);
+          Serial.printf("Treasure Deposit %d", Treas_Deposit_);
           Serial.println(" ");
           Serial.printf("Multiplier %d", MULTIPLIER_);
           Serial.println(" ");
@@ -225,11 +247,12 @@ class TreasureBase
     void handleAction(int CLAN_, int ID_, int action_, int Treas_Deposit_, int MULTIPLIER_, int channel_) {
       Serial.print("Action ID: "); Serial.println(action_);
       //action_= action;
-      Treas_Deposit=Treas_Deposit_;
+      //Treas_Deposit=Treas_Deposit_;
       switch (action_)
       {
         case collect:
-        Treas_Deposit= Treas_Deposit_ / 16;
+        Treas_Deposit= Treas_Deposit_ % 16;
+        Serial.printf("Treasure caculated %d\n ", Treas_Deposit),
         handle_Collected(Treas_Deposit);
          break; 
          
@@ -242,10 +265,10 @@ class TreasureBase
 
     
 
-void sendDepositAction(int CLAN_, int ID_, int TREAS_DEPOSIT, int action_, int channel_) {
+void sendDepositAction(int CLAN_, int ID_, int MULTIPLIER_, int action_, int channel_) {
     uint16_hex_digits address_digits, command_digits;
   
-    int This_Action_Multiplier = MULTIPLIER; // Set the multiplier to the treasure deposit amount
+    int This_Action_Multiplier = MULTIPLIER_; // Set the multiplier to the treasure deposit amount
     int ID=ID_;
     int CLAN=CLAN_;
     int action=action_;
@@ -279,7 +302,9 @@ void sendDepositAction(int CLAN_, int ID_, int TREAS_DEPOSIT, int action_, int c
                   command_digits.digit3, command_digits.digit2, command_digits.digit1, command_digits.digit0);
     
     // Send the IR signal
+    delay(100);
     TreasureBase_IR.send(send_signal, 1);
+    
 }
 
 
@@ -303,7 +328,7 @@ void sendDepositAction(int CLAN_, int ID_, int TREAS_DEPOSIT, int action_, int c
       //int player_identifier = CLAN_ * pow(16, 2) + ID_;
 
       // this code to save the info of the CLAN collected the treasure
-      this_recover_duration = TREASURE_BASE_RECOVER_DURATION * random(1, 9);
+      this_recover_duration = TREASURE_BASE_RECOVER_DURATION * random(1, 5);
 
 
       EEPROM.write(ENABLE_add, 2);
@@ -316,12 +341,12 @@ void sendDepositAction(int CLAN_, int ID_, int TREAS_DEPOSIT, int action_, int c
 
         case DYNARI:
           {EEPROM.write(DYNARI_add, EEPROM.read(DYNARI_add) + Treas_Deposit); // EEPROM.write(address, value)
-          DYNARI_TREAS=EEPROM.read(INVICTA_add);}
+          DYNARI_TREAS=EEPROM.read(DYNARI_add);}
           break;
 
         case EPHILIA:
           {EEPROM.write(EPHILIA_add, EEPROM.read(EPHILIA_add) + Treas_Deposit);
-          EPHILIA_TREAS=EEPROM.read(INVICTA_add);}
+          EPHILIA_TREAS=EEPROM.read(EPHILIA_add);}
           break;
 
         case AKRONA:
@@ -338,7 +363,7 @@ void sendDepositAction(int CLAN_, int ID_, int TREAS_DEPOSIT, int action_, int c
           break;
       }
       EEPROM.commit();
-     sendDepositAction(CLAN_, ID_, MULTIPLIER, action_,channel_);
+     sendDepositAction(CLAN_, ID_, MULTIPLIER_, action_,channel_);
 
       // if (WIFI_ON) {
       //   dbc.setTreasureAsOpened("TREASURE" + String(ID), CLAN_, ID_);
@@ -390,6 +415,7 @@ void sendDepositAction(int CLAN_, int ID_, int TREAS_DEPOSIT, int action_, int c
 
     void display_in_game() {
       int currStatus = EEPROM.read(ENABLE_add);
+       display.clearDisplay();
       if (currStatus == 1) {
         display.clearDisplay(); \
         display.setTextSize(1); // Draw SIZE
@@ -402,12 +428,17 @@ void sendDepositAction(int CLAN_, int ID_, int TREAS_DEPOSIT, int action_, int c
         display.setTextColor(SSD1306_WHITE); // Draw white text
         display.println("    Press Down to      ");
         display.println("       Deposit!   ");
+        //display.setCursor(26, 56);
+        //display.println(F("< Main Menu >"));
 
-        if (!WIFI_ON) {
-          display.setCursor(0, 56);
-          display.setTextColor(SSD1306_BLACK, SSD1306_WHITE);
-          display.println("    OFFLINE MODE    ");
-        }
+        Display_Nav_Bar();
+
+        // if (!WIFI_ON) {  
+        //   display.setCursor(0, 56);
+        //   display.setTextColor(SSD1306_BLACK, SSD1306_WHITE);
+        //   display.println(" OFFLINE MODE ");
+        //   display.setTextColor(SSD1306_BLACK, SSD1306_WHITE);
+        // }
 
         display.display();
       }
@@ -416,56 +447,59 @@ void sendDepositAction(int CLAN_, int ID_, int TREAS_DEPOSIT, int action_, int c
         display.setTextSize(1); // Draw SIZE
         display.setTextColor(SSD1306_BLACK, SSD1306_WHITE); // Draw 'inverse' text
         display.setCursor(0, 0);
-        display.println(F("   Treasure Base  "));
+        display.println(F("   Treasure Base    "));
 
-        display.setCursor(0, 12);
-        display.setTextSize(1);      // Normal 1:1 pixel scale
-        display.setTextColor(SSD1306_WHITE); // Draw white text
+        //display.setCursor(0, 12);
+        //display.setTextSize(1);      // Normal 1:1 pixel scale
         //display.println("  Treasure is Opened  ");
 
         //display.setCursor(0, 22);
         //display.println("  Resetting soon...  ");
 
-        display.setCursor(0, 10);
+        display.setCursor(0, 12);
         display.setTextSize(1);
+        display.setTextColor(SSD1306_WHITE); // Draw white text
         display.println("   Clan Deposited:  ");
 
         display.setCursor(0, 20); // sets the row and the column
         display.setTextSize(1); // set the size of the text 
         if (CLAN_ == INVICTA)
+        
           {display.println("      INVICTA       ");
-          display.println("      ");
-          display.println("  Total Tressure  ");
-          display.println("      ");
+           display.println("  ");
+          display.println("    Total Tressure  ");
+          display.setCursor(50, 54);
           display.println(INVICTA_TREAS);}
 
         else if (CLAN_ == DYNARI)
-          {display.println("       DYNARI       ");
-          display.println("      ");
-          display.println("   Total Tressure  ");
-          display.print("      ");
+
+          {display.println(" ");
+          display.print("       DYNARI       ");
+          display.println("  ");
+          display.println("    Total Tressure  ");
+          display.setCursor(50, 54);
           display.println(DYNARI_TREAS);}
 
 
         else if (CLAN_ == EPHILIA)
           {display.println("      EPHILIA       ");
-          display.println("      ");
-          display.println("     Total Tressure  ");
-          display.print("      ");
-          display.println(DYNARI_TREAS);}
+           display.println("  ");
+          display.println("    Total Tressure  ");
+          display.setCursor(50, 54);
+          display.println(EPHILIA_TREAS);}
 
         else if (CLAN_ == AKRONA)
           {display.println("       AKRONA       ");
-          display.println("      ");
-          display.println("     Total Tressure  ");
-          display.print("      ");
+          display.println("  ");
+          display.println("    Total Tressure  ");
+          display.setCursor(50, 54);
           display.println(AKRONA_TREAS);}
 
         else if (CLAN_ == SOLARIS)
           {display.println("      SOLARIS       ");
           display.println("      ");
           display.println("     Total Tressure  ");
-          display.print("      ");
+          display.println("      ");
           display.println(SOLARIS_TREAS);}
 
         if (!WIFI_ON) {
@@ -491,6 +525,7 @@ void clearEEPROM() {
   EEPROM.commit();
 }
 
+
 bool setUpDone = 0;
 int get_game_state() {
   // Directly set game parameters without connecting to WiFi or checking server
@@ -501,7 +536,7 @@ int get_game_state() {
     HTTP_TIMEOUT = 5000; // Example value
     TREASURE_BASE_INITIAL_HP = 100; // Example value
     TREASURE_BASE_ACTION_RECV_WAIT = 3000; // Example value
-    TREASURE_BASE_RECOVER_DURATION = 60000; // Example value
+    TREASURE_BASE_RECOVER_DURATION = 6000; // Example value
     parameters_updated = true;
 
     Serial.println("[BACKGROUND] Parameters Set Locally");
@@ -527,6 +562,29 @@ int get_game_state() {
 }
 
 TaskHandle_t backgroundTask;
+
+void Display_Nav_Bar()
+{
+
+  switch (display_nav_bar)
+  {
+    case 0:
+      display.setTextColor(SSD1306_WHITE);
+      display.setCursor(26, 56);
+      display.println(F("< Main Menu >"));
+      break;
+    
+    case 1:
+      display.setTextColor(SSD1306_WHITE);
+      display.setCursor(26, 56);
+      display.println(F("<   Admin   "));
+      break;
+
+      default:
+      break;
+  }
+  display.display();
+}
 
 void backgroundTaskCode(void * pvParameters) {
   TickType_t xLastWakeTime = xTaskGetTickCount();
@@ -601,6 +659,8 @@ void setup() {
 
 }
 
+
+
 void loop() {
   if (AdminFunction) {
     TreasureBase_Admin.AdminLoop();
@@ -614,6 +674,7 @@ void loop() {
   } else {
     // online mode
     handleJoystick();
+    //Display_Nav_Bar();
     if (setUpDone) {
       treasureBase.display_in_game();
       treasureBase.receiveAction();

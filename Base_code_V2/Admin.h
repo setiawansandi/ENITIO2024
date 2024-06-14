@@ -156,9 +156,9 @@ class Admin_OLED {
       display.setCursor(10, 12);
       display.println("NO");
       display.setCursor(10, 22);
-      display.println("YES, KEEP TREASURE ID");
+      display.println("YES, KEEP BASE ID");
       display.setCursor(10, 32);
-      display.println("YES, CLEAR TREASURE ID");
+      display.println("YES, CLEAR BASE ID");
 
       switch (ConfirmingResetNav)
       {
