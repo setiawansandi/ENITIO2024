@@ -35,6 +35,12 @@ const int PLAYER_num_bomb_add = 18;
 const int PLAYER_num_poison_add = 19;
 const int ONLINE_mode_add = 20;
 const int PLAYER_registered_online_add = 21;
+const int POINT_INVICTA_add = 22;
+const int POINT_DYNARI_add = 23;
+const int POINT_EPHILIA_add = 24;
+const int POINT_AKRONA_add = 25;
+const int POINT_SOLARIS_add = 26;
+
 
 int EN_RECOVER_DURATION;
 int VIRUS_DECAY_DURATION;
@@ -52,6 +58,7 @@ int KILL_UPDATE_SERVER_INTERVAL;
 int revival_MULTIPLIER;
 int HEAL_MULTIPLIER;
 int WIFI_ON;
+int MAX_COOLDOWN; // in seconds
 
 
 int failed_kill_feedback = 0;

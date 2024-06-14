@@ -16,6 +16,7 @@ typedef enum {
     heal = 3,
     revive = 4,
     poisonID = 5,
+    deposit = 6,
 } action_id ;
 
 typedef enum {
