@@ -57,6 +57,8 @@ void setup() {
 
   my_MAC_address = WiFi.macAddress();
 
+  randomSeed(analogRead(0));
+
   //  here is a set of fixed constants
   HTTP_TIMEOUT = 15000;
   EN_RECOVER_DURATION = 5000;

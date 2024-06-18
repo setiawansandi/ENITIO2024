@@ -45,6 +45,8 @@ private:
   unsigned long last_lucky_not_infected = 0;
   unsigned long start_x2_en_regen = 0;
   unsigned long last_update_kills_to_server = 0;
+  unsigned long previousMillis = 0;
+  unsigned long interval = 0;
 
   unsigned long start_receiving_feedback = 0;
 
@@ -343,11 +345,23 @@ public:
     }
 
     // Turn on the buzzer if treasure is collected
-    if(numL1Treasure > 0) {
-
-    } else {
-      //TODO: --numL1Treasure;
-    }
+    { 
+      unsigned long currentMillis=millis(); // get current time of arduino
+      if (currentMillis-previousMillis >= interval) //current time will check with previous time
+      {
+        if(numL1Treasure >0 )
+        {
+        previousMillis = currentMillis;
+        Player_Buzzer.sound(NOTE_G3); // ACTIVATE the buzzer with fixed freq
+        interval=random(1000,7000); // set next random interval 1 & t
+        delay(200); // duration (100ms)
+        Player_Buzzer.end_sound();
+        }
+        else{
+          Player_Buzzer.end_sound();
+        }
+      }
+    }  
     EEPROM.commit();
   }
 
@@ -763,6 +777,7 @@ public:
         Serial.print("L1 Treasure Collected Power Up:");
         Serial.println(feedbackData.powerup_received);
         numL1Treasure++;
+        EEPROM.write(PLAYER_numL1Treasure_add, numL1Treasure);
         switch (feedbackData.powerup_received)
         {
         case bonus6HP:
@@ -835,6 +850,7 @@ public:
     default:
       break;
     }
+    EEPROM.commit();
   }
 
   void handleBombed(feedback_message feedbackData)
@@ -1173,6 +1189,7 @@ public:
       delay(50);
     }
   }
+
 };
 
 TreasureHuntPlayer PLAYER;
