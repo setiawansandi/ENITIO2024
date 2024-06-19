@@ -190,6 +190,7 @@ public:
       switch (action)
       {
       case attack:
+        command_digits.digit0 = attack;
         this_action_multiplier = min(Multiplier, MAX_ATTACK_MULTIPLIER);
         break;
 
@@ -284,6 +285,8 @@ public:
     if (currentCooldown > 0)
     {
       permNoti = "     Respawn in " + String(currentCooldown) + "s     ";
+      numL1Treasure=0;
+      EEPROM.write(PLAYER_numL1Treasure_add, numL1Treasure);
     }
     else
     {
@@ -354,7 +357,7 @@ public:
         previousMillis = currentMillis;
         Player_Buzzer.sound(NOTE_G3); // ACTIVATE the buzzer with fixed freq
         interval=random(1000,7000); // set next random interval 1 & t
-        delay(200); // duration (100ms)
+        delay(100); // duration (100ms)
         Player_Buzzer.end_sound();
         }
         else{
@@ -774,48 +777,48 @@ public:
     case 2:
       if ((feedbackData.attacker_CLAN == CLAN) && (feedbackData.attacker_ID == ID))
       {
-        Serial.print("L1 Treasure Collected Power Up:");
+        Serial.print("L1 Treasure Collected ");
         Serial.println(feedbackData.powerup_received);
         numL1Treasure++;
         EEPROM.write(PLAYER_numL1Treasure_add, numL1Treasure);
-        switch (feedbackData.powerup_received)
-        {
-        case bonus6HP:
-          num_bonus6HP++;
-          EEPROM.write(PLAYER_num_bonus6HP_add, num_bonus6HP);
-          tempNoti = "    PowerUp: +6 HP   ";
-          break;
-
-        case bonus1MaxEn:
-          num_bonus1MaxEn++;
-          EEPROM.write(PLAYER_num_bonus1MaxEn_add, num_bonus1MaxEn);
-          tempNoti = "  PowerUp: +1 Max En ";
-          break;
-
-        case bonus1MULTIPLIER:
-          num_bonus1Multiplier++;
-          EEPROM.write(PLAYER_num_bonus1MULTIPLIER_add, num_bonus1Multiplier);
-          tempNoti = "   PowerUp: +1 MULTIPLIER  ";
-          break;
-
-        case fiveminx2EnRegen:
-          num_fiveminx2EnRegen++;
-          EEPROM.write(PLAYER_num_fiveminx2EnRegen_add, num_fiveminx2EnRegen);
-          tempNoti = "PowerUp: x2 En Regen ";
-          break;
-
-        case bomb:
-          num_bomb++;
-          EEPROM.write(PLAYER_num_bomb_add, num_bomb);
-          tempNoti = "  PowerUp: A Bomb!!  ";
-          break;
-
-        default:
-          break;
-        }
+        tempNoti = "  Treasure Collected !   ";
         tempNoti_start = millis();
-      }
-      break;
+        Player_Buzzer.sound(NOTE_E3);
+        break;
+        // switch (feedbackData.powerup_received)
+        // {
+        // case bonus6HP:
+        //   num_bonus6HP++;
+        //   EEPROM.write(PLAYER_num_bonus6HP_add, num_bonus6HP);
+        // tempNoti = "    Treasure Collected !   ";
+        // break;
+
+        // case bonus1MaxEn:
+        //   num_bonus1MaxEn++;
+        //   EEPROM.write(PLAYER_num_bonus1MaxEn_add, num_bonus1MaxEn);
+        //   tempNoti = "  PowerUp: +1 Max En ";
+        //   break;
+
+        // case bonus1MULTIPLIER:
+        //   num_bonus1Multiplier++;
+        //   EEPROM.write(PLAYER_num_bonus1MULTIPLIER_add, num_bonus1Multiplier);
+        //   tempNoti = "   PowerUp: +1 MULTIPLIER  ";
+        //   break;
+
+        // case fiveminx2EnRegen:
+        //   num_fiveminx2EnRegen++;
+        //   EEPROM.write(PLAYER_num_fiveminx2EnRegen_add, num_fiveminx2EnRegen);
+        //   tempNoti = "PowerUp: x2 En Regen ";
+        //   break;
+
+        // case bomb:
+        //   num_bomb++;
+        //   EEPROM.write(PLAYER_num_bomb_add, num_bomb);
+        //   tempNoti = "  PowerUp: A Bomb!!  ";
+        //   break;
+        //}
+        //tempNoti_start = millis();
+      };
 
     case 4:
       if ((feedbackData.attacker_CLAN == CLAN) && (feedbackData.attacker_ID == ID))
@@ -1056,7 +1059,7 @@ public:
           KILL_UPDATE_SERVER_INTERVAL = 10 * 60 * 1000; // 10 mins
           WIFI_ON = EEPROM.read(ONLINE_mode_add);
           MAX_COOLDOWN = 10;
-        }
+        //}
 
         Serial.printf("[INITIALISE] Current CLAN: %d ID %d\n", CLAN, EEPROM.read(ID_add));
         setup_initial_state(id, CLAN, isGL); // initialize Player
