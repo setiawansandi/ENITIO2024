@@ -8,10 +8,17 @@
 
 #define x2_En_Regen_bonus_duration 300000 // [ms]
 
+#define R_ON 1
+#define G_ON 0
+#define B_ON 0 //255
+
+
 int game_started_buffer = 1;
 
 uint8_t newMACAddress_AP[] = {4, 8, 1, 255, 255, 0};
 uint8_t newMACAddress_STA[] = {4, 8, 1, 255, 255, 1};
+
+
 
 class TreasureHuntPlayer
 {
@@ -54,6 +61,8 @@ private:
   int numL1Treasure = 0;
   int numL2Treasure = 0;
   int Treas_deduct;
+  int totalTreasure = 0;
+  int currentTreasure = 0;
 
   int num_bonus6HP = 0;
   int num_bonus1MaxEn = 0;
@@ -134,6 +143,7 @@ public:
       EEPROM.write(POINT_EPHILIA_add, 0);
       EEPROM.write(POINT_AKRONA_add, 0);
       EEPROM.write(POINT_SOLARIS_add, 0);
+      EEPROM.write(PLAYER_totalTreasure_add,0);
       EEPROM.commit();
     }
     else
@@ -157,6 +167,7 @@ public:
       scoreEphilia = EEPROM.read(POINT_EPHILIA_add);
       scoreAkrona = EEPROM.read(POINT_AKRONA_add);
       scoreSolaris = EEPROM.read(POINT_SOLARIS_add);
+      totalTreasure= EEPROM.read(PLAYER_totalTreasure_add);
     }
 
     if (WIFI_ON)
@@ -350,20 +361,42 @@ public:
     // Turn on the buzzer if treasure is collected
     { 
       unsigned long currentMillis=millis(); // get current time of arduino
+      static unsigned long buzzerStartTime = 0;
+      const unsigned long buzzerDuration = 5000; // 5 seconds buzz duration (adjust as needed)
+      static bool hasBuzzed = false;
       if (currentMillis-previousMillis >= interval) //current time will check with previous time
       {
-        if(numL1Treasure >0 )
-        {
         previousMillis = currentMillis;
-        Player_Buzzer.sound(NOTE_G3); // ACTIVATE the buzzer with fixed freq
-        interval=random(1000,7000); // set next random interval 1 & t
-        delay(100); // duration (100ms)
-        Player_Buzzer.end_sound();
+        if(numL1Treasure >0 && !hasBuzzed)
+        {
+          if (buzzerStartTime==0)
+          {
+            buzzerStartTime = currentMillis;
+          }
+          if (currentMillis - buzzerStartTime <= buzzerDuration )
+          {
+            Player_Buzzer.sound(NOTE_E4); // ACTIVATE the buzzer with fixed freq
+            
+          }
+          else
+          {
+            Player_Buzzer.end_sound();
+            hasBuzzed = true;
+            buzzerStartTime = 0;
+          }
         }
-        else{
+        else
+        {
           Player_Buzzer.end_sound();
+
+        }
+
+        if(numL1Treasure ==0)
+        {
+          hasBuzzed = false;
         }
       }
+      
     }  
     EEPROM.commit();
   }
@@ -698,13 +731,12 @@ public:
           numL1Treasure=numL1Treasure-num_of_treas_col;
           Serial.printf("Treasure deposited %d\n", num_of_treas_col);
           EEPROM.write(PLAYER_numL1Treasure_add, numL1Treasure);
-          EEPROM.commit();
           //Serial.println(EEPROM.read(PLAYER_numL1Treasure_add));
-          Serial.printf("Treasure Deducted %d \n", Treas_deduct);
+          //Serial.printf("Treasure Deducted %d \n", Treas_deduct);
             tempNoti = "   Deposited " + String(num_of_treas_col) + " Treas";
             tempNoti_start = millis();
-            //handleFeedbackMsg(numL1Treasure);
             Player_Buzzer.sound(NOTE_E3);
+            TreasureStore(num_of_treas_col);
         }
         EEPROM.commit();
 
@@ -713,6 +745,22 @@ public:
     }
   }
 
+void TreasureStore(int num_of_treas_col) {
+  // Read the current treasure
+  //totalTreasure = EEPROM.read(PLAYER_totalTreasure_add);
+  totalTreasure=EEPROM.read(PLAYER_totalTreasure_add);
+  Serial.printf("Current treasure %d\n", totalTreasure);
+  // Update the total treasure
+  totalTreasure += num_of_treas_col;
+
+  // Write the updated treasure to EEPROM
+  EEPROM.write(PLAYER_totalTreasure_add, totalTreasure);
+  EEPROM.commit();
+
+  Serial.printf("Total treasure collected %d\n", totalTreasure);
+  // Reset num_of_treas_col
+  num_of_treas_col = 0;
+}
   void feedback_attack(int CLAN_, int ID_, int channel_)
   {
     bool killed = (HP == 0);
@@ -782,8 +830,9 @@ public:
         numL1Treasure++;
         EEPROM.write(PLAYER_numL1Treasure_add, numL1Treasure);
         tempNoti = "  Treasure Collected !   ";
-        tempNoti_start = millis();
         Player_Buzzer.sound(NOTE_E3);
+        tempNoti_start = millis();
+
         break;
         // switch (feedbackData.powerup_received)
         // {
@@ -950,7 +999,7 @@ public:
       break;
     case achievementPage:
       TreasureHunt_OLED.display_achievementPage_new(numKilled, 
-                                                    0, // TODO: treasure
+                                                    totalTreasure, // TODO: treasure
                                                     scoreInvicta,
                                                     scoreDynari,
                                                     scoreEphilia,
@@ -1048,9 +1097,9 @@ public:
           VIRUS_IMMUNITY_DURATION = 120000;
           VIRUS_INFECTION_PROBABILITY = 30;
           PARTICIPANT_MaxHP = 12;
-          GL_MaxHP = 50;
+          GL_MaxHP = 12;
           PARTICIPANT_MaxEn = 5;
-          GL_MaxEn = 50;
+          GL_MaxEn = 12;
           INITIAL_MULTIPLIER = 1;
           HEAL_MULTIPLIER = 4;
           MAX_ATTACK_MULTIPLIER = 3;
@@ -1059,7 +1108,7 @@ public:
           KILL_UPDATE_SERVER_INTERVAL = 10 * 60 * 1000; // 10 mins
           WIFI_ON = EEPROM.read(ONLINE_mode_add);
           MAX_COOLDOWN = 10;
-        //}
+        }
 
         Serial.printf("[INITIALISE] Current CLAN: %d ID %d\n", CLAN, EEPROM.read(ID_add));
         setup_initial_state(id, CLAN, isGL); // initialize Player

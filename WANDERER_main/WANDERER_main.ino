@@ -35,9 +35,13 @@ void backgroundTaskCode(void *pvParameters) {
     }
 };
 
-void setup() {
+
+
+void setup() 
+{
   Serial.begin(115200);
   EEPROM.begin(EEPROM_SIZE);
+  randomSeed(analogRead(0));
 
   // check OLED display
   if(!display.begin(SSD1306_SWITCHCAPVCC, SCREEN_ADDRESS)) {
@@ -56,8 +60,6 @@ void setup() {
   Player_EspNOW.enable();
 
   my_MAC_address = WiFi.macAddress();
-
-  randomSeed(analogRead(0));
 
   //  here is a set of fixed constants
   HTTP_TIMEOUT = 15000;

@@ -40,6 +40,7 @@ const int POINT_DYNARI_add = 23;
 const int POINT_EPHILIA_add = 24;
 const int POINT_AKRONA_add = 25;
 const int POINT_SOLARIS_add = 26;
+const int PLAYER_totalTreasure_add = 27;
 
 
 int EN_RECOVER_DURATION;

@@ -48,7 +48,6 @@ class Profile {
 
             EEPROM.write(CLAN_add, CLAN);
             EEPROM.write(PROFILE_enable_add, 1);
-            Serial.printf("Your Clan is %d \n", CLAN);
             if (EEPROM.read(isGL_add) != 1) EEPROM.write(isGL_add, 0);
             EEPROM.commit();
             Player_joystick.set_state();
