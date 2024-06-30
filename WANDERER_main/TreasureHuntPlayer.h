@@ -70,7 +70,7 @@ private:
   int temp_bomb_killed = 0;
 
   bool onCooldown = false;   
-  unsigned long TimeOfDeath;
+  unsigned long timeOfDeath;
 
   int scoreInvicta = 0;
   int scoreDynari = 0;
@@ -102,6 +102,7 @@ public:
 
     if (EEPROM.read(PLAYER_enable_add) == 0)
     {
+      Serial.print("Initializing EEPROM...");
       if (!_isGL)
       {
         HP = PARTICIPANT_MaxHP;
@@ -134,6 +135,7 @@ public:
     }
     else
     {
+      Serial.println("Reading Player State from EEPROM...");
       HP = EEPROM.read(PLAYER_HP_add);
       En = EEPROM.read(PLAYER_EN_add);
       MaxHP = EEPROM.read(PLAYER_MaxHP_add);
@@ -264,11 +266,11 @@ public:
     if (!onCooldown)
     {
       onCooldown = true;
-      TimeOfDeath = millis();
+      timeOfDeath = millis();
     }
 
     unsigned long currTime = millis();
-    unsigned long elapsedTime = currTime - TimeOfDeath;
+    unsigned long elapsedTime = currTime - timeOfDeath;
     int currentCooldown = MAX_COOLDOWN - (elapsedTime / 1000);
 
    
@@ -279,7 +281,7 @@ public:
     else
     {
       onCooldown = false;
-      TimeOfDeath = 0;
+      timeOfDeath = 0;
       HP = MaxHP;
       EEPROM.write(PLAYER_HP_add, HP);
     }
@@ -335,12 +337,6 @@ public:
       }
     }
 
-    // Turn on the buzzer if treasure is collected
-    if(numL1Treasure > 0) {
-
-    } else {
-      //TODO: --numL1Treasure;
-    }
     EEPROM.commit();
   }
 
