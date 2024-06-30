@@ -11,7 +11,7 @@ const int MACAddressProcess = 5;
 
 #define NAV_WAIT 4000
 
-#define EEPROM_SIZE 25
+#define EEPROM_SIZE 27
 
 const int PROFILE_enable_add = 0;
 const int CLAN_add = 1;
