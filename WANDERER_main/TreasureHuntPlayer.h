@@ -48,9 +48,14 @@ private:
 
   unsigned long start_receiving_feedback = 0;
 
+  unsigned long previousMillis = 0;
+  unsigned long interval = 0;
+
   int numKilled = 0;
   int numL1Treasure = 0;
   int numL2Treasure = 0;
+  int totalTreasure = 0;
+  int currentTreasure = 0;
 
   int num_bonus6HP = 0;
   int num_bonus1MaxEn = 0;
@@ -58,6 +63,7 @@ private:
   int num_fiveminx2EnRegen = 0;
   int num_bomb = 0;
   int num_poison = 0;
+  int num_of_treas_col=0;
 
   bool is_x2EnRegen = false;
 
@@ -131,6 +137,7 @@ public:
       EEPROM.write(POINT_EPHILIA_add, 0);
       EEPROM.write(POINT_AKRONA_add, 0);
       EEPROM.write(POINT_SOLARIS_add, 0);
+      EEPROM.write(PLAYER_totalTreasure_add,0);
       EEPROM.commit();
     }
     else
@@ -155,6 +162,7 @@ public:
       scoreEphilia = EEPROM.read(POINT_EPHILIA_add);
       scoreAkrona = EEPROM.read(POINT_AKRONA_add);
       scoreSolaris = EEPROM.read(POINT_SOLARIS_add);
+      totalTreasure = EEPROM.read(PLAYER_totalTreasure_add);
     }
 
     if (WIFI_ON)
@@ -193,6 +201,7 @@ public:
 
       case collect:
         this_action_multiplier = min(Multiplier, MAX_COLLECT_MULTIPLIER);
+        command_digits.digit3 = numL1Treasure; // for depositing the treasure to the base
         break;
 
       case heal:
@@ -255,7 +264,7 @@ public:
 
         lastActionReceived = currTime;
 
-        if (((CLAN_ != CLAN) && (action_ == attack)) || ((action_ == heal) && (CLAN_ == CLAN) && (ID_ != ID)) || ((action_ == heal) && (CLAN_ != CLAN)) || (action_ == revive))
+        if (((CLAN_ != CLAN) && (action_ == attack)) || ((action_ == heal) && (CLAN_ == CLAN) && (ID_ != ID)) || ((action_ == heal) && (CLAN_ != CLAN)) || (action_ == revive) || ((action_ == deposit) && (CLAN_== CLAN) && (ID_== ID)))
           handleAction(CLAN_, ID_, action_, MULTIPLIER_, channel_);
       }
     }
@@ -267,6 +276,10 @@ public:
     {
       onCooldown = true;
       timeOfDeath = millis();
+
+      // drop collected treasure(s)
+      numL1Treasure = 0;
+      EEPROM.write(PLAYER_numL1Treasure_add, numL1Treasure);
     }
 
     unsigned long currTime = millis();
@@ -664,16 +677,40 @@ public:
       }
       break;
 
+    case deposit:
+      if(HP > 0)
+      {
+        Serial.printf("Treasure deposited %d\n", numL1Treasure);
+        tempNoti = "   Deposited " + String(num_of_treas_col) + " Trea.";
+        tempNoti_start = millis();
+        Player_Buzzer.sound(NOTE_E3);
+
+        update_total_treasure_collected(numL1Treasure); // update the total treasure collected by player (achievement)
+
+        // clear treasure from inventory
+        numL1Treasure = 0;
+        EEPROM.write(PLAYER_numL1Treasure_add, numL1Treasure);
+      }
+      break;
+
     default:
       break;
     }
+  }
+
+  void update_total_treasure_collected(int num_of_treasure_deposited)
+  {
+    totalTreasure = EEPROM.read(PLAYER_totalTreasure_add); // Read the current treasure
+    totalTreasure += num_of_treasure_deposited; // Update the total treasure
+    EEPROM.write(PLAYER_totalTreasure_add, totalTreasure); // Write the updated treasure to EEPROM
+    Serial.printf("Total treasure collected %d\n", totalTreasure);
   }
 
   void feedback_attack(int CLAN_, int ID_, int channel_)
   {
     bool killed = (HP == 0);
     Player_EspNOW.send_data(1, 1, CLAN_, ID_, CLAN, killed, channel_);
-  };
+  }
 
   void feedback_bomb(int CLAN_, int ID_)
   {
@@ -733,44 +770,45 @@ public:
     case 2:
       if ((feedbackData.attacker_CLAN == CLAN) && (feedbackData.attacker_ID == ID))
       {
-        Serial.print("L1 Treasure Collected Power Up:");
-        Serial.println(feedbackData.powerup_received);
+      //  Serial.print("L1 Treasure Collected Power Up:");
+      //  Serial.println(feedbackData.powerup_received);
+        Serial.print("Treasure Collected");
         numL1Treasure++;
-        switch (feedbackData.powerup_received)
-        {
-        case bonus6HP:
-          num_bonus6HP++;
-          EEPROM.write(PLAYER_num_bonus6HP_add, num_bonus6HP);
-          tempNoti = "    PowerUp: +6 HP   ";
-          break;
+      //   switch (feedbackData.powerup_received)
+      //   {
+      //   case bonus6HP:
+      //     num_bonus6HP++;
+      //     EEPROM.write(PLAYER_num_bonus6HP_add, num_bonus6HP);
+      //     tempNoti = "    PowerUp: +6 HP   ";
+      //     break;
 
-        case bonus1MaxEn:
-          num_bonus1MaxEn++;
-          EEPROM.write(PLAYER_num_bonus1MaxEn_add, num_bonus1MaxEn);
-          tempNoti = "  PowerUp: +1 Max En ";
-          break;
+      //   case bonus1MaxEn:
+      //     num_bonus1MaxEn++;
+      //     EEPROM.write(PLAYER_num_bonus1MaxEn_add, num_bonus1MaxEn);
+      //     tempNoti = "  PowerUp: +1 Max En ";
+      //     break;
 
-        case bonus1MULTIPLIER:
-          num_bonus1Multiplier++;
-          EEPROM.write(PLAYER_num_bonus1MULTIPLIER_add, num_bonus1Multiplier);
-          tempNoti = "   PowerUp: +1 MULTIPLIER  ";
-          break;
+      //   case bonus1MULTIPLIER:
+      //     num_bonus1Multiplier++;
+      //     EEPROM.write(PLAYER_num_bonus1MULTIPLIER_add, num_bonus1Multiplier);
+      //     tempNoti = "   PowerUp: +1 MULTIPLIER  ";
+      //     break;
 
-        case fiveminx2EnRegen:
-          num_fiveminx2EnRegen++;
-          EEPROM.write(PLAYER_num_fiveminx2EnRegen_add, num_fiveminx2EnRegen);
-          tempNoti = "PowerUp: x2 En Regen ";
-          break;
+      //   case fiveminx2EnRegen:
+      //     num_fiveminx2EnRegen++;
+      //     EEPROM.write(PLAYER_num_fiveminx2EnRegen_add, num_fiveminx2EnRegen);
+      //     tempNoti = "PowerUp: x2 En Regen ";
+      //     break;
 
-        case bomb:
-          num_bomb++;
-          EEPROM.write(PLAYER_num_bomb_add, num_bomb);
-          tempNoti = "  PowerUp: A Bomb!!  ";
-          break;
+      //   case bomb:
+      //     num_bomb++;
+      //     EEPROM.write(PLAYER_num_bomb_add, num_bomb);
+      //     tempNoti = "  PowerUp: A Bomb!!  ";
+      //     break;
 
-        default:
-          break;
-        }
+      //   default:
+      //     break;
+      //   }
         tempNoti_start = millis();
       }
       break;
@@ -860,7 +898,7 @@ public:
         active_bomb = false;
       }
     }
-  };
+  }
 
   void update_display_waiting()
   {
@@ -904,12 +942,7 @@ public:
       break;
     case achievementPage:
       TreasureHunt_OLED.display_achievementPage_new(numKilled, 
-                                                    0, // TODO: treasure
-                                                    scoreInvicta,
-                                                    scoreDynari,
-                                                    scoreEphilia,
-                                                    scoreAkrona,
-                                                    scoreSolaris,
+                                                    totalTreasure,
                                                     noti_to_display, 
                                                     lastPageNav);
       break;
@@ -939,7 +972,7 @@ public:
     {
       Player_Buzzer.end_sound();
     }
-  };
+  }
 
   int get_game_state()
   {

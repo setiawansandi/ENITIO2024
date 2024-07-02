@@ -1078,7 +1078,7 @@ class TreasureHunt_OLED {
       display.display();
     };
 
-    void display_achievementPage_new(int numKilled, int treasure, int scoreInvicta, int scoreDynari, int scoreEphilia, int scoreAkrona, int scoreSolaris, String noti, int pageNav) {
+    void display_achievementPage_new(int numKilled, int treasure, String noti, int pageNav) {
       display.clearDisplay();
       display.setTextSize(1); // Draw SIZE
       if (noti.length() == 0)
@@ -1102,12 +1102,8 @@ class TreasureHunt_OLED {
       display.println(numKilled);
 
       display.setCursor(0, 24);
-      display.print("Treasure: ");
-      display.println("TODO");
-
-      display.setCursor(0, 42);
-      display.printf("I:%d D:%d E:%d A:%d S:%d\n", scoreInvicta, scoreDynari, scoreEphilia, scoreAkrona, scoreSolaris);
-      
+      display.print("Tres. deposited: ");
+      display.println(treasure);
 
       switch (pageNav) {
         case mainPage:
