@@ -69,7 +69,8 @@ const int SetGLFunction = 0;
 const int FactoryResetFunction = 1;
 const int ToggleServerConnectivityFunction = 2;
 const int OverwritePlayerIDFunction = 3;
-const int ExitFunction = 4;
+const int CheckScore = 4;
+const int ExitFunction = 5;
 
 void StartUpDisplay() {
   display.clearDisplay();
@@ -294,7 +295,11 @@ class Admin_OLED {
       
       display.setCursor(10, 37);
       display.println("Overwrite ID");
+
       display.setCursor(10, 46);
+      display.println("Check Scores");
+
+      display.setCursor(10, 55);
       display.println("Back to Main Menu");
 
       switch (FunctionNav)
@@ -319,8 +324,13 @@ class Admin_OLED {
           display.println(">");
           break;
 
-        case ExitFunction:
+        case CheckScore:
           display.setCursor(2, 46);
+          display.println(">");
+          break;
+
+        case ExitFunction:
+          display.setCursor(2, 55);
           display.println(">");
           break;
 
@@ -328,9 +338,9 @@ class Admin_OLED {
           break;
       }
 
-      display.setCursor(14, 56);
-      display.setTextColor(SSD1306_BLACK, SSD1306_WHITE);
-      display.println("(Press to choose)");
+      // display.setCursor(14, 56);
+      // display.setTextColor(SSD1306_BLACK, SSD1306_WHITE);
+      // display.println("(Press to choose)");
 
       display.display();
     }
@@ -421,6 +431,31 @@ class Admin_OLED {
       display.setTextColor(SSD1306_BLACK, SSD1306_WHITE);
       display.println("(Press to choose)");
       
+      display.display();
+    }
+
+    void display_Checkingscore(int invicta_score, int dynari_score, int ephilia_score,
+                                  int akrona_score, int solaris_score) {
+      display.clearDisplay();
+      display.setTextColor(SSD1306_BLACK, SSD1306_WHITE); // Draw 'inverse' text
+      display.setCursor(0, 0);
+      display.println(F("     Clan Scores     "));
+
+      display.setTextColor(SSD1306_WHITE); // Draw 'inverse' text
+      display.setCursor(0, 12);
+      display.print("Invicta: "), display.println(invicta_score);
+      display.setCursor(0, 21);
+      display.print("Dynari: "), display.println(dynari_score);
+      display.setCursor(0, 30);
+      display.print("Ephilia: "), display.println(ephilia_score);
+      display.setCursor(0, 39);
+      display.print("Akrona: "), display.println(akrona_score);
+      display.setCursor(0, 48);
+      display.print("Solaris: "), display.println(solaris_score);
+
+      display.setCursor(10, 56);
+      display.setTextColor(SSD1306_BLACK, SSD1306_WHITE);
+      display.println("(Press to go back)");
       display.display();
     }
 };
