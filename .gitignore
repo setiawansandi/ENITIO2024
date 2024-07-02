@@ -7,3 +7,4 @@ __pycache__/
 **/debug.cfg
 **/debug_custom.json
 **/esp32.svd
+.vscode/settings.json
