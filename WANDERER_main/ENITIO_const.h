@@ -43,6 +43,7 @@ const int POINT_SOLARIS_add = 26;
 const int PLAYER_totalTreasure_add = 27;
 
 
+
 int EN_RECOVER_DURATION;
 int VIRUS_DECAY_DURATION;
 int VIRUS_IMMUNITY_DURATION;
@@ -67,3 +68,13 @@ int failed_kill_CLAN[50] = {};
 int failed_kill_ID[50] = {};
 int current_failed_save_pointer = 0;
 int current_failed_read_pointer = 0;
+
+
+// NEOPIXEL LED
+#define R_ALIVE 0
+#define G_ALIVE 5
+#define B_ALIVE 0
+
+#define R_DEAD 50
+#define G_DEAD 0
+#define B_DEAD 0

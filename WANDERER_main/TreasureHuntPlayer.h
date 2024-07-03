@@ -9,6 +9,7 @@
 #define x2_En_Regen_bonus_duration 300000 // [ms]
 
 int game_started_buffer = 1;
+bool is_LED_active = false;
 
 uint8_t newMACAddress_AP[] = {4, 8, 1, 255, 255, 0};
 uint8_t newMACAddress_STA[] = {4, 8, 1, 255, 255, 1};
@@ -280,6 +281,10 @@ public:
       // drop collected treasure(s)
       numL1Treasure = 0;
       EEPROM.write(PLAYER_numL1Treasure_add, numL1Treasure);
+
+      // Light up RED LED
+      Player_NeoPixel.displayRGB_FRONT(R_DEAD, G_ALIVE, B_DEAD);
+      Player_NeoPixel.displayRGB_TOP(R_DEAD, G_DEAD, B_DEAD);
     }
 
     unsigned long currTime = millis();
@@ -297,6 +302,10 @@ public:
       timeOfDeath = 0;
       HP = MaxHP;
       EEPROM.write(PLAYER_HP_add, HP);
+
+      // light up GREEN LED
+      Player_NeoPixel.displayRGB_FRONT(R_ALIVE, G_ALIVE, B_ALIVE);
+      Player_NeoPixel.displayRGB_TOP(R_ALIVE, G_ALIVE, B_ALIVE);
     }
   }
 
@@ -463,6 +472,11 @@ public:
             currentPage = lastPageNav;
           if (currentPage == exitPage)
           {
+            // Turn off LED
+            Player_NeoPixel.off_FRONT();
+            Player_NeoPixel.off_TOP();
+            is_LED_active = false;
+
             currentProcess = MainMenuProcess;
             currentPage = mainPage; // reset current page
             lastPageNav = currentPage;
@@ -976,6 +990,13 @@ public:
 
   int get_game_state()
   {
+    if (!is_LED_active) {
+      is_LED_active = true;
+      // LIGHT UP LED
+      Player_NeoPixel.displayRGB_FRONT(R_ALIVE, G_ALIVE, B_ALIVE);
+      Player_NeoPixel.displayRGB_TOP(R_ALIVE, G_ALIVE, B_ALIVE);
+    }
+
     // retrieve game state from server
     // 0 mean game did not start
     // 1 mean in game

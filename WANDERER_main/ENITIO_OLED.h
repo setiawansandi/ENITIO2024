@@ -442,18 +442,18 @@ class Admin_OLED {
       display.println(F("     Clan Scores     "));
 
       display.setTextColor(SSD1306_WHITE); // Draw 'inverse' text
-      display.setCursor(0, 12);
+      display.setCursor(0, 10);
       display.print("Invicta: "), display.println(invicta_score);
-      display.setCursor(0, 21);
+      display.setCursor(0, 19);
       display.print("Dynari: "), display.println(dynari_score);
-      display.setCursor(0, 30);
+      display.setCursor(0, 28);
       display.print("Ephilia: "), display.println(ephilia_score);
-      display.setCursor(0, 39);
+      display.setCursor(0, 37);
       display.print("Akrona: "), display.println(akrona_score);
-      display.setCursor(0, 48);
+      display.setCursor(0, 46);
       display.print("Solaris: "), display.println(solaris_score);
 
-      display.setCursor(10, 56);
+      display.setCursor(10, 55);
       display.setTextColor(SSD1306_BLACK, SSD1306_WHITE);
       display.println("(Press to go back)");
       display.display();
@@ -545,7 +545,7 @@ class Profile_OLED {
 
       display.setTextColor(SSD1306_WHITE);
       display.setCursor(0, 12);
-      display.println("ENITIO 2023");
+      display.println("ENITIO 2024");
 
       display.setCursor(0, 24);
 
