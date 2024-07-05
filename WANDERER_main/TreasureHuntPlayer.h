@@ -8,7 +8,13 @@
 
 #define x2_En_Regen_bonus_duration 300000 // [ms]
 
+<<<<<<< Updated upstream
 int game_started_buffer = 0;
+=======
+int game_started_buffer = 1;
+bool is_LED_active = false;
+bool depositBuzz = false;
+>>>>>>> Stashed changes
 
 uint8_t newMACAddress_AP[] = {4, 8, 1, 255, 255, 0};
 uint8_t newMACAddress_STA[] = {4, 8, 1, 255, 255, 1};
@@ -46,7 +52,19 @@ class TreasureHuntPlayer
     unsigned long start_x2_en_regen = 0;
     unsigned long last_update_kills_to_server = 0;
 
+<<<<<<< Updated upstream
     unsigned long start_receiving_feedback = 0;
+=======
+
+  unsigned long buzzerStartTime = 0;
+  const unsigned long buzzerDuration = 5000; // 5 seconds buzz duration
+  bool isBuzzing = false; // Random interval duration
+  bool firstRun = true;
+  unsigned long startDelay = 0;
+  unsigned long endDelay = 0;
+
+  unsigned long start_receiving_feedback = 0;
+>>>>>>> Stashed changes
 
     int numKilled = 0;
     int numL1Treasure = 0;
@@ -73,10 +91,16 @@ class TreasureHuntPlayer
     bool gameStarted = 0;
     bool deviceReady = 0;
 
+<<<<<<< Updated upstream
     void setup_initial_state(int id, int clan, bool isGL) {
       ID = id;
       CLAN = clan;
       _isGL = isGL;
+=======
+  bool onCooldown = false;   
+  unsigned long timeOfDeath;
+  int numDeath=0;
+>>>>>>> Stashed changes
 
       newMACAddress_AP[3] = CLAN;
       newMACAddress_AP[4] = ID;
@@ -88,7 +112,153 @@ class TreasureHuntPlayer
       esp_wifi_set_mac(WIFI_IF_STA, &newMACAddress_STA[0]);
 
 
+<<<<<<< Updated upstream
       Serial.print("[NEW] ESP32 Board MAC Address:  ");
+=======
+    newMACAddress_STA[3] = CLAN;
+    newMACAddress_STA[4] = ID;
+
+    esp_wifi_set_mac(WIFI_IF_AP, &newMACAddress_AP[0]);
+    esp_wifi_set_mac(WIFI_IF_STA, &newMACAddress_STA[0]);
+
+    Serial.print("[NEW] ESP32 Board MAC Address:  ");
+    Serial.println(WiFi.macAddress());
+
+    if (EEPROM.read(PLAYER_enable_add) == 0)
+    {
+      Serial.print("Initializing EEPROM...");
+      if (!_isGL)
+      {
+        HP = PARTICIPANT_MaxHP;
+        En = PARTICIPANT_MaxEn;
+        MaxHP = PARTICIPANT_MaxHP;
+        MaxEn = PARTICIPANT_MaxEn;
+        Multiplier = INITIAL_MULTIPLIER;
+      }
+      else
+      {
+        HP = GL_MaxHP;
+        En = GL_MaxEn;
+        MaxHP = GL_MaxHP;
+        MaxEn = GL_MaxEn;
+        Multiplier = INITIAL_MULTIPLIER;
+      }
+
+      EEPROM.write(PLAYER_enable_add, 1);
+      EEPROM.write(PLAYER_HP_add, HP);
+      EEPROM.write(PLAYER_EN_add, En);
+      EEPROM.write(PLAYER_MaxHP_add, MaxHP);
+      EEPROM.write(PLAYER_MaxEn_add, MaxEn);
+      EEPROM.write(PLAYER_MULTIPLIER_add, Multiplier);
+      EEPROM.write(POINT_INVICTA_add, 0);
+      EEPROM.write(POINT_DYNARI_add, 0);
+      EEPROM.write(POINT_EPHILIA_add, 0);
+      EEPROM.write(POINT_AKRONA_add, 0);
+      EEPROM.write(POINT_SOLARIS_add, 0);
+      EEPROM.write(PLAYER_totalTreasure_add,0);
+      EEPROM.commit();
+    }
+    else
+    {
+      Serial.println("Reading Player State from EEPROM...");
+      HP = EEPROM.read(PLAYER_HP_add);
+      En = EEPROM.read(PLAYER_EN_add);
+      MaxHP = EEPROM.read(PLAYER_MaxHP_add);
+      MaxEn = EEPROM.read(PLAYER_MaxEn_add);
+      Multiplier = EEPROM.read(PLAYER_MULTIPLIER_add);
+      numKilled = EEPROM.read(PLAYER_numKilled_add);
+      numL1Treasure = EEPROM.read(PLAYER_numL1Treasure_add);
+      numL2Treasure = EEPROM.read(PLAYER_numL2Treasure_add);
+      num_bonus6HP = EEPROM.read(PLAYER_num_bonus6HP_add);
+      num_bonus1MaxEn = EEPROM.read(PLAYER_num_bonus1MaxEn_add);
+      num_bonus1Multiplier = EEPROM.read(PLAYER_num_bonus1MULTIPLIER_add);
+      num_fiveminx2EnRegen = EEPROM.read(PLAYER_num_fiveminx2EnRegen_add);
+      num_bomb = EEPROM.read(PLAYER_num_bomb_add);
+      num_poison = EEPROM.read(PLAYER_num_poison_add);
+      scoreInvicta = EEPROM.read(POINT_INVICTA_add);
+      scoreDynari = EEPROM.read(POINT_DYNARI_add);
+      scoreEphilia = EEPROM.read(POINT_EPHILIA_add);
+      scoreAkrona = EEPROM.read(POINT_AKRONA_add);
+      scoreSolaris = EEPROM.read(POINT_SOLARIS_add);
+      totalTreasure = EEPROM.read(PLAYER_totalTreasure_add);
+      numDeath = EEPROM.read(PLAYER_numDeath_add);
+    }
+
+    if (WIFI_ON)
+      WiFi.disconnect();
+    // change to correct channel, according to clan 
+    int clan_channel = dbc.getClanWiFiChannel(CLAN);
+    Serial.print("[INITIALISE] Changing to WiFi ");
+    Serial.println(clan_channel);
+    dbc.changeWiFiChannel(clan_channel);
+    Player_EspNOW.enable();
+  }
+
+  void sendAction()
+  {
+    // format of the IR signal (16-bit hexadecimal, i.e. 4 digits)
+    // address: 0x0<CLAN><ID - 2 bit>  (ID is 2 bits as there maybe more than 16 people in one CLAN)
+    // command: 0x0<Current WiFi Channel><MULTIPLIER><Action>
+    if ((action != do_nothing) && (En > 0))
+    {
+      uint16_hex_digits address_digits, command_digits;
+
+      address_digits.digit0 = ID % 16;
+      address_digits.digit1 = ID / 16;
+      address_digits.digit2 = CLAN;
+
+      command_digits.digit2 = WiFi.channel();
+      command_digits.digit0 = action;
+
+      int this_action_multiplier;
+
+      switch (action)
+      {
+      case attack:
+        this_action_multiplier = min(Multiplier, MAX_ATTACK_MULTIPLIER);
+        break;
+
+      case collect:
+        this_action_multiplier = min(Multiplier, MAX_COLLECT_MULTIPLIER);
+        command_digits.digit3 = numL1Treasure; // for depositing the treasure to the base
+        break;
+
+      case heal:
+        this_action_multiplier = HEAL_MULTIPLIER; // player heals through pushing down of joystick.
+        break;
+
+      case poisonID:
+        command_digits.digit0 = attack;
+        this_action_multiplier = PARTICIPANT_MaxHP;
+        break;
+
+      default:
+        this_action_multiplier = 0;
+        break;
+      }
+
+      command_digits.digit1 = this_action_multiplier;
+
+      ir_signal send_signal;
+      send_signal.address = address_digits;
+      send_signal.command = command_digits;
+
+      Serial.printf("SEND %d %d %d %d | %d %d %d %d \n", address_digits.digit3, address_digits.digit2, address_digits.digit1, address_digits.digit0,
+                    command_digits.digit3, command_digits.digit2, command_digits.digit1, command_digits.digit0);
+      Player_IR.send(send_signal, 1);
+
+      start_receiving_feedback = millis();
+
+      if ((EEPROM.read(isGL_add)) && (action == heal))
+      {
+        HP--;
+        EEPROM.write(PLAYER_HP_add, HP);
+      }
+
+      En--;
+      EEPROM.write(PLAYER_EN_add, En);
+      Serial.print("CURRENT MAC ADDRESS: ");
+>>>>>>> Stashed changes
       Serial.println(WiFi.macAddress());
 
       if (EEPROM.read(PLAYER_enable_add) == 0) {
@@ -107,11 +277,82 @@ class TreasureHuntPlayer
           Multiplier = INITIAL_MULTIPLIER;
         }
 
+<<<<<<< Updated upstream
         EEPROM.write(PLAYER_enable_add, 1);
         EEPROM.write(PLAYER_HP_add, HP);
         EEPROM.write(PLAYER_EN_add, En);
         EEPROM.write(PLAYER_MaxHP_add, MaxHP);
         EEPROM.write(PLAYER_MaxEn_add, MaxEn);
+=======
+        channel_ = IRsignal_.command.digit2;
+        MULTIPLIER_ = IRsignal_.command.digit1;
+        action_ = IRsignal_.command.digit0;
+
+        Serial.printf("RECV %d %d %d %d | %d %d %d %d \n", IRsignal_.address.digit3, IRsignal_.address.digit2, IRsignal_.address.digit1, IRsignal_.address.digit0, IRsignal_.command.digit3, IRsignal_.command.digit2, IRsignal_.command.digit1, IRsignal_.command.digit0);
+
+        lastActionReceived = currTime;
+
+        if (((CLAN_ != CLAN) && (action_ == attack)) || ((action_ == heal) && (CLAN_ == CLAN) && (ID_ != ID)) || ((action_ == heal) && (CLAN_ != CLAN)) || (action_ == revive) || ((action_ == deposit) && (CLAN_== CLAN) && (ID_== ID)))
+          handleAction(CLAN_, ID_, action_, MULTIPLIER_, channel_);
+      }
+    }
+  }
+
+  void handle_respawn()
+  {
+    if (!onCooldown)
+    {
+      onCooldown = true;
+      timeOfDeath = millis();
+
+      // drop collected treasure(s)
+      numL1Treasure = 0;
+      EEPROM.write(PLAYER_numL1Treasure_add, numL1Treasure);
+      EEPROM.write(PLAYER_numDeath_add, numDeath);
+
+      // Light up RED LED
+      Player_NeoPixel.displayRGB_FRONT(R_DEAD, G_ALIVE, B_DEAD);
+      Player_NeoPixel.displayRGB_TOP(R_DEAD, G_DEAD, B_DEAD);
+      
+    }
+
+    unsigned long currTime = millis();
+    unsigned long elapsedTime = currTime - timeOfDeath;
+    int currentCooldown = MAX_COOLDOWN - (elapsedTime / 1000);
+
+   
+    if (currentCooldown > 0)
+    {
+      permNoti = "     Respawn in " + String(currentCooldown) + "s     ";
+    }
+    else
+    {
+      onCooldown = false;
+      timeOfDeath = 0;
+      HP = MaxHP;
+      EEPROM.write(PLAYER_HP_add, HP);
+
+      // light up GREEN LED
+      Player_NeoPixel.displayRGB_FRONT(R_ALIVE, G_ALIVE, B_ALIVE);
+      Player_NeoPixel.displayRGB_TOP(R_ALIVE, G_ALIVE, B_ALIVE);
+    }
+  }
+
+  void update_player_state()
+  {
+    // Respawn if HP is 0
+    if (HP == 0)
+    {
+
+      handle_respawn();
+
+      En = 0;
+      EEPROM.write(PLAYER_EN_add, En);
+
+      if (Multiplier > 1)
+      {
+        Multiplier = 1;
+>>>>>>> Stashed changes
         EEPROM.write(PLAYER_MULTIPLIER_add, Multiplier);
         EEPROM.commit();
       }
@@ -139,7 +380,9 @@ class TreasureHuntPlayer
       dbc.changeWiFiChannel(clan_channel);
       Player_EspNOW.enable();
     }
+  // Turn on the buzzer if treasure is collected
 
+<<<<<<< Updated upstream
     void sendAction() {
       // format of the IR signal (16-bit hexadecimal, i.e. 4 digits)
       // address: 0x0<CLAN><ID - 2 bit>  (ID is 2 bits as there maybe more than 16 people in one CLAN)
@@ -150,6 +393,88 @@ class TreasureHuntPlayer
         address_digits.digit0 = ID % 16;
         address_digits.digit1 = ID / 16;
         address_digits.digit2 = CLAN;
+=======
+
+ unsigned long currentMillis = millis();
+   if(numL1Treasure>0)
+   {
+      TreasureBuzz(currentMillis);
+      
+   }
+   else
+   {
+      Player_Buzzer.end_sound();
+      isBuzzing = false;
+      firstRun= true;
+   }
+    EEPROM.commit();
+  }
+
+   void TreasureBuzz(unsigned long currentMillis)
+  {
+    if(firstRun)
+    {
+      if(currentMillis-previousMillis >= startDelay)
+      {
+        firstRun = false;
+        previousMillis=currentMillis;
+        endDelay = random(3000, 20000);
+      }
+      return;
+    }
+
+    if (depositBuzz)
+  {
+    Player_Buzzer.sound(NOTE_E3);
+    buzzerStartTime = currentMillis;
+    isBuzzing = true;
+    depositBuzz = false;
+    Serial.println("Deposit Buzzer started at " + String(currentMillis) + ", will buzz for " + String(buzzerDuration) + " ms");
+  }
+
+   else if (!isBuzzing && currentMillis - previousMillis >= endDelay) 
+    {
+    previousMillis = currentMillis;
+    buzzerStartTime = currentMillis;
+    isBuzzing = true;
+    Serial.println("Buzzer started at " + String(currentMillis) + ", will buzz for " + String(buzzerDuration) + " ms");
+    }
+
+    if (isBuzzing) 
+    {
+    if (currentMillis - buzzerStartTime <= buzzerDuration) 
+    {
+      Player_Buzzer.sound(NOTE_E4);
+      if ((currentMillis - buzzerStartTime) % 1000 == 0) 
+      {
+        Serial.println("Buzzing... " + String(currentMillis - buzzerStartTime) + " ms elapsed");
+      }
+    } 
+   else
+    {
+      Player_Buzzer.end_sound();
+      isBuzzing = false;
+      endDelay = random(3000, 20000); // Set next random interval
+      Serial.println("Buzzer stopped at " + String(currentMillis));
+      Serial.println("Next buzz in " + String(endDelay)+"ms");
+    }
+
+  } 
+  else 
+  {
+    Player_Buzzer.end_sound();
+  }
+
+  }
+
+  void sync_state()
+  {
+    ID = EEPROM.read(ID_add);
+    _isGL = EEPROM.read(isGL_add);
+    
+    MaxHP = EEPROM.read(PLAYER_MaxHP_add);
+    MaxEn = EEPROM.read(PLAYER_MaxEn_add);
+>>>>>>> Stashed changes
 
         command_digits.digit2 = WiFi.channel();
         command_digits.digit0 = action;
@@ -219,6 +544,7 @@ class TreasureHuntPlayer
           action_ = IRsignal_.command.digit0;
 
 
+<<<<<<< Updated upstream
           Serial.printf("RECV %d %d %d %d | %d %d %d %d \n", IRsignal_.address.digit3, IRsignal_.address.digit2, IRsignal_.address.digit1, IRsignal_.address.digit0, IRsignal_.command.digit3, IRsignal_.command.digit2, IRsignal_.command.digit1, IRsignal_.command.digit0);
 
           lastActionReceived = currTime;
@@ -226,6 +552,293 @@ class TreasureHuntPlayer
           if (((CLAN_ != CLAN) && (action_ == attack)) || ((action_ == heal) && (CLAN_ == CLAN) && (ID_ != ID)) || ((action_ == heal) && (CLAN_ != CLAN)) || (action_ == revive))
             handleAction(CLAN_, ID_, action_, MULTIPLIER_, channel_);
         }
+=======
+            case AKRONA:
+              EEPROM.write(POINT_AKRONA_add, ++scoreAkrona);
+              Serial.println("AKRONA Scores!");
+              break;
+            
+            case SOLARIS:
+              EEPROM.write(POINT_SOLARIS_add, ++scoreSolaris);
+              Serial.println("SOLARIS Scores!");
+              break;
+            
+            default:
+              break;
+          
+          }
+          numDeath= scoreInvicta + scoreDynari + scoreEphilia + scoreAkrona + scoreSolaris;
+
+        }
+
+        EEPROM.write(PLAYER_HP_add, HP);
+        Serial.printf("Attacked. Current HP: %d \n", HP);
+        tempNoti = "       Attacked      ";
+        tempNoti_start = millis();
+        feedback_attack(CLAN_, ID_, channel_);
+        Player_Buzzer.sound(NOTE_E3);
+      } 
+      break;
+
+    case heal:
+      if (HP > 0)
+      {
+        HP = min(HP + MULTIPLIER_, MaxHP);
+        EEPROM.write(PLAYER_HP_add, HP);
+        tempNoti = "        Healed       ";
+        tempNoti_start = millis();
+        last_received_heal = tempNoti_start;
+      }
+      break;
+
+    case revive:
+      if (HP == 0)
+      {
+        HP = HP + MULTIPLIER_;
+        EEPROM.write(PLAYER_HP_add, HP);
+        tempNoti = "        Revived       ";
+        tempNoti_start = millis();
+        last_received_heal = tempNoti_start;
+      }
+      break;
+
+    case poisonID:
+      if (HP > 0)
+      {
+        HP = max(HP - PARTICIPANT_MaxHP, 0);
+        EEPROM.write(PLAYER_HP_add, HP);
+        Serial.printf("Attacked. Current HP: %d \n", HP);
+        tempNoti = "       Poisoned      ";
+        tempNoti_start = millis();
+        feedback_attack(CLAN_, ID_, channel_);
+        Player_Buzzer.sound(NOTE_E3);
+      }
+      break;
+
+    case deposit:
+      if(HP > 0)
+      {
+        Serial.printf("Treasure deposited %d\n", numL1Treasure);
+        tempNoti = "   Deposited " + String(numL1Treasure) + " Trea.";
+        tempNoti_start = millis();
+        depositBuzz = true;  // Set this to true when depositing
+        TreasureBuzz(millis()); // Call TreasureBuzz with current time
+        update_total_treasure_collected(numL1Treasure); // update the total treasure collected by player (achievement)
+        // clear treasure from inventory
+        numL1Treasure = 0;
+        EEPROM.write(PLAYER_numL1Treasure_add, numL1Treasure);
+      }
+      break;
+
+    default:
+      break;
+    }
+  }
+
+  void update_total_treasure_collected(int num_of_treasure_deposited)
+  {
+    totalTreasure = EEPROM.read(PLAYER_totalTreasure_add); // Read the current treasure
+    totalTreasure += num_of_treasure_deposited; // Update the total treasure
+    EEPROM.write(PLAYER_totalTreasure_add, totalTreasure); // Write the updated treasure to EEPROM
+    Serial.printf("Total treasure collected %d\n", totalTreasure);
+  }
+
+  void feedback_attack(int CLAN_, int ID_, int channel_)
+  {
+    bool killed = (HP == 0);
+    Player_EspNOW.send_data(1, 1, CLAN_, ID_, CLAN, killed, channel_);
+  }
+
+  void feedback_bomb(int CLAN_, int ID_)
+  {
+    bool killed = (HP == 0);
+    Player_EspNOW.send_data(1, 4, CLAN_, ID_, CLAN, killed, 1); // TODO: Specify WiFi Channel
+  }
+
+  void handleFeedbackMsg(feedback_message feedbackData)
+  {
+    switch (feedbackData.attackee_type)
+    {
+    case 1:
+      if ((feedbackData.attacker_CLAN == CLAN) && (feedbackData.attacker_ID == ID))
+      {
+        if (feedbackData.is_attackee_killed == true)
+        {
+          tempNoti = " You killed a person ";
+          tempNoti_start = millis();
+          Multiplier++;
+          numKilled++;
+          EEPROM.write(PLAYER_MULTIPLIER_add, Multiplier);
+          EEPROM.write(PLAYER_numKilled_add, numKilled);
+        }
+        else
+        {
+          tempNoti = " Attack successfully ";
+          tempNoti_start = millis();
+        }
+      }
+      break;
+
+    case 3:
+      if ((feedbackData.attacker_CLAN == CLAN) && (feedbackData.attacker_ID == ID))
+      {
+        if (feedbackData.is_attackee_killed == true)
+        {
+          tempNoti = " U Opened L2 Treasure";
+          tempNoti_start = millis();
+          numL2Treasure++;
+          if (feedbackData.powerup_received == 6)
+          {
+            num_poison++;
+            EEPROM.write(PLAYER_num_poison_add, num_poison);
+            tempNoti = " PowerUp: A Poison!!  ";
+          }
+
+          break;
+        }
+        else
+        {
+          tempNoti = " L2 Treasure Damaged ";
+          tempNoti_start = millis();
+        }
+      }
+      break;
+
+    case 2:
+      if ((feedbackData.attacker_CLAN == CLAN) && (feedbackData.attacker_ID == ID))
+      {
+      //  Serial.print("L1 Treasure Collected Power Up:");
+      //  Serial.println(feedbackData.powerup_received);
+        Serial.print("Treasure Collected");
+        numL1Treasure++;
+        EEPROM.write(PLAYER_numL1Treasure_add, numL1Treasure);
+        tempNoti = " Treasure Collected !  ";
+        Player_Buzzer.sound(NOTE_E3);
+        tempNoti_start = millis();
+      //   switch (feedbackData.powerup_received)
+      //   {
+      //   case bonus6HP:
+      //     num_bonus6HP++;
+      //     EEPROM.write(PLAYER_num_bonus6HP_add, num_bonus6HP);
+      //     tempNoti = "    PowerUp: +6 HP   ";
+      //     break;
+
+      //   case bonus1MaxEn:
+      //     num_bonus1MaxEn++;
+      //     EEPROM.write(PLAYER_num_bonus1MaxEn_add, num_bonus1MaxEn);
+      //     tempNoti = "  PowerUp: +1 Max En ";
+      //     break;
+
+      //   case bonus1MULTIPLIER:
+      //     num_bonus1Multiplier++;
+      //     EEPROM.write(PLAYER_num_bonus1MULTIPLIER_add, num_bonus1Multiplier);
+      //     tempNoti = "   PowerUp: +1 MULTIPLIER  ";
+      //     break;
+
+      //   case fiveminx2EnRegen:
+      //     num_fiveminx2EnRegen++;
+      //     EEPROM.write(PLAYER_num_fiveminx2EnRegen_add, num_fiveminx2EnRegen);
+      //     tempNoti = "PowerUp: x2 En Regen ";
+      //     break;
+
+      //   case bomb:
+      //     num_bomb++;
+      //     EEPROM.write(PLAYER_num_bomb_add, num_bomb);
+      //     tempNoti = "  PowerUp: A Bomb!!  ";
+      //     break;
+
+      //   default:
+      //     break;
+      //   }
+
+      }
+      break;
+
+    case 4:
+      if ((feedbackData.attacker_CLAN == CLAN) && (feedbackData.attacker_ID == ID))
+      {
+        if (feedbackData.powerup_received == true)
+        {
+          temp_bomb_killed += 1;
+          temp_bomb_attacked += 1;
+          Multiplier++;
+          numKilled++;
+          EEPROM.write(PLAYER_MULTIPLIER_add, Multiplier);
+          EEPROM.write(PLAYER_numKilled_add, numKilled);
+        }
+        else
+        {
+          temp_bomb_attacked += 1;
+        }
+      }
+      break;
+
+    case 5:
+      // received a heal feedback
+      if (HP != 0)
+        En++;
+      HP = MaxHP;
+      EEPROM.write(PLAYER_HP_add, HP);
+      tempNoti = "        Healed       ";
+      tempNoti_start = millis();
+      last_received_heal = tempNoti_start;
+      break;
+
+    default:
+      break;
+    }
+    EEPROM.commit();
+  }
+
+  void handleBombed(feedback_message feedbackData)
+  {
+    if (HP > 0)
+    {
+      HP = std::max(HP - BOMB_HP_DEDUCTION, 0);
+      std::tie(tempNoti, tempNoti_start) = std::make_pair("   You are Bombed!!  ", millis());
+      Player_Buzzer.sound(NOTE_E3);
+      feedback_bomb(feedbackData.attacker_CLAN, feedbackData.attacker_ID);
+    }
+  }
+
+  void receiveEspNOW()
+  {
+    if (EspNOW_received >= 1)
+    {
+      int i;
+      for (i = 0; i < EspNOW_received; i++)
+      {
+        feedback_message feedbackData = Player_EspNOW.get_feedback_received();
+        switch (feedbackData.msg_type)
+        {
+        case 1:
+          handleFeedbackMsg(feedbackData);
+          break;
+
+        case 2:
+          handleBombed(feedbackData);
+          break;
+
+        default:
+          break;
+        }
+        EspNOW_received--;
+      }
+      if ((temp_bomb_attacked == Player_EspNOW.num_bombed) && (active_bomb))
+      {
+        Serial.print("Bombed ");
+        Serial.println(temp_bomb_attacked);
+        String num_attack_noti = String(" Bombed ");
+        num_attack_noti.concat(temp_bomb_attacked);
+        String num_killed_noti = String(" Killed ");
+        num_killed_noti.concat(temp_bomb_killed);
+        num_attack_noti += num_killed_noti;
+        tempNoti = num_attack_noti;
+        tempNoti_start = millis();
+        temp_bomb_attacked = 0;
+        temp_bomb_killed = 0;
+        active_bomb = false;
+>>>>>>> Stashed changes
       }
     }
 
@@ -241,6 +854,7 @@ class TreasureHuntPlayer
         }
         poisonActive = false;
       }
+<<<<<<< Updated upstream
       else {
         permNoti = "";
         unsigned long currTime = millis();
@@ -262,6 +876,87 @@ class TreasureHuntPlayer
             En++ ;
             EEPROM.write(PLAYER_EN_add, En);
             last_en_recover = currTime;
+=======
+    }
+    else
+    {
+      noti_to_display = permNoti;
+    }
+
+    switch (currentPage)
+    {
+    case mainPage:
+      TreasureHunt_OLED.display_mainPage(HP, En, noti_to_display, lastPageNav);
+      break;
+    case infoPage:
+      TreasureHunt_OLED.display_infoPage(CLAN, ID, Multiplier, MaxEn, noti_to_display, lastPageNav);
+      break;
+    case achievementPage:
+      TreasureHunt_OLED.display_achievementPage_new(numKilled, 
+                                                    totalTreasure,
+                                                    noti_to_display, 
+                                                    lastPageNav,
+                                                    numDeath);
+      break;
+    case powerupPage:
+      // TreasureHunt_OLED.display_powerupPage(num_bonus6HP,
+      //                                       num_bonus1MaxEn,
+      //                                       num_bonus1Multiplier,
+      //                                       num_fiveminx2EnRegen,
+      //                                       num_bomb,
+      //                                       num_poison,
+      //                                       noti_to_display,
+      //                                       PowerUpNav);
+
+      TreasureHunt_OLED.display_inventoryPage(numL1Treasure, noti_to_display, lastPageNav);
+      break;
+
+    default:
+      lastPageNav = mainPage;
+      currentPage = mainPage;
+    }
+  }
+
+  void update_sound()
+  {
+    unsigned long currTime = millis();
+    if (currTime - tempNoti_start >= NOTI_SOUND_DURATION)
+    {
+      Player_Buzzer.end_sound();
+    }
+  }
+
+  int get_game_state()
+  {
+    if (!is_LED_active) {
+      is_LED_active = true;
+      // LIGHT UP LED
+      Player_NeoPixel.displayRGB_FRONT(R_ALIVE, G_ALIVE, B_ALIVE);
+      Player_NeoPixel.displayRGB_TOP(R_ALIVE, G_ALIVE, B_ALIVE);
+    }
+
+    // retrieve game state from server
+    // 0 mean game did not start
+    // 1 mean in game
+    // once the game has started then we dunnid to check anymore
+    if (!gameStarted)
+    {
+      gameStarted = game_started_buffer;
+      if (gameStarted)
+      {
+        Serial.println("Game has started! Starting initialisation processes...");
+        int CLAN = EEPROM.read(CLAN_add);
+        bool isGL = EEPROM.read(isGL_add);
+        int id;
+
+        if (WIFI_ON)
+        {
+          // first check if wanderer has been registered
+          while (EEPROM.read(PLAYER_registered_online_add) != 1)
+          {
+            Serial.println("Attempting to register WANDERER...");
+            EEPROM.write(PLAYER_registered_online_add, dbc.registerWanderer(CLAN, my_MAC_address));
+>>>>>>> Stashed changes
           }
         }
       }

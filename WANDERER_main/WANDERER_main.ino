@@ -35,9 +35,16 @@ void backgroundTaskCode(void *pvParameters) {
     }
 };
 
+unsigned long previousMillis;
+unsigned long startDelay = 0;
+
 void setup() {
   Serial.begin(115200);
   EEPROM.begin(EEPROM_SIZE);
+
+  randomSeed(analogRead(0));
+  startDelay = random(1000, 5000);
+  previousMillis = millis();
 
   // check OLED display
   if(!display.begin(SSD1306_SWITCHCAPVCC, SCREEN_ADDRESS)) {

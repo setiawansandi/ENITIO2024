@@ -925,7 +925,99 @@ class TreasureHunt_OLED {
       display.display();
     }
 
-    void display_achievementPage(int numKilled, int numL1Treasure, int numL2Treasure, String noti, int pageNav) {
+    // void display_achievementPage(int numKilled, int numL1Treasure, int numL2Treasure, String noti, int pageNav, int numDeath) 
+    // {
+    //   display.clearDisplay();
+    //   display.setTextSize(1); // Draw SIZE
+    //   if (noti.length() == 0)
+    //   {
+    //     display.setTextColor(SSD1306_BLACK, SSD1306_WHITE); // Draw 'inverse' text
+    //     display.setCursor(0, 0);
+    //     display.println(F("  Treasure Hunt Game "));
+    //   }
+    //   else
+    //   {
+    //     display.setTextColor(SSD1306_WHITE); // Draw 'inverse' text
+    //     display.setCursor(0, 0);
+    //     display.println(noti);
+    //   }
+
+    //   display.setCursor(0, 12);
+    //   display.setTextSize(1);      // Normal 1:1 pixel scale
+    //   display.setTextColor(SSD1306_WHITE); // Draw white text
+
+    //   display.print("Killed: ");
+    //   display.println(numKilled);
+
+    //   display.setCursor(0, 24);
+    //   display.print("L1 Treasure: ");
+    //   display.println(numL1Treasure);
+
+    //   display.setCursor(0, 36);
+    //   display.print("L2 Treasure: ");
+    //   display.println(numL2Treasure);
+
+    //   switch (pageNav) {
+    //     case mainPage:
+    //       display.setCursor(44, 56);
+    //       display.print(F("< "));
+    //       display.setTextColor(SSD1306_BLACK, SSD1306_WHITE);
+    //       display.print(F("Main"));
+    //       display.setTextColor(SSD1306_WHITE);
+    //       display.print(F(" >"));
+    //       break;
+
+<<<<<<< Updated upstream
+        case powerupPage:
+          display.setCursor(30, 56);
+          display.print(F("< "));
+          display.setTextColor(SSD1306_BLACK, SSD1306_WHITE);
+          display.print(F("Power-Up"));
+          display.setTextColor(SSD1306_WHITE);
+          display.print(F(" >"));
+          break;
+=======
+    //     case powerupPage:
+    //       display.setCursor(26, 56);
+    //       display.print(F("< "));
+    //       display.setTextColor(SSD1306_BLACK, SSD1306_WHITE);
+    //       // display.print(F("Power-Up"));
+    //       display.print(F("Inventory"));
+    //       display.setTextColor(SSD1306_WHITE);
+    //       display.print(F(" >"));
+    //       break;
+>>>>>>> Stashed changes
+
+    //     case infoPage:
+    //       display.setCursor(44, 56);
+    //       display.print(F("< "));
+    //       display.setTextColor(SSD1306_BLACK, SSD1306_WHITE);
+    //       display.print(F("Info"));
+    //       display.setTextColor(SSD1306_WHITE);
+    //       display.print(F(" >"));
+    //       break;
+
+    //     case achievementPage:
+    //       display.setCursor(20, 56);
+    //       display.println(F("< Achievement >"));
+    //       break;
+
+    //     case exitPage:
+    //       display.setCursor(44, 56);
+    //       display.print(F("< "));
+    //       display.setTextColor(SSD1306_BLACK, SSD1306_WHITE);
+    //       display.print(F("Exit"));
+    //       display.setTextColor(SSD1306_WHITE);
+    //       display.print(F(" >"));
+    //       break;
+    //   }
+
+    //   display.display();
+    // };
+
+<<<<<<< Updated upstream
+=======
+    void display_achievementPage_new(int numKilled, int treasure, String noti, int pageNav, int numDeath) {
       display.clearDisplay();
       display.setTextSize(1); // Draw SIZE
       if (noti.length() == 0)
@@ -949,12 +1041,13 @@ class TreasureHunt_OLED {
       display.println(numKilled);
 
       display.setCursor(0, 24);
-      display.print("L1 Treasure: ");
-      display.println(numL1Treasure);
+      display.print("Tres. deposited: ");
+      display.println(treasure);
 
       display.setCursor(0, 36);
-      display.print("L2 Treasure: ");
-      display.println(numL2Treasure);
+      display.print("N.o of Death: ");
+      display.println(numDeath);
+
 
       switch (pageNav) {
         case mainPage:
@@ -967,10 +1060,11 @@ class TreasureHunt_OLED {
           break;
 
         case powerupPage:
-          display.setCursor(30, 56);
+          display.setCursor(26, 56);
           display.print(F("< "));
           display.setTextColor(SSD1306_BLACK, SSD1306_WHITE);
-          display.print(F("Power-Up"));
+          // display.print(F("Power-Up"));
+          display.print(F("Inventory"));
           display.setTextColor(SSD1306_WHITE);
           display.print(F(" >"));
           break;
@@ -1000,8 +1094,9 @@ class TreasureHunt_OLED {
       }
 
       display.display();
-    };
+    }
 
+>>>>>>> Stashed changes
     void display_WaitingPage() {
       display.clearDisplay();
       display.setTextSize(1); // Draw SIZE
