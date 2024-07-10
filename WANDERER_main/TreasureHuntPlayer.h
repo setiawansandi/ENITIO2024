@@ -9,7 +9,6 @@
 #define x2_En_Regen_bonus_duration 300000 // [ms]
 
 int game_started_buffer = 1;
-bool is_LED_active = false;
 
 uint8_t newMACAddress_AP[] = {4, 8, 1, 255, 255, 0};
 uint8_t newMACAddress_STA[] = {4, 8, 1, 255, 255, 1};
@@ -78,6 +77,10 @@ private:
 
   bool onCooldown = false;   
   unsigned long timeOfDeath;
+
+  bool ledIsOn = false;
+  unsigned long ledActivationTime;
+  unsigned long ledMaxActivationDuration = 3000;
 
   int scoreInvicta = 0;
   int scoreDynari = 0;
@@ -273,24 +276,25 @@ public:
 
   void handle_respawn()
   {
-    if (!onCooldown)
+    unsigned long currTime = millis();
+    
+    if (!onCooldown) // init
     {
       onCooldown = true;
       timeOfDeath = millis();
 
       // drop collected treasure(s)
-      numL1Treasure = 0;
-      EEPROM.write(PLAYER_numL1Treasure_add, numL1Treasure);
+      EEPROM.write(PLAYER_numL1Treasure_add, 0);
 
-      // Light up RED LED
-      Player_NeoPixel.displayRGB_FRONT(R_DEAD, G_ALIVE, B_DEAD);
+      // Light up LED (Red)
+      ledIsOn = true;
+      ledActivationTime = currTime;
+      Player_NeoPixel.displayRGB_FRONT(R_DEAD, G_DEAD, B_DEAD);
       Player_NeoPixel.displayRGB_TOP(R_DEAD, G_DEAD, B_DEAD);
     }
 
-    unsigned long currTime = millis();
     unsigned long elapsedTime = currTime - timeOfDeath;
     int currentCooldown = MAX_COOLDOWN - (elapsedTime / 1000);
-
    
     if (currentCooldown > 0)
     {
@@ -303,7 +307,9 @@ public:
       HP = MaxHP;
       EEPROM.write(PLAYER_HP_add, HP);
 
-      // light up GREEN LED
+      // Light up LED (Green)
+      ledIsOn = true;
+      ledActivationTime = currTime;
       Player_NeoPixel.displayRGB_FRONT(R_ALIVE, G_ALIVE, B_ALIVE);
       Player_NeoPixel.displayRGB_TOP(R_ALIVE, G_ALIVE, B_ALIVE);
     }
@@ -311,10 +317,11 @@ public:
 
   void update_player_state()
   {
+    unsigned long currTime = millis();
+
     // Respawn if HP is 0
     if (HP == 0)
     {
-
       handle_respawn();
 
       En = 0;
@@ -330,8 +337,8 @@ public:
     else
     {
       permNoti = "";
-      unsigned long currTime = millis();
       last_max_en_decay = currTime;
+
       if (En >= MaxEn)
       {
         last_en_recover = currTime;
@@ -357,6 +364,14 @@ public:
           last_en_recover = currTime;
         }
       }
+    }
+
+    // Turn of LED after a pre-determined duration
+    if (ledIsOn && (currTime - ledActivationTime >= ledMaxActivationDuration))
+    {
+      ledIsOn = false;
+      Player_NeoPixel.off_FRONT();
+      Player_NeoPixel.off_TOP();
     }
 
     EEPROM.commit();
@@ -475,7 +490,7 @@ public:
             // Turn off LED
             Player_NeoPixel.off_FRONT();
             Player_NeoPixel.off_TOP();
-            is_LED_active = false;
+            ledIsOn = false;
 
             currentProcess = MainMenuProcess;
             currentPage = mainPage; // reset current page
@@ -990,13 +1005,6 @@ public:
 
   int get_game_state()
   {
-    if (!is_LED_active) {
-      is_LED_active = true;
-      // LIGHT UP LED
-      Player_NeoPixel.displayRGB_FRONT(R_ALIVE, G_ALIVE, B_ALIVE);
-      Player_NeoPixel.displayRGB_TOP(R_ALIVE, G_ALIVE, B_ALIVE);
-    }
-
     // retrieve game state from server
     // 0 mean game did not start
     // 1 mean in game

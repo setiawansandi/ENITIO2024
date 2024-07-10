@@ -63,6 +63,7 @@ int WIFI_ON;
 int MAX_COOLDOWN; // in seconds
 
 
+
 int failed_kill_feedback = 0;
 int failed_kill_CLAN[50] = {};
 int failed_kill_ID[50] = {};
@@ -75,6 +76,6 @@ int current_failed_read_pointer = 0;
 #define G_ALIVE 5
 #define B_ALIVE 0
 
-#define R_DEAD 50
+#define R_DEAD 5
 #define G_DEAD 0
 #define B_DEAD 0
