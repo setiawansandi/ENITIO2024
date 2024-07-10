@@ -21,6 +21,7 @@ class Admin {
         int isGLNav = 1 ;
         bool isOverwritingID = false;
         int currentIDnum = 0;
+        bool isCheckingScore = false;
 
     public:
         void handleJoystickMain(){
@@ -33,7 +34,7 @@ class Admin {
                         break;
 
                     case down:
-                        FunctionNav = min(FunctionNav + 1, 4);
+                        FunctionNav = min(FunctionNav + 1, 5);
                         Player_joystick.set_state();
                         break;
 
@@ -54,6 +55,10 @@ class Admin {
 
                         case OverwritePlayerIDFunction:
                             isOverwritingID = true;
+                            break;
+
+                        case CheckScore:
+                            isCheckingScore = true;
                             break;
 
                         case ExitFunction:
@@ -310,6 +315,25 @@ class Admin {
           Player_joystick.set_state();
         }
 
+        void handleJoystickClanScore() {
+            joystick_pos joystick_pos = Player_joystick.read_Joystick();
+            if (Player_joystick.get_state() == 0) {
+                switch (joystick_pos) {
+                    case button:
+                        isCheckingScore = false;
+                        Player_joystick.set_state();
+                        break;
+
+                    case idle:
+                        break;
+
+                    default:
+                        Player_joystick.set_state();
+                        break;
+                }
+            }
+        }
+
         void AdminLoop(){
             switch (verified)
             {
@@ -319,11 +343,11 @@ class Admin {
                 break;
 
             case 1:
-                if (isConfirmingReset){
+                if (isConfirmingReset) {
                     handleJoystickConfirmReset();
                     Admin_OLED.display_ConfirmingReset(ConfirmingResetNav);
                 }
-                else if(isSettingGL){
+                else if(isSettingGL){ 
                     handleJoystickSettingGL();
                     Admin_OLED.display_SettingGL(isGLNav);
                 }
@@ -331,6 +355,17 @@ class Admin {
                     handleJoystickOverwriteID();
                     int previousID = EEPROM.read(ID_add);
                     Admin_OLED.display_SettingID(previousID, currentIDnum);
+                }
+                else if (isCheckingScore) {
+                    handleJoystickClanScore();
+                    int invicta_score = EEPROM.read(POINT_INVICTA_add);
+                    int dynari_score = EEPROM.read(POINT_DYNARI_add);
+                    int ephilia_score = EEPROM.read(POINT_EPHILIA_add);
+                    int akrona_score = EEPROM.read(POINT_AKRONA_add);
+                    int solaris_score = EEPROM.read(POINT_SOLARIS_add);
+
+                    Admin_OLED.display_Checkingscore(invicta_score, dynari_score, ephilia_score,
+                                                        akrona_score, solaris_score);
                 }
                 else {
                     handleJoystickMain();

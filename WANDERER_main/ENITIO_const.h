@@ -11,11 +11,7 @@ const int MACAddressProcess = 5;
 
 #define NAV_WAIT 4000
 
-<<<<<<< Updated upstream
-#define EEPROM_SIZE 25
-=======
 #define EEPROM_SIZE 30
->>>>>>> Stashed changes
 
 const int PROFILE_enable_add = 0;
 const int CLAN_add = 1;
@@ -39,18 +35,15 @@ const int PLAYER_num_bomb_add = 18;
 const int PLAYER_num_poison_add = 19;
 const int ONLINE_mode_add = 20;
 const int PLAYER_registered_online_add = 21;
-<<<<<<< Updated upstream
-=======
 const int POINT_INVICTA_add = 22;
 const int POINT_DYNARI_add = 23;
 const int POINT_EPHILIA_add = 24;
 const int POINT_AKRONA_add = 25;
 const int POINT_SOLARIS_add = 26;
 const int PLAYER_totalTreasure_add = 27;
-const int PLAYER_numDeath_add=28;
+const int PLAYER_numDeath_add = 28;
 
 
->>>>>>> Stashed changes
 
 int EN_RECOVER_DURATION;
 int VIRUS_DECAY_DURATION;
@@ -68,6 +61,8 @@ int KILL_UPDATE_SERVER_INTERVAL;
 int revival_MULTIPLIER;
 int HEAL_MULTIPLIER;
 int WIFI_ON;
+int MAX_COOLDOWN; // in seconds
+
 
 
 int failed_kill_feedback = 0;
@@ -75,3 +70,13 @@ int failed_kill_CLAN[50] = {};
 int failed_kill_ID[50] = {};
 int current_failed_save_pointer = 0;
 int current_failed_read_pointer = 0;
+
+
+// NEOPIXEL LED
+#define R_ALIVE 0
+#define G_ALIVE 50
+#define B_ALIVE 0
+
+#define R_DEAD 50
+#define G_DEAD 0
+#define B_DEAD 0

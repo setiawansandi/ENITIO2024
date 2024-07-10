@@ -6,6 +6,7 @@
 #include "ENITIO_buzzer.h"
 #include "ENITIO_EspNOW.h"
 #include "ENITIO_OLED.h"
+#include "ENITIO_NeoPixel.h"
 #include "MainMenu.h"
 #include "Profile.h"
 #include "TreasureHuntPlayer.h"
@@ -13,6 +14,8 @@
 #include "Credits.h"
 #include "MACAddress.h"
 #define LED_BUILTIN 2
+
+
 
 TaskHandle_t backgroundTask;
 
@@ -41,7 +44,9 @@ unsigned long startDelay = 0;
 void setup() {
   Serial.begin(115200);
   EEPROM.begin(EEPROM_SIZE);
+  Player_NeoPixel.initialize();
 
+  //buzzer delay for 1st instance treasure collected
   randomSeed(analogRead(0));
   startDelay = random(1000, 5000);
   previousMillis = millis();

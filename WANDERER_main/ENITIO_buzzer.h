@@ -21,8 +21,30 @@ class Buzzer{
     void end_sound(){
       noTone(BUZZER_PIN);
     }
-};
 
+
+void Blaster() {
+   
+   // Initial "pop"
+  tone(BUZZER_PIN, 4000);
+  delay(5);
+  
+ const int startFreq = 3000;
+  const int endFreq = 200;
+  const int steps = 50;
+  const int durationPerStep = 5;
+  
+  for (int i = 0; i < steps; i++) {
+    float t = (float)i / steps;
+    int freq = startFreq * pow(endFreq / (float)startFreq, t);
+    tone(BUZZER_PIN, freq);
+    delay(durationPerStep);
+  }
+  
+  noTone(BUZZER_PIN);
+}
+
+};
 Buzzer Player_Buzzer;
 
 #define NOTE_B0  31
