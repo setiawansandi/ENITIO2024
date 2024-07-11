@@ -63,7 +63,7 @@ private:
   int num_fiveminx2EnRegen = 0;
   int num_bomb = 0;
   int num_poison = 0;
-  int num_of_treas_col=0;
+  int num_of_treas_col = 0;
 
   bool is_x2EnRegen = false;
 
@@ -75,7 +75,7 @@ private:
   int temp_bomb_attacked = 0;
   int temp_bomb_killed = 0;
 
-  bool onCooldown = false;   
+  bool onCooldown = false;
   unsigned long timeOfDeath;
 
   bool ledIsOn = false;
@@ -87,6 +87,13 @@ private:
   int scoreEphilia = 0;
   int scoreAkrona = 0;
   int scoreSolaris = 0;
+  int numDeath = 0;
+
+  bool buzzerFirstRun = true;
+  unsigned long buzzerEndTime = 0;
+  unsigned long buzzerEndDelay = 0;
+  unsigned long TREASURE_BUZZ_DURATION = 5000;
+  unsigned long BUZZER_STARTING_DELAY = 0;
 
 public:
   bool gameStarted = 0;
@@ -141,7 +148,7 @@ public:
       EEPROM.write(POINT_EPHILIA_add, 0);
       EEPROM.write(POINT_AKRONA_add, 0);
       EEPROM.write(POINT_SOLARIS_add, 0);
-      EEPROM.write(PLAYER_totalTreasure_add,0);
+      EEPROM.write(PLAYER_totalTreasure_add, 0);
       EEPROM.commit();
     }
     else
@@ -268,7 +275,7 @@ public:
 
         lastActionReceived = currTime;
 
-        if (((CLAN_ != CLAN) && (action_ == attack)) || ((action_ == heal) && (CLAN_ == CLAN) && (ID_ != ID)) || ((action_ == heal) && (CLAN_ != CLAN)) || (action_ == revive) || ((action_ == deposit) && (CLAN_== CLAN) && (ID_== ID)))
+        if (((CLAN_ != CLAN) && (action_ == attack)) || ((action_ == heal) && (CLAN_ == CLAN) && (ID_ != ID)) || ((action_ == heal) && (CLAN_ != CLAN)) || (action_ == revive) || ((action_ == deposit) && (CLAN_ == CLAN) && (ID_ == ID)))
           handleAction(CLAN_, ID_, action_, MULTIPLIER_, channel_);
       }
     }
@@ -277,14 +284,15 @@ public:
   void handle_respawn()
   {
     unsigned long currTime = millis();
-    
+
     if (!onCooldown) // init
     {
       onCooldown = true;
       timeOfDeath = millis();
 
       // drop collected treasure(s)
-      EEPROM.write(PLAYER_numL1Treasure_add, 0);
+      numL1Treasure = 0;
+      EEPROM.write(PLAYER_numL1Treasure_add, numL1Treasure);
 
       // Light up LED (Red)
       ledIsOn = true;
@@ -295,7 +303,7 @@ public:
 
     unsigned long elapsedTime = currTime - timeOfDeath;
     int currentCooldown = MAX_COOLDOWN - (elapsedTime / 1000);
-   
+
     if (currentCooldown > 0)
     {
       permNoti = "     Respawn in " + String(currentCooldown) + "s     ";
@@ -336,6 +344,14 @@ public:
     }
     else
     {
+      // Turn off LED after a pre-determined duration
+      if (ledIsOn && (currTime - ledActivationTime >= ledMaxActivationDuration))
+      {
+        ledIsOn = false;
+        Player_NeoPixel.off_FRONT();
+        Player_NeoPixel.off_TOP();
+      }
+
       permNoti = "";
       last_max_en_decay = currTime;
 
@@ -366,14 +382,6 @@ public:
       }
     }
 
-    // Turn of LED after a pre-determined duration
-    if (ledIsOn && (currTime - ledActivationTime >= ledMaxActivationDuration))
-    {
-      ledIsOn = false;
-      Player_NeoPixel.off_FRONT();
-      Player_NeoPixel.off_TOP();
-    }
-
     EEPROM.commit();
   }
 
@@ -381,12 +389,14 @@ public:
   {
     ID = EEPROM.read(ID_add);
     _isGL = EEPROM.read(isGL_add);
-    
+
     MaxHP = EEPROM.read(PLAYER_MaxHP_add);
     MaxEn = EEPROM.read(PLAYER_MaxEn_add);
 
-    if(HP > MaxHP) HP = MaxHP;
-    if(En > MaxEn) En = MaxEn;
+    if (HP > MaxHP)
+      HP = MaxHP;
+    if (En > MaxEn)
+      En = MaxEn;
   }
 
   void handleJoystick_waiting()
@@ -483,24 +493,24 @@ public:
       case button:
         // if (!choosingPowerUp)
         //{
-          if (lastPageNav != currentPage)
-            currentPage = lastPageNav;
-          if (currentPage == exitPage)
-          {
-            // Turn off LED
-            Player_NeoPixel.off_FRONT();
-            Player_NeoPixel.off_TOP();
-            ledIsOn = false;
+        if (lastPageNav != currentPage)
+          currentPage = lastPageNav;
+        if (currentPage == exitPage)
+        {
+          // Turn off LED
+          Player_NeoPixel.off_FRONT();
+          Player_NeoPixel.off_TOP();
+          ledIsOn = false;
 
-            currentProcess = MainMenuProcess;
-            currentPage = mainPage; // reset current page
-            lastPageNav = currentPage;
-          }
-          // if (currentPage == powerupPage)
-          // {
-          //   choosingPowerUp = true;
-          //   lastPageNav = mainPage;
-          // }
+          currentProcess = MainMenuProcess;
+          currentPage = mainPage; // reset current page
+          lastPageNav = currentPage;
+        }
+        // if (currentPage == powerupPage)
+        // {
+        //   choosingPowerUp = true;
+        //   lastPageNav = mainPage;
+        // }
         //}
 
         // else
@@ -617,6 +627,61 @@ public:
     }
   }
 
+  void handleTreasureBuzzer()
+  {
+    unsigned long currentMillis = millis();
+
+    // If numL1Treasure is 0, stop any ongoing buzz and reset buzzerFirstRun
+    if (numL1Treasure == 0)
+    {
+      if (buzzerEndTime != 0)
+      {
+        Player_Buzzer.end_sound();
+        buzzerEndTime = 0;
+        Serial.println("Buzzer stopped due to no treasure");
+      }
+      buzzerFirstRun = true;
+      return;
+    }
+
+    // Handle first run delay when numL1Treasure becomes > 0
+    if (buzzerFirstRun)
+    {
+      if (currentMillis - previousMillis >= BUZZER_STARTING_DELAY)
+      {
+        buzzerFirstRun = false;
+        previousMillis = currentMillis;
+        buzzerEndDelay = random(3000, 20000);
+        Serial.println("First run delay completed. Next buzz in " + String(buzzerEndDelay) + "ms");
+      }
+      return;
+    }
+
+    // Handle treasure buzz when numL1Treasure > 0 and first run is complete
+    if (currentMillis - previousMillis >= buzzerEndDelay && buzzerEndTime == 0)
+    {
+      // Start a new treasure buzz
+      Player_Buzzer.sound(NOTE_E4);
+      buzzerEndTime = currentMillis + TREASURE_BUZZ_DURATION;
+      previousMillis = currentMillis;
+      buzzerEndDelay = random(3000, 20000);
+      Serial.println("Treasure Buzzer started. Next in " + String(buzzerEndDelay) + "ms");
+    }
+    else if (currentMillis < buzzerEndTime)
+    {
+      // Continue ongoing treasure buzz
+      Player_Buzzer.sound(NOTE_E4);
+    }
+
+    // Stop any completed buzz
+    if (buzzerEndTime != 0 && currentMillis >= buzzerEndTime)
+    {
+      Player_Buzzer.end_sound();
+      buzzerEndTime = 0;
+      Serial.println("Treasure Buzzer stopped");
+    }
+  }
+
   void handleAction(int CLAN_, int ID_, int action_, int MULTIPLIER_, int channel_)
   {
     Serial.print("Action ID: ");
@@ -628,38 +693,40 @@ public:
       {
         HP = max(HP - MULTIPLIER_, 0);
 
-        if (HP == 0) 
+        if (HP == 0)
         {
-          switch(CLAN_)
+          switch (CLAN_)
           {
-            case INVICTA:
-              EEPROM.write(POINT_INVICTA_add, ++scoreInvicta);
-              Serial.println("INVICTA Scores!");
-              break;
-            
-            case DYNARI:
-              EEPROM.write(POINT_DYNARI_add, ++scoreDynari);
-              Serial.println("DYNARI Scores!");
-              break;
+          case INVICTA:
+            EEPROM.write(POINT_INVICTA_add, ++scoreInvicta);
+            Serial.println("INVICTA Scores!");
+            break;
 
-            case EPHILIA:
-              EEPROM.write(POINT_EPHILIA_add, ++scoreEphilia);
-              Serial.println("EPHILIA Scores!");
-              break;
+          case DYNARI:
+            EEPROM.write(POINT_DYNARI_add, ++scoreDynari);
+            Serial.println("DYNARI Scores!");
+            break;
 
-            case AKRONA:
-              EEPROM.write(POINT_AKRONA_add, ++scoreAkrona);
-              Serial.println("AKRONA Scores!");
-              break;
-            
-            case SOLARIS:
-              EEPROM.write(POINT_SOLARIS_add, ++scoreSolaris);
-              Serial.println("SOLARIS Scores!");
-              break;
-            
-            default:
-              break;
+          case EPHILIA:
+            EEPROM.write(POINT_EPHILIA_add, ++scoreEphilia);
+            Serial.println("EPHILIA Scores!");
+            break;
+
+          case AKRONA:
+            EEPROM.write(POINT_AKRONA_add, ++scoreAkrona);
+            Serial.println("AKRONA Scores!");
+            break;
+
+          case SOLARIS:
+            EEPROM.write(POINT_SOLARIS_add, ++scoreSolaris);
+            Serial.println("SOLARIS Scores!");
+            break;
+
+          default:
+            break;
           }
+
+          numDeath = scoreInvicta + scoreDynari + scoreEphilia + scoreAkrona + scoreSolaris;
         }
 
         EEPROM.write(PLAYER_HP_add, HP);
@@ -668,7 +735,7 @@ public:
         tempNoti_start = millis();
         feedback_attack(CLAN_, ID_, channel_);
         Player_Buzzer.sound(NOTE_E3);
-      } 
+      }
       break;
 
     case heal:
@@ -707,7 +774,7 @@ public:
       break;
 
     case deposit:
-      if(HP > 0)
+      if (HP > 0)
       {
         Serial.printf("Treasure deposited %d\n", numL1Treasure);
         tempNoti = "   Deposited " + String(num_of_treas_col) + " Trea.";
@@ -730,7 +797,7 @@ public:
   void update_total_treasure_collected(int num_of_treasure_deposited)
   {
     totalTreasure = EEPROM.read(PLAYER_totalTreasure_add); // Read the current treasure
-    totalTreasure += num_of_treasure_deposited; // Update the total treasure
+    totalTreasure += num_of_treasure_deposited;            // Update the total treasure
     EEPROM.write(PLAYER_totalTreasure_add, totalTreasure); // Write the updated treasure to EEPROM
     Serial.printf("Total treasure collected %d\n", totalTreasure);
   }
@@ -767,6 +834,7 @@ public:
         {
           tempNoti = " Attack successfully ";
           tempNoti_start = millis();
+          Player_Buzzer.Blaster();
         }
       }
       break;
@@ -799,45 +867,49 @@ public:
     case 2:
       if ((feedbackData.attacker_CLAN == CLAN) && (feedbackData.attacker_ID == ID))
       {
-      //  Serial.print("L1 Treasure Collected Power Up:");
-      //  Serial.println(feedbackData.powerup_received);
-        Serial.print("Treasure Collected");
+        //  Serial.print("L1 Treasure Collected Power Up:");
+        //  Serial.println(feedbackData.powerup_received);
+        Serial.println("Treasure Collected");
         numL1Treasure++;
-      //   switch (feedbackData.powerup_received)
-      //   {
-      //   case bonus6HP:
-      //     num_bonus6HP++;
-      //     EEPROM.write(PLAYER_num_bonus6HP_add, num_bonus6HP);
-      //     tempNoti = "    PowerUp: +6 HP   ";
-      //     break;
+        EEPROM.write(PLAYER_numL1Treasure_add, numL1Treasure);
 
-      //   case bonus1MaxEn:
-      //     num_bonus1MaxEn++;
-      //     EEPROM.write(PLAYER_num_bonus1MaxEn_add, num_bonus1MaxEn);
-      //     tempNoti = "  PowerUp: +1 Max En ";
-      //     break;
+        Player_Buzzer.sound(NOTE_E3);
+        tempNoti = " Treasure Collected! ";
+        //   switch (feedbackData.powerup_received)
+        //   {
+        //   case bonus6HP:
+        //     num_bonus6HP++;
+        //     EEPROM.write(PLAYER_num_bonus6HP_add, num_bonus6HP);
+        //     tempNoti = "    PowerUp: +6 HP   ";
+        //     break;
 
-      //   case bonus1MULTIPLIER:
-      //     num_bonus1Multiplier++;
-      //     EEPROM.write(PLAYER_num_bonus1MULTIPLIER_add, num_bonus1Multiplier);
-      //     tempNoti = "   PowerUp: +1 MULTIPLIER  ";
-      //     break;
+        //   case bonus1MaxEn:
+        //     num_bonus1MaxEn++;
+        //     EEPROM.write(PLAYER_num_bonus1MaxEn_add, num_bonus1MaxEn);
+        //     tempNoti = "  PowerUp: +1 Max En ";
+        //     break;
 
-      //   case fiveminx2EnRegen:
-      //     num_fiveminx2EnRegen++;
-      //     EEPROM.write(PLAYER_num_fiveminx2EnRegen_add, num_fiveminx2EnRegen);
-      //     tempNoti = "PowerUp: x2 En Regen ";
-      //     break;
+        //   case bonus1MULTIPLIER:
+        //     num_bonus1Multiplier++;
+        //     EEPROM.write(PLAYER_num_bonus1MULTIPLIER_add, num_bonus1Multiplier);
+        //     tempNoti = "   PowerUp: +1 MULTIPLIER  ";
+        //     break;
 
-      //   case bomb:
-      //     num_bomb++;
-      //     EEPROM.write(PLAYER_num_bomb_add, num_bomb);
-      //     tempNoti = "  PowerUp: A Bomb!!  ";
-      //     break;
+        //   case fiveminx2EnRegen:
+        //     num_fiveminx2EnRegen++;
+        //     EEPROM.write(PLAYER_num_fiveminx2EnRegen_add, num_fiveminx2EnRegen);
+        //     tempNoti = "PowerUp: x2 En Regen ";
+        //     break;
 
-      //   default:
-      //     break;
-      //   }
+        //   case bomb:
+        //     num_bomb++;
+        //     EEPROM.write(PLAYER_num_bomb_add, num_bomb);
+        //     tempNoti = "  PowerUp: A Bomb!!  ";
+        //     break;
+
+        //   default:
+        //     break;
+        //   }
         tempNoti_start = millis();
       }
       break;
@@ -970,9 +1042,10 @@ public:
       TreasureHunt_OLED.display_infoPage(CLAN, ID, Multiplier, MaxEn, noti_to_display, lastPageNav);
       break;
     case achievementPage:
-      TreasureHunt_OLED.display_achievementPage_new(numKilled, 
+      TreasureHunt_OLED.display_achievementPage_new(numKilled,
+                                                    numDeath,
                                                     totalTreasure,
-                                                    noti_to_display, 
+                                                    noti_to_display,
                                                     lastPageNav);
       break;
     case powerupPage:
@@ -1104,6 +1177,7 @@ public:
       update_player_state();
       update_display();
       update_sound();
+      handleTreasureBuzzer();
       EEPROM.commit();
     }
   };

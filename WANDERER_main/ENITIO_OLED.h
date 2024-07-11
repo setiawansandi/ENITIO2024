@@ -442,15 +442,15 @@ class Admin_OLED {
       display.println(F("     Clan Scores     "));
 
       display.setTextColor(SSD1306_WHITE); // Draw 'inverse' text
-      display.setCursor(0, 10);
+      display.setCursor(5, 10);
       display.print("Invicta: "), display.println(invicta_score);
-      display.setCursor(0, 19);
+      display.setCursor(5, 19);
       display.print("Dynari: "), display.println(dynari_score);
-      display.setCursor(0, 28);
+      display.setCursor(5, 28);
       display.print("Ephilia: "), display.println(ephilia_score);
-      display.setCursor(0, 37);
+      display.setCursor(5, 37);
       display.print("Akrona: "), display.println(akrona_score);
-      display.setCursor(0, 46);
+      display.setCursor(5, 46);
       display.print("Solaris: "), display.println(solaris_score);
 
       display.setCursor(10, 55);
@@ -1113,7 +1113,7 @@ class TreasureHunt_OLED {
       display.display();
     };
 
-    void display_achievementPage_new(int numKilled, int treasure, String noti, int pageNav) {
+    void display_achievementPage_new(int numKilled, int numDeath, int treasure, String noti, int pageNav) {
       display.clearDisplay();
       display.setTextSize(1); // Draw SIZE
       if (noti.length() == 0)
@@ -1137,6 +1137,10 @@ class TreasureHunt_OLED {
       display.println(numKilled);
 
       display.setCursor(0, 24);
+      display.print("Death: ");
+      display.println(numDeath);
+
+      display.setCursor(0, 36);
       display.print("Tres. deposited: ");
       display.println(treasure);
 
