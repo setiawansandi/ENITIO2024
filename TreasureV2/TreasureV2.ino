@@ -30,7 +30,7 @@ int current_failed_save_pointer = 0;
 int current_failed_read_pointer = 0;
 bool uploadInProgress = 0;  // boolean required to ensure treasure doesn't recover while WiFi is transmitting
 bool can_upload_fail = 1;
-int WIFI_ON;
+int WIFI_ON = 0;
 bool parameters_updated = false;
 
 // stub functions
@@ -43,6 +43,7 @@ void clearEEPROM();
 #include "ENITIO_ESPNOW.h"
 #include "ENITIO_NeoPixel.h"
 #include "ENITIO_joystick.h"
+#include "ENITIO_treasure_OLED.h"
 #include "Admin.h"
 
 
@@ -126,7 +127,7 @@ class TreasureLevel1
 
           if (action_ == collect) {
             lastOpenedTime = millis();
-            handle_Collected();
+            handle_Collected_Real();
           }
         }
       }
@@ -138,7 +139,7 @@ class TreasureLevel1
       TreasureLevel1_EspNOW.send_data(2, CLAN_, ID_, ID, true, powerup_ID, channel_);
     } ;
 
-    void handle_Collected() {
+    void handle_Collected_Real() {
       interim_collected_display();
 
       // inform the server here ...
@@ -231,63 +232,10 @@ class TreasureLevel1
     void display_in_game() {
       int currStatus = EEPROM.read(ENABLE_add);
       if (currStatus == 1) {
-        display.clearDisplay(); \
-        display.setTextSize(1); // Draw SIZE
-        display.setTextColor(SSD1306_BLACK, SSD1306_WHITE); // Draw 'inverse' text
-        display.setCursor(0, 0);
-        display.println(F("    Treasure Chest   "));
-
-        display.setCursor(0, 24);
-        display.setTextSize(1);      // Normal 1:1 pixel scale
-        display.setTextColor(SSD1306_WHITE); // Draw white text
-        display.println("   Collect this to   ");
-        display.println("   get a power-up!   ");
-
-        if (!WIFI_ON) {
-          display.setCursor(0, 56);
-          display.setTextColor(SSD1306_BLACK, SSD1306_WHITE);
-          display.println("    OFFLINE MODE    ");
-        }
-
-        display.display();
+        displayTreasure();
       }
       else {
-        display.clearDisplay(); \
-        display.setTextSize(1); // Draw SIZE
-        display.setTextColor(SSD1306_BLACK, SSD1306_WHITE); // Draw 'inverse' text
-        display.setCursor(0, 0);
-        display.println(F("    Treasure Chest   "));
-
-        display.setCursor(0, 12);
-        display.setTextSize(1);      // Normal 1:1 pixel scale
-        display.setTextColor(SSD1306_WHITE); // Draw white text
-        display.println("  Treasure is Opened  ");
-
-        display.setCursor(0, 22);
-        display.println("  Resetting soon...  ");
-
-        display.setCursor(0, 34);
-        display.println("   Clan Collected:  ");
-
-        display.setCursor(0, 44);
-        if (CLAN_ == INVICTA)
-          display.println("      INVICTA       ");
-        else if (CLAN_ == DYNARI)
-          display.println("       DYNARI       ");
-        else if (CLAN_ == EPHILIA)
-          display.println("      EPHILIA       ");
-        else if (CLAN_ == AKRONA)
-          display.println("       AKRONA       ");
-        else if (CLAN_ == SOLARIS)
-          display.println("      SOLARIS       ");
-
-        if (!WIFI_ON) {
-          display.setCursor(0, 56);
-          display.setTextColor(SSD1306_BLACK, SSD1306_WHITE);
-          display.println("    OFFLINE MODE    ");
-        }
-
-        display.display();
+        displayTreasureLooted(CLAN_);
       };
     }
 };
@@ -382,6 +330,8 @@ void backgroundTaskCode(void * pvParameters) {
 };
 
 void setup() {
+  randomSeed(analogRead(0));
+  
   if (!display.begin(SSD1306_SWITCHCAPVCC, SCREEN_ADDRESS)) {
     Serial.println(F("SSD1306 allocation failed"));
     for (;;); // Don't proceed, loop forever
@@ -418,13 +368,15 @@ void setup() {
 void loop() {
   if (AdminFunction) {
     TreasureLevel1_Admin.AdminLoop();
-  } else if (!WIFI_ON) {
+  } 
+  else if (!WIFI_ON) {
     // offline mode
     handleJoystick();
     Treasure.display_in_game();
     Treasure.receiveAction();
     Treasure.recover();
-  } else {
+  } 
+  else {
     // online mode
     handleJoystick();
     if (setUpDone) {
