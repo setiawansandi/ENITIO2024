@@ -178,6 +178,24 @@ class DBConnection {
                 Serial.println("Target on same channel, no change required");
             }
         }
+
+        int getClanWiFiChannel(int CLAN) {
+            switch(CLAN) {
+                case INVICTA:
+                    return 1;
+                case DYNARI:
+                    return 6;
+                case EPHILIA:
+                    return 6;
+                case AKRONA:
+                    return 11;
+                case SOLARIS:
+                    return 11;
+                default:
+                    Serial.println("getClanWiFiChannel: CLAN not found");
+                    return 1;
+            }
+        }
 };
 
 DBConnection dbc;

@@ -4,7 +4,7 @@
 
 #define hp_pxl_bar_width 100 // [pxl/HP]
 
-#define ENABLE_add 0  // 0 means Treasure has not been initialized, 1 means already initialized
+#define ENABLE_add 0 // 0 means Treasure has not been initialized, 1 means already initialized
 #define ID_add 1
 #define HP_add 2
 #define INVICTA_add 3
@@ -16,7 +16,7 @@
 
 #define R_ON 0
 #define G_ON 0
-#define B_ON 0 //255
+#define B_ON 0 // 255
 
 #define DOUBLE_CLICK_LENGTH 1000 // [ms]
 
@@ -28,7 +28,7 @@ int failed_kill_CLAN[50] = {};
 int failed_kill_ID[50] = {};
 int current_failed_save_pointer = 0;
 int current_failed_read_pointer = 0;
-bool uploadInProgress = 0;  // boolean required to ensure treasure doesn't recover while WiFi is transmitting
+bool uploadInProgress = 0; // boolean required to ensure treasure doesn't recover while WiFi is transmitting
 bool can_upload_fail = 1;
 int WIFI_ON = 0;
 bool parameters_updated = false;
@@ -49,6 +49,8 @@ void clearEEPROM();
 
 bool isBombed = false;
 
+const int CLAN = -1; // -1 since chest doesn't belong to any clan
+
 // Constants
 int TREASURE_LEVEL1_INITIAL_HP;
 int TREASURE_LEVEL1_ACTION_RECV_WAIT;
@@ -59,234 +61,337 @@ unsigned long tempNoti_start = 0;
 bool clicked_once = 0;
 unsigned long last_clicked = 0;
 
-void handleJoystick() {
+void handleJoystick()
+{
   joystick_pos joystick_pos = TreasureLevel1_joystick.read_Joystick();
-  if (TreasureLevel1_joystick.get_state() == 0) {
-    switch (joystick_pos) {
-      case button:
-        if (clicked_once) {
-          AdminFunction = true;
+  if (TreasureLevel1_joystick.get_state() == 0)
+  {
+    switch (joystick_pos)
+    {
+    case button:
+      if (clicked_once)
+      {
+        AdminFunction = true;
+        clicked_once = 0;
+      }
+      else
+      {
+        clicked_once = 1;
+        last_clicked = millis();
+      }
+      TreasureLevel1_joystick.set_state();
+      break;
+
+    case idle:
+      if (clicked_once)
+      {
+        unsigned long currTime = millis();
+        if (currTime - last_clicked > DOUBLE_CLICK_LENGTH)
           clicked_once = 0;
-        }
-        else {
-          clicked_once = 1;
-          last_clicked = millis();
-        }
-        TreasureLevel1_joystick.set_state();
-        break;
+      }
+      break;
 
-      case idle:
-        if (clicked_once) {
-          unsigned long currTime = millis();
-          if (currTime - last_clicked > DOUBLE_CLICK_LENGTH) clicked_once = 0;
-        }
-        break;
-
-      default:
-        if (clicked_once) {
-          unsigned long currTime = millis();
-          if (currTime - last_clicked > DOUBLE_CLICK_LENGTH) clicked_once = 0;
-        }
-        TreasureLevel1_joystick.set_state();
-        break;
+    default:
+      if (clicked_once)
+      {
+        unsigned long currTime = millis();
+        if (currTime - last_clicked > DOUBLE_CLICK_LENGTH)
+          clicked_once = 0;
+      }
+      TreasureLevel1_joystick.set_state();
+      break;
     }
   }
 }
 
-class TreasureLevel1
+void sendBomb(void *parameter)
 {
-  private:
-    int HP;
+  // Perform the bomb scanning and sending operations
+  Treasure_EspNOW.ScanForBombTarget();
+  Treasure_EspNOW.SendBombToAllTargets(CLAN, ID);
+  vTaskDelete(NULL); // Delete this task when done
+}
 
-    int this_recover_duration = TREASURE_RECOVER_DURATION;
-    unsigned long lastOpenedTime = 0;
-    unsigned long lastActionReceived = 0;
+class TreasureV2
+{
+private:
+  int HP;
 
-  public:
+  int this_recover_duration = TREASURE_RECOVER_DURATION;
+  unsigned long lastOpenedTime = 0;
+  unsigned long lastActionReceived = 0;
 
-    int CLAN_, ID_, En_, MULTIPLIER_, action_, channel_;
+public:
+  int CLAN_, ID_, En_, MULTIPLIER_, action_, channel_;
 
-    void init_treasure() {
-      EEPROM.write(ENABLE_add, 1);
-      EEPROM.commit();
-      HP = TREASURE_LEVEL1_INITIAL_HP;
-    };
+  void init_treasure()
+  {
+    EEPROM.write(ENABLE_add, 1);
+    EEPROM.commit();
+    HP = TREASURE_LEVEL1_INITIAL_HP;
+  };
 
-    void receiveAction() {
-      int currStatus = EEPROM.read(ENABLE_add);
-      if (TreasureLevel1_IR.available()) {
-        ir_signal IRsignal_ = TreasureLevel1_IR.read();
-        unsigned long currTime = millis();
-        if ((currStatus == 1) && (currTime - lastActionReceived > TREASURE_LEVEL1_ACTION_RECV_WAIT)) {
-          Serial.printf("RECV %d %d %d %d | %d %d %d %d \n", IRsignal_.address.digit3, IRsignal_.address.digit2, IRsignal_.address.digit1, IRsignal_.address.digit0, IRsignal_.command.digit3, IRsignal_.command.digit2, IRsignal_.command.digit1, IRsignal_.command.digit0);
-          CLAN_ = IRsignal_.address.digit2;
-          ID_ = IRsignal_.address.digit0 + (IRsignal_.address.digit1 << 4);
+  void receiveAction()
+  {
+    int currStatus = EEPROM.read(ENABLE_add);
+    if (TreasureLevel1_IR.available())
+    {
+      ir_signal IRsignal_ = TreasureLevel1_IR.read();
+      unsigned long currTime = millis();
+      if ((currStatus == 1) && (currTime - lastActionReceived > TREASURE_LEVEL1_ACTION_RECV_WAIT))
+      {
+        Serial.printf("RECV %d %d %d %d | %d %d %d %d \n", IRsignal_.address.digit3, IRsignal_.address.digit2, IRsignal_.address.digit1, IRsignal_.address.digit0, IRsignal_.command.digit3, IRsignal_.command.digit2, IRsignal_.command.digit1, IRsignal_.command.digit0);
+        CLAN_ = IRsignal_.address.digit2;
+        ID_ = IRsignal_.address.digit0 + (IRsignal_.address.digit1 << 4);
 
-          channel_ = IRsignal_.command.digit2;
-          MULTIPLIER_ = IRsignal_.command.digit1;
-          action_ = IRsignal_.command.digit0;
-          lastActionReceived = currTime;
+        channel_ = IRsignal_.command.digit2;
+        MULTIPLIER_ = IRsignal_.command.digit1;
+        action_ = IRsignal_.command.digit0;
+        lastActionReceived = currTime;
 
-          if (action_ == collect) {
-            int randomValue = random(100);  // Generate a random number between 0 and 99 (inclusive)
+        if (action_ == collect)
+        {
+          int randomValue = random(100); // Generate a random number between 0 and 99 (inclusive)
 
-            if (randomValue < 50) {  // chance in %
-              handle_Bomb();
-            } else {
-              handle_Collected();
-            }
-
-            // SET treasure chest COOLDOWN
-            lastOpenedTime = millis();
-            this_recover_duration = TREASURE_RECOVER_DURATION * random(1, 9);
+          if (randomValue < 50)
+          { // chance in %
+            handle_Bomb();
           }
+          else
+          {
+            handle_Collected();
+          }
+
+          // SET treasure chest COOLDOWN
+          lastOpenedTime = millis();
+          this_recover_duration = TREASURE_RECOVER_DURATION * random(1, 9);
         }
       }
-    };
+    }
+  };
 
-    void feedback_collectL1(int CLAN_, int ID_, int channel_) {
-      unsigned long currTime = millis();
-      int powerup_ID = random(1, 6);
-      TreasureLevel1_EspNOW.send_data(2, CLAN_, ID_, ID, true, powerup_ID, channel_);
-    } ;
+  void receiveEspNOW() { //TODO
+    // if (EspNOW_received >= 1)
+    // {
+    //   int i;
+    //   for (i = 0; i < EspNOW_received; i++)
+    //   {
+    //     feedback_message feedbackData = Player_EspNOW.get_feedback_received();
+    //     switch (feedbackData.msg_type)
+    //     {
+    //     case 1:
+    //       handleFeedbackMsg(feedbackData);
+    //       break;
 
-    void handle_Bomb() {
-      Serial.println("Fake treasure, dropping Bomb!");
+    //     case 2:
+    //       handleBombed(feedbackData);
+    //       break;
 
-      isBombed = true;
+    //     default:
+    //       break;
+    //     }
+    //     EspNOW_received--;
+    //   }
+    //   if ((temp_bomb_attacked == Player_EspNOW.num_bombed) && (active_bomb))
+    //   {
+    //     Serial.print("Bombed ");
+    //     Serial.println(temp_bomb_attacked);
+    //     String num_attack_noti = String(" Bombed ");
+    //     num_attack_noti.concat(temp_bomb_attacked);
+    //     String num_killed_noti = String(" Killed ");
+    //     num_killed_noti.concat(temp_bomb_killed);
+    //     num_attack_noti += num_killed_noti;
+    //     tempNoti = num_attack_noti;
+    //     tempNoti_start = millis();
+    //     temp_bomb_attacked = 0;
+    //     temp_bomb_killed = 0;
+    //     active_bomb = false;
+    //   }
+    // }
+  }
 
-      EEPROM.write(ENABLE_add, 2);
-      EEPROM.commit();
+  void feedback_collect(int CLAN_, int ID_, int channel_)
+  {
+    unsigned long currTime = millis();
+    int powerup_ID = random(1, 6);
+    Treasure_EspNOW.send_data(2, CLAN_, ID_, ID, true, powerup_ID, channel_);
+  };
 
-      for(int i = 0; i < 3; ++i) {
-        Treasure_Buzzer.sound(NOTE_C2);
-        displayBombed();
-        TreasureLevel1_NeoPixel.displayRGB_FRONT(5, 0, 0);
-        TreasureLevel1_NeoPixel.displayRGB_TOP(5, 0, 0);
-        delay(600);
+  void handle_Bomb()
+  {
+    Serial.println("Fake treasure, dropping Bomb!");
 
-        Treasure_Buzzer.end_sound();
-        displayClear();
-        TreasureLevel1_NeoPixel.off_FRONT();
-        TreasureLevel1_NeoPixel.off_TOP();
-        delay(600);
-      }
-      
+    isBombed = true;
+
+    EEPROM.write(ENABLE_add, 2);
+    EEPROM.commit();
+
+
+    // Send the bomb through espnow
+    // Determine a safe stack size to allocate
+    const uint32_t stackSize = 10000; // Stack size in bytes
+    
+    // Check if the required stack size can be allocated
+    if (xPortGetFreeHeapSize() > stackSize)
+    {
+      // Create a new task to handle the bomb scan and send
+      xTaskCreate(
+        sendBomb,     // Function to be executed
+        "Bomb Task",  // Name of the task (for debugging)
+        stackSize,    // Stack size (bytes)
+        NULL,         // Parameter to pass to the task
+        1,            // Task priority
+        NULL          // Task handle
+      );
+    }
+    else
+    {
+      Serial.println("Not enough heap memory to create the task!");
     }
 
-    void handle_Collected() {
-      interim_collected_display();
 
-      // inform the server here ...
+    for (int i = 0; i < 3; ++i)
+    {
+      Treasure_Buzzer.sound(NOTE_C2);
+      displayBombed();
+      TreasureLevel1_NeoPixel.displayRGB_FRONT(5, 0, 0);
+      TreasureLevel1_NeoPixel.displayRGB_TOP(5, 0, 0);
+      delay(600);
+
+      Treasure_Buzzer.end_sound();
+      displayClear();
       TreasureLevel1_NeoPixel.off_FRONT();
       TreasureLevel1_NeoPixel.off_TOP();
+      delay(600);
+    }
+  }
 
-      Serial.printf("TREASURE%d opened by CLAN %d ID %d\n", ID, CLAN_, ID_);
-      feedback_collectL1(CLAN_, ID_, channel_);
-      int player_identifier = CLAN_ * pow(16, 2) + ID_;
+  void handle_Collected()
+  {
+    interim_collected_display();
 
-      EEPROM.write(ENABLE_add, 2);
-      switch (CLAN_)
+    // inform the server here ...
+    TreasureLevel1_NeoPixel.off_FRONT();
+    TreasureLevel1_NeoPixel.off_TOP();
+
+    Serial.printf("TREASURE%d opened by CLAN %d ID %d\n", ID, CLAN_, ID_);
+    feedback_collect(CLAN_, ID_, channel_);
+    int player_identifier = CLAN_ * pow(16, 2) + ID_;
+
+    EEPROM.write(ENABLE_add, 2);
+    switch (CLAN_)
+    {
+    case INVICTA:
+      EEPROM.write(INVICTA_add, EEPROM.read(INVICTA_add) + 1);
+      break;
+
+    case DYNARI:
+      EEPROM.write(DYNARI_add, EEPROM.read(DYNARI_add) + 1);
+      break;
+
+    case EPHILIA:
+      EEPROM.write(EPHILIA_add, EEPROM.read(EPHILIA_add) + 1);
+      break;
+
+    case AKRONA:
+      EEPROM.write(AKRONA_add, EEPROM.read(AKRONA_add) + 1);
+      break;
+
+    case SOLARIS:
+      EEPROM.write(SOLARIS_add, EEPROM.read(SOLARIS_add) + 1);
+      break;
+
+    default:
+      break;
+    }
+    EEPROM.commit();
+
+    Treasure_Buzzer.sound(NOTE_DS1);
+    tempNoti_start = millis();
+
+    if (WIFI_ON)
+    {
+      dbc.setTreasureAsOpened("TREASURE" + String(ID), CLAN_, ID_);
+    }
+  };
+
+  void recover()
+  {
+    // Level1Treasures can recover after a fixed amt of time
+    int currStatus = EEPROM.read(ENABLE_add);
+    unsigned int currTime = millis();
+
+    if (currStatus == 2 && currTime - lastOpenedTime > this_recover_duration && !uploadInProgress)
+    {
+      Serial.println("Reopening Treasure..");
+      isBombed = false;
+      EEPROM.write(ENABLE_add, 1);
+      HP = TREASURE_LEVEL1_INITIAL_HP;
+      TreasureLevel1_NeoPixel.displayRGB_FRONT(R_ON, G_ON, B_ON);
+      TreasureLevel1_NeoPixel.displayRGB_TOP(R_ON, G_ON, B_ON);
+    }
+  };
+
+  void display_not_playing_yet()
+  {
+    display.clearDisplay();
+    display.setTextSize(1);                             // Draw SIZE
+    display.setTextColor(SSD1306_BLACK, SSD1306_WHITE); // Draw 'inverse' text
+    display.setCursor(0, 0);
+    display.println(F("    Treasure Chest   "));
+
+    display.setCursor(0, 16);
+    display.setTextColor(SSD1306_WHITE); // Draw white text
+    display.println("      Hold on!!     ");
+    display.setCursor(0, 30);
+    display.println("  The game has not  ");
+    display.println("    started yet.    ");
+    display.display();
+  };
+
+  void interim_collected_display()
+  {
+    display.clearDisplay();
+    display.setTextSize(1);                             // Draw SIZE
+    display.setTextColor(SSD1306_BLACK, SSD1306_WHITE); // Draw 'inverse' text
+    display.setCursor(0, 0);
+    display.println(F("    Treasure Chest   "));
+
+    display.setCursor(0, 16);
+    display.setTextColor(SSD1306_WHITE); // Draw white text
+    display.println("    Please wait ...   ");
+    display.display();
+  }
+
+  void display_in_game()
+  {
+    int currStatus = EEPROM.read(ENABLE_add);
+    if (currStatus == 1)
+    {
+      displayTreasure();
+    }
+    else
+    {
+      if (isBombed == 1)
       {
-        case INVICTA:
-          EEPROM.write(INVICTA_add, EEPROM.read(INVICTA_add) + 1);
-          break;
-
-        case DYNARI:
-          EEPROM.write(DYNARI_add, EEPROM.read(DYNARI_add) + 1);
-          break;
-
-        case EPHILIA:
-          EEPROM.write(EPHILIA_add, EEPROM.read(EPHILIA_add) + 1);
-          break;
-
-        case AKRONA:
-          EEPROM.write(AKRONA_add, EEPROM.read(AKRONA_add) + 1);
-          break;
-
-        case SOLARIS:
-          EEPROM.write(SOLARIS_add, EEPROM.read(SOLARIS_add) + 1);
-          break;
-
-        default:
-          break;
+        displayCombusted();
       }
-      EEPROM.commit();
-
-      Treasure_Buzzer.sound(NOTE_DS1);
-      tempNoti_start = millis();
-
-      if (WIFI_ON) {
-        dbc.setTreasureAsOpened("TREASURE" + String(ID), CLAN_, ID_);
+      else
+      {
+        displayTreasureLooted(CLAN_);
       }
-    };
-
-    void recover() {
-      // Level1Treasures can recover after a fixed amt of time
-      int currStatus = EEPROM.read(ENABLE_add);
-      unsigned int currTime = millis();
-
-      if (currStatus == 2 && currTime - lastOpenedTime > this_recover_duration && !uploadInProgress) {
-        Serial.println("Reopening Treasure..");
-        isBombed = false;
-        EEPROM.write(ENABLE_add, 1);
-        HP = TREASURE_LEVEL1_INITIAL_HP;
-        TreasureLevel1_NeoPixel.displayRGB_FRONT(R_ON, G_ON, B_ON);
-        TreasureLevel1_NeoPixel.displayRGB_TOP(R_ON, G_ON, B_ON);
-      }
-    };
-
-    void display_not_playing_yet() {
-      display.clearDisplay();
-      display.setTextSize(1); // Draw SIZE
-      display.setTextColor(SSD1306_BLACK, SSD1306_WHITE); // Draw 'inverse' text
-      display.setCursor(0, 0);
-      display.println(F("    Treasure Chest   "));
-
-      display.setCursor(0, 16);
-      display.setTextColor(SSD1306_WHITE); // Draw white text
-      display.println("      Hold on!!     ");
-      display.setCursor(0, 30);
-      display.println("  The game has not  ");
-      display.println("    started yet.    ");
-      display.display();
-    };
-
-    void interim_collected_display() {
-      display.clearDisplay();
-      display.setTextSize(1); // Draw SIZE
-      display.setTextColor(SSD1306_BLACK, SSD1306_WHITE); // Draw 'inverse' text
-      display.setCursor(0, 0);
-      display.println(F("    Treasure Chest   "));
-
-      display.setCursor(0, 16);
-      display.setTextColor(SSD1306_WHITE); // Draw white text
-      display.println("    Please wait ...   ");
-      display.display();
     }
-
-    void display_in_game() {
-      int currStatus = EEPROM.read(ENABLE_add);
-      if (currStatus == 1) {
-        displayTreasure();
-      }
-      else{
-        if (isBombed == 1) {
-          displayCombusted();
-        }
-        else {
-          displayTreasureLooted(CLAN_);
-        }
-      } 
-    }
+  }
 };
 
-TreasureLevel1 Treasure;  // use OLED to input ID
+TreasureV2 Treasure; // use OLED to input ID
 bool gameStarted = 0;
 
-void clearEEPROM() {
+void clearEEPROM()
+{
   int i;
-  for (i = 0; i < EEPROM_SIZE; i++) {
+  for (i = 0; i < EEPROM_SIZE; i++)
+  {
     EEPROM.write(i, 0);
   }
   EEPROM.commit();
@@ -302,14 +407,17 @@ void update_sound()
 }
 
 bool setUpDone = 0;
-int get_game_state() {
+int get_game_state()
+{
   // retrieve game state from server
   // 0 mean game did not start
   // 1 mean in game
-  if (!parameters_updated) {
+  if (!parameters_updated)
+  {
     Serial.println("[BACKGROUND] Connecting to WiFi to retrieve latest parameters..");
     bool isWiFiConnected = dbc.connectToWiFi();
-    if (isWiFiConnected) {
+    if (isWiFiConnected)
+    {
       GAME_CONSTANTS game_consts = dbc.getGameConstants();
       HTTP_TIMEOUT = game_consts.HTTP_TIMEOUT;
       TREASURE_LEVEL1_INITIAL_HP = game_consts.TREASURE_LEVEL1_INITIAL_HP;
@@ -317,16 +425,21 @@ int get_game_state() {
       TREASURE_RECOVER_DURATION = game_consts.TREASURE_LEVEL1_RECOVER_DURATION;
       parameters_updated = true;
       Serial.println("[BACKGROUND] Parameters Retrieved");
-    } else {
+    }
+    else
+    {
       Serial.println("[BACKGROUND] Update Unsuccessful");
       return 0;
     }
   }
 
-  if (gameStarted) return 1;  // once the game has started then we dunnid to check anymore
-  else {
+  if (gameStarted)
+    return 1; // once the game has started then we dunnid to check anymore
+  else
+  {
     gameStarted = dbc.hasGameStarted();
-    if (gameStarted) {
+    if (gameStarted)
+    {
       Serial.println("[BACKGROUND] Game has started! Initialising Treasure..");
       TreasureLevel1_NeoPixel.displayRGB_FRONT(R_ON, G_ON, B_ON);
       TreasureLevel1_NeoPixel.displayRGB_TOP(R_ON, G_ON, B_ON);
@@ -340,34 +453,42 @@ int get_game_state() {
 
 TaskHandle_t backgroundTask;
 
-void backgroundTaskCode(void * pvParameters) {
+void backgroundTaskCode(void *pvParameters)
+{
   TickType_t xLastWakeTime = xTaskGetTickCount();
 
-  for ( ; ; ) {
-    if (!WIFI_ON) {
+  for (;;)
+  {
+    if (!WIFI_ON)
+    {
       // offline mode
-      if (!setUpDone) {
+      if (!setUpDone)
+      {
         TreasureLevel1_NeoPixel.displayRGB_FRONT(R_ON, G_ON, B_ON);
         TreasureLevel1_NeoPixel.displayRGB_TOP(R_ON, G_ON, B_ON);
         Treasure.init_treasure();
         setUpDone = 1;
       }
       vTaskDelayUntil(&xLastWakeTime, pdMS_TO_TICKS(10));
-
-    } else {
+    }
+    else
+    {
       get_game_state();
 
-      if (gameStarted && can_upload_fail && failed_kill_feedback > 0) {
+      if (gameStarted && can_upload_fail && failed_kill_feedback > 0)
+      {
         Serial.println("[BACKGROUND] Initiating Failed ESPNOW Feedback Upload...");
-        uploadInProgress = 1;  // prevent Treasure from recovering
+        uploadInProgress = 1; // prevent Treasure from recovering
         dbc.connectToWiFi();
-        for (int i = failed_kill_feedback; i > 0; i--) {
+        for (int i = failed_kill_feedback; i > 0; i--)
+        {
           int this_ID = failed_kill_ID[current_failed_read_pointer];
           int this_CLAN = failed_kill_CLAN[current_failed_read_pointer];
           Serial.printf("[BACKGROUND] Upload Failed ESPNOW Feedback from CLAN %d ID %d\n", this_CLAN, this_ID);
-          dbc.uploadFailedFeedback("TREASURE" + String(ID), this_CLAN, this_ID);  // if still unsuccessful, it will be ignored. TODO: Fix
+          dbc.uploadFailedFeedback("TREASURE" + String(ID), this_CLAN, this_ID); // if still unsuccessful, it will be ignored. TODO: Fix
           current_failed_read_pointer++;
-          if (current_failed_read_pointer > 50) current_failed_read_pointer -= 50;
+          if (current_failed_read_pointer > 50)
+            current_failed_read_pointer -= 50;
           failed_kill_feedback--;
         }
         Serial.println("[BACKGROUND] Failed ESPNOW Feedback completed");
@@ -379,12 +500,15 @@ void backgroundTaskCode(void * pvParameters) {
   }
 };
 
-void setup() {
+void setup()
+{
   randomSeed(analogRead(0));
 
-  if (!display.begin(SSD1306_SWITCHCAPVCC, SCREEN_ADDRESS)) {
+  if (!display.begin(SSD1306_SWITCHCAPVCC, SCREEN_ADDRESS))
+  {
     Serial.println(F("SSD1306 allocation failed"));
-    for (;;); // Don't proceed, loop forever
+    for (;;)
+      ; // Don't proceed, loop forever
   }
   StartUpDisplay();
   Serial.begin(115200);
@@ -393,7 +517,7 @@ void setup() {
   TreasureLevel1_NeoPixel.off_TOP();
 
   TreasureLevel1_IR.enable();
-  TreasureLevel1_EspNOW.enable();
+  Treasure_EspNOW.enable();
   EEPROM.begin(EEPROM_SIZE);
   ID = EEPROM.read(ID_add);
   WIFI_ON = EEPROM.read(ONLINE_mode_add);
@@ -405,37 +529,43 @@ void setup() {
   TREASURE_RECOVER_DURATION = 2000;
 
   xTaskCreatePinnedToCore(
-    backgroundTaskCode,   /* Task function. */
-    "backgroundTask",     /* name of task. */
-    10000,       /* Stack size of task */
-    NULL,        /* parameter of the task */
-    2,           /* priority of the task */
-    &backgroundTask,      /* Task handle to keep track of created task */
-    0);
-
+      backgroundTaskCode, /* Task function. */
+      "backgroundTask",   /* name of task. */
+      10000,              /* Stack size of task */
+      NULL,               /* parameter of the task */
+      2,                  /* priority of the task */
+      &backgroundTask,    /* Task handle to keep track of created task */
+      0);
 }
 
-void loop() {
-  if (AdminFunction) {
+void loop()
+{
+  if (AdminFunction)
+  {
     TreasureLevel1_Admin.AdminLoop();
-  } 
-  else if (!WIFI_ON) {
+  }
+  else if (!WIFI_ON)
+  {
     // offline mode
     handleJoystick();
     Treasure.display_in_game();
     Treasure.receiveAction();
     Treasure.recover();
     update_sound();
-  } 
-  else {
+  }
+  else
+  {
     // online mode
     handleJoystick();
-    if (setUpDone) {
+    if (setUpDone)
+    {
       Treasure.display_in_game();
       Treasure.receiveAction();
       Treasure.recover();
       update_sound();
-    } else {
+    }
+    else
+    {
       Treasure.display_not_playing_yet();
     }
   }
