@@ -230,8 +230,8 @@ const unsigned char treasure [] PROGMEM = {
 	0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00
 };
 
-// 'Combusted', 128x64px
-const unsigned char Combusted [] PROGMEM = {
+// 'combusted', 128x64px
+const unsigned char combusted [] PROGMEM = {
 	0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 
 	0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 
 	0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 
@@ -354,6 +354,11 @@ void StartUpDisplay() {
     display.display();
 }
 
+void displayClear() {
+    display.clearDisplay();
+    display.display();
+}
+
 void displayTreasure() {
     display.clearDisplay();
     display.setTextSize(1); // Draw SIZE
@@ -395,6 +400,32 @@ void displayTreasureLooted(int CLAN_) {
 
     // Display Loading Bar
     display.drawBitmap(90, 30, loading_bar[current_loading_frame], 12, 12, WHITE);
+    ++current_loading_frame;
+    if (current_loading_frame >= loading_bar_LEN) current_loading_frame = 0;
+    delay(200);
+
+    display.display();
+}
+
+void displayBombed() {
+    display.clearDisplay();
+
+    display.drawBitmap(0, 0, bomb, 128, 64, WHITE);
+
+    display.display();
+}
+
+void displayCombusted() {
+    display.clearDisplay();
+
+    display.drawBitmap(0, 0, combusted, 128, 64, WHITE);
+
+    display.setCursor(0, 54);
+
+    display.println("   Fake Treasure!?   ");
+
+    // Display Loading Bar
+    display.drawBitmap(57, 8, loading_bar[current_loading_frame], 12, 12, WHITE);
     ++current_loading_frame;
     if (current_loading_frame >= loading_bar_LEN) current_loading_frame = 0;
     delay(200);

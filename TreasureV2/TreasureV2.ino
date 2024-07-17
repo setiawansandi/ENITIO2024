@@ -43,17 +43,19 @@ void clearEEPROM();
 #include "ENITIO_ESPNOW.h"
 #include "ENITIO_NeoPixel.h"
 #include "ENITIO_joystick.h"
+#include "ENITIO_buzzer.h"
 #include "ENITIO_treasure_OLED.h"
 #include "Admin.h"
 
-
+bool isBombed = false;
 
 // Constants
 int TREASURE_LEVEL1_INITIAL_HP;
 int TREASURE_LEVEL1_ACTION_RECV_WAIT;
-int TREASURE_LEVEL1_RECOVER_DURATION;
+int TREASURE_RECOVER_DURATION;
+int NOTI_SOUND_DURATION = 300;
 
-
+unsigned long tempNoti_start = 0;
 bool clicked_once = 0;
 unsigned long last_clicked = 0;
 
@@ -96,7 +98,7 @@ class TreasureLevel1
   private:
     int HP;
 
-    int this_recover_duration = TREASURE_LEVEL1_RECOVER_DURATION;
+    int this_recover_duration = TREASURE_RECOVER_DURATION;
     unsigned long lastOpenedTime = 0;
     unsigned long lastActionReceived = 0;
 
@@ -126,8 +128,17 @@ class TreasureLevel1
           lastActionReceived = currTime;
 
           if (action_ == collect) {
+            int randomValue = random(100);  // Generate a random number between 0 and 99 (inclusive)
+
+            if (randomValue < 50) {  // chance in %
+              handle_Bomb();
+            } else {
+              handle_Collected();
+            }
+
+            // SET treasure chest COOLDOWN
             lastOpenedTime = millis();
-            handle_Collected_Real();
+            this_recover_duration = TREASURE_RECOVER_DURATION * random(1, 9);
           }
         }
       }
@@ -139,7 +150,31 @@ class TreasureLevel1
       TreasureLevel1_EspNOW.send_data(2, CLAN_, ID_, ID, true, powerup_ID, channel_);
     } ;
 
-    void handle_Collected_Real() {
+    void handle_Bomb() {
+      Serial.println("Fake treasure, dropping Bomb!");
+
+      isBombed = true;
+
+      EEPROM.write(ENABLE_add, 2);
+      EEPROM.commit();
+
+      for(int i = 0; i < 3; ++i) {
+        Treasure_Buzzer.sound(NOTE_C2);
+        displayBombed();
+        TreasureLevel1_NeoPixel.displayRGB_FRONT(5, 0, 0);
+        TreasureLevel1_NeoPixel.displayRGB_TOP(5, 0, 0);
+        delay(600);
+
+        Treasure_Buzzer.end_sound();
+        displayClear();
+        TreasureLevel1_NeoPixel.off_FRONT();
+        TreasureLevel1_NeoPixel.off_TOP();
+        delay(600);
+      }
+      
+    }
+
+    void handle_Collected() {
       interim_collected_display();
 
       // inform the server here ...
@@ -149,9 +184,6 @@ class TreasureLevel1
       Serial.printf("TREASURE%d opened by CLAN %d ID %d\n", ID, CLAN_, ID_);
       feedback_collectL1(CLAN_, ID_, channel_);
       int player_identifier = CLAN_ * pow(16, 2) + ID_;
-
-      // this code to save the info of the CLAN collected the treasure
-      this_recover_duration = TREASURE_LEVEL1_RECOVER_DURATION * random(1, 9);
 
       EEPROM.write(ENABLE_add, 2);
       switch (CLAN_)
@@ -181,6 +213,9 @@ class TreasureLevel1
       }
       EEPROM.commit();
 
+      Treasure_Buzzer.sound(NOTE_DS1);
+      tempNoti_start = millis();
+
       if (WIFI_ON) {
         dbc.setTreasureAsOpened("TREASURE" + String(ID), CLAN_, ID_);
       }
@@ -193,6 +228,7 @@ class TreasureLevel1
 
       if (currStatus == 2 && currTime - lastOpenedTime > this_recover_duration && !uploadInProgress) {
         Serial.println("Reopening Treasure..");
+        isBombed = false;
         EEPROM.write(ENABLE_add, 1);
         HP = TREASURE_LEVEL1_INITIAL_HP;
         TreasureLevel1_NeoPixel.displayRGB_FRONT(R_ON, G_ON, B_ON);
@@ -234,9 +270,14 @@ class TreasureLevel1
       if (currStatus == 1) {
         displayTreasure();
       }
-      else {
-        displayTreasureLooted(CLAN_);
-      };
+      else{
+        if (isBombed == 1) {
+          displayCombusted();
+        }
+        else {
+          displayTreasureLooted(CLAN_);
+        }
+      } 
     }
 };
 
@@ -249,6 +290,15 @@ void clearEEPROM() {
     EEPROM.write(i, 0);
   }
   EEPROM.commit();
+}
+
+void update_sound()
+{
+  unsigned long currTime = millis();
+  if (currTime - tempNoti_start >= NOTI_SOUND_DURATION)
+  {
+    Treasure_Buzzer.end_sound();
+  }
 }
 
 bool setUpDone = 0;
@@ -264,7 +314,7 @@ int get_game_state() {
       HTTP_TIMEOUT = game_consts.HTTP_TIMEOUT;
       TREASURE_LEVEL1_INITIAL_HP = game_consts.TREASURE_LEVEL1_INITIAL_HP;
       TREASURE_LEVEL1_ACTION_RECV_WAIT = game_consts.TREASURE_LEVEL1_ACTION_RECV_WAIT;
-      TREASURE_LEVEL1_RECOVER_DURATION = game_consts.TREASURE_LEVEL1_RECOVER_DURATION;
+      TREASURE_RECOVER_DURATION = game_consts.TREASURE_LEVEL1_RECOVER_DURATION;
       parameters_updated = true;
       Serial.println("[BACKGROUND] Parameters Retrieved");
     } else {
@@ -331,7 +381,7 @@ void backgroundTaskCode(void * pvParameters) {
 
 void setup() {
   randomSeed(analogRead(0));
-  
+
   if (!display.begin(SSD1306_SWITCHCAPVCC, SCREEN_ADDRESS)) {
     Serial.println(F("SSD1306 allocation failed"));
     for (;;); // Don't proceed, loop forever
@@ -352,7 +402,7 @@ void setup() {
   HTTP_TIMEOUT = 30000;
   TREASURE_LEVEL1_INITIAL_HP = 1;
   TREASURE_LEVEL1_ACTION_RECV_WAIT = 3000;
-  TREASURE_LEVEL1_RECOVER_DURATION = 20000;
+  TREASURE_RECOVER_DURATION = 2000;
 
   xTaskCreatePinnedToCore(
     backgroundTaskCode,   /* Task function. */
@@ -375,6 +425,7 @@ void loop() {
     Treasure.display_in_game();
     Treasure.receiveAction();
     Treasure.recover();
+    update_sound();
   } 
   else {
     // online mode
@@ -383,6 +434,7 @@ void loop() {
       Treasure.display_in_game();
       Treasure.receiveAction();
       Treasure.recover();
+      update_sound();
     } else {
       Treasure.display_not_playing_yet();
     }
