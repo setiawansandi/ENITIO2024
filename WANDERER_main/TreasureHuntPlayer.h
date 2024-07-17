@@ -1126,9 +1126,6 @@ public:
         {
           Serial.println("WIFI MODE DISABLED, retrieving ID and constants from hardcoded memory");
 
-          int temp_default_id = 123;
-          EEPROM.write(ID_add, temp_default_id);
-
           id = EEPROM.read(ID_add);
 
           HTTP_TIMEOUT = 15000;
