@@ -56,4 +56,4 @@ class NeoPixel {
     }
 };
 
-NeoPixel TreasureLevel1_NeoPixel;
+NeoPixel TreasureV2_NeoPixel;

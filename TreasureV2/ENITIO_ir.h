@@ -78,4 +78,4 @@ class IR{
         }
 };
 
-IR TreasureLevel1_IR;
+IR TreasureV2_IR;

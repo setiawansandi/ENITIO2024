@@ -268,17 +268,17 @@ class Admin {
 
   public:
     void handleJoystickMain() {
-      joystick_pos joystick_pos = TreasureLevel1_joystick.read_Joystick();
-      if (TreasureLevel1_joystick.get_state() == 0) {
+      joystick_pos joystick_pos = TreasureV2_joystick.read_Joystick();
+      if (TreasureV2_joystick.get_state() == 0) {
         switch (joystick_pos) {
           case up:
             FunctionNav = max(FunctionNav - 1, 0);
-            TreasureLevel1_joystick.set_state();
+            TreasureV2_joystick.set_state();
             break;
 
           case down:
             FunctionNav = min(FunctionNav + 1, 4);
-            TreasureLevel1_joystick.set_state();
+            TreasureV2_joystick.set_state();
             break;
 
           case button:
@@ -309,45 +309,45 @@ class Admin {
                 break;
             }
             FunctionNav = 0;
-            TreasureLevel1_joystick.set_state();
+            TreasureV2_joystick.set_state();
             break;
 
           case idle:
             break;
 
           default:
-            TreasureLevel1_joystick.set_state();
+            TreasureV2_joystick.set_state();
             break;
         }
       }
     }
 
     void handleJoystickPwd() {
-      joystick_pos joystick_pos = TreasureLevel1_joystick.read_Joystick();
-      if (TreasureLevel1_joystick.get_state() == 0) {
+      joystick_pos joystick_pos = TreasureV2_joystick.read_Joystick();
+      if (TreasureV2_joystick.get_state() == 0) {
         switch (joystick_pos) {
           case up:
             currentDigit ++;
             if (currentDigit > 9) currentDigit -= 10;
             if (currentDigit < 0) currentDigit += 10;
-            TreasureLevel1_joystick.set_state();
+            TreasureV2_joystick.set_state();
             break;
 
           case down:
             currentDigit --;
             if (currentDigit > 9) currentDigit -= 10;
             if (currentDigit < 0) currentDigit += 10;
-            TreasureLevel1_joystick.set_state();
+            TreasureV2_joystick.set_state();
             break;
 
           case left:
             enteringPwdNav = max(enteringPwdNav - 1 , 0) ;
-            TreasureLevel1_joystick.set_state();
+            TreasureV2_joystick.set_state();
             break;
 
           case right:
             enteringPwdNav = min(enteringPwdNav + 1 , 2) ;
-            TreasureLevel1_joystick.set_state();
+            TreasureV2_joystick.set_state();
             break;
 
           case button:
@@ -394,31 +394,31 @@ class Admin {
               default:
                 break;
             }
-            TreasureLevel1_joystick.set_state();
+            TreasureV2_joystick.set_state();
             break;
 
           case idle:
             break;
 
           default:
-            TreasureLevel1_joystick.set_state();
+            TreasureV2_joystick.set_state();
             break;
         }
       }
     }
 
     void handleJoystickConfirmReset() {
-      joystick_pos joystick_pos = TreasureLevel1_joystick.read_Joystick();
-      if (TreasureLevel1_joystick.get_state() == 0) {
+      joystick_pos joystick_pos = TreasureV2_joystick.read_Joystick();
+      if (TreasureV2_joystick.get_state() == 0) {
         switch (joystick_pos) {
           case up:
             ConfirmingResetNav = max(ConfirmingResetNav - 1, 0);
-            TreasureLevel1_joystick.set_state();
+            TreasureV2_joystick.set_state();
             break;
 
           case down:
             ConfirmingResetNav = min(ConfirmingResetNav + 1, 2);
-            TreasureLevel1_joystick.set_state();
+            TreasureV2_joystick.set_state();
             break;
 
           case button:
@@ -449,50 +449,50 @@ class Admin {
               default:
                 break;
             }
-            TreasureLevel1_joystick.set_state();
+            TreasureV2_joystick.set_state();
             break;
 
           case idle:
             break;
 
           default:
-            TreasureLevel1_joystick.set_state();
+            TreasureV2_joystick.set_state();
             break;
         }
       }
     }
 
     void handleJoystickCheckingCollection() {
-      joystick_pos joystick_pos = TreasureLevel1_joystick.read_Joystick();
-      if (TreasureLevel1_joystick.get_state() == 0) {
+      joystick_pos joystick_pos = TreasureV2_joystick.read_Joystick();
+      if (TreasureV2_joystick.get_state() == 0) {
         switch (joystick_pos) {
           case button:
             isCheckingCollection = false;
-            TreasureLevel1_joystick.set_state();
+            TreasureV2_joystick.set_state();
             break;
 
           case idle:
             break;
 
           default:
-            TreasureLevel1_joystick.set_state();
+            TreasureV2_joystick.set_state();
             break;
         }
       }
     }
 
     void handleJoystickSettingID() {
-      joystick_pos joystick_pos = TreasureLevel1_joystick.read_Joystick();
-      if (TreasureLevel1_joystick.get_state() == 0) {
+      joystick_pos joystick_pos = TreasureV2_joystick.read_Joystick();
+      if (TreasureV2_joystick.get_state() == 0) {
         switch (joystick_pos) {
           case down:
             currentIDnum = max(currentIDnum - 1, 0);
-            TreasureLevel1_joystick.set_state();
+            TreasureV2_joystick.set_state();
             break;
 
           case up:
             currentIDnum = min(currentIDnum + 1, ID_BOUND);
-            TreasureLevel1_joystick.set_state();
+            TreasureV2_joystick.set_state();
             break;
 
           case button:
@@ -503,14 +503,14 @@ class Admin {
             currentIDnum = 0;
             isSettingID = false;
             delay(1500);
-            TreasureLevel1_joystick.set_state();
+            TreasureV2_joystick.set_state();
             break;
 
           case idle:
             break;
 
           default:
-            TreasureLevel1_joystick.set_state();
+            TreasureV2_joystick.set_state();
             break;
         }
       }
@@ -530,7 +530,7 @@ class Admin {
       WIFI_ON = newConnectivityMode;
       Admin_OLED.ConfirmConnectivityToggle(newConnectivityMode);
       delay(1500);
-      TreasureLevel1_joystick.set_state();
+      TreasureV2_joystick.set_state();
     }
 
     void AdminLoop() {
@@ -573,4 +573,4 @@ class Admin {
     }
 };
 
-Admin TreasureLevel1_Admin;
+Admin TreasureV2_Admin;

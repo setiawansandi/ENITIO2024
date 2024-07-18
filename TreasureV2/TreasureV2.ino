@@ -52,8 +52,8 @@ bool isBombed = false;
 const int CLAN = -1; // -1 since chest doesn't belong to any clan
 
 // Constants
-int TREASURE_LEVEL1_INITIAL_HP;
-int TREASURE_LEVEL1_ACTION_RECV_WAIT;
+int TREASURE_V2_INITIAL_HP;
+int TREASURE_V2_ACTION_RECV_WAIT;
 int TREASURE_RECOVER_DURATION;
 int NOTI_SOUND_DURATION = 300;
 
@@ -63,8 +63,8 @@ unsigned long last_clicked = 0;
 
 void handleJoystick()
 {
-  joystick_pos joystick_pos = TreasureLevel1_joystick.read_Joystick();
-  if (TreasureLevel1_joystick.get_state() == 0)
+  joystick_pos joystick_pos = TreasureV2_joystick.read_Joystick();
+  if (TreasureV2_joystick.get_state() == 0)
   {
     switch (joystick_pos)
     {
@@ -79,7 +79,7 @@ void handleJoystick()
         clicked_once = 1;
         last_clicked = millis();
       }
-      TreasureLevel1_joystick.set_state();
+      TreasureV2_joystick.set_state();
       break;
 
     case idle:
@@ -98,7 +98,7 @@ void handleJoystick()
         if (currTime - last_clicked > DOUBLE_CLICK_LENGTH)
           clicked_once = 0;
       }
-      TreasureLevel1_joystick.set_state();
+      TreasureV2_joystick.set_state();
       break;
     }
   }
@@ -107,8 +107,8 @@ void handleJoystick()
 void sendBomb(void *parameter)
 {
   // Perform the bomb scanning and sending operations
-  Treasure_EspNOW.ScanForBombTarget();
-  Treasure_EspNOW.SendBombToAllTargets(CLAN, ID);
+  TreasureV2_EspNOW.ScanForBombTarget();
+  TreasureV2_EspNOW.SendBombToAllTargets(CLAN, ID);
   vTaskDelete(NULL); // Delete this task when done
 }
 
@@ -128,17 +128,17 @@ public:
   {
     EEPROM.write(ENABLE_add, 1);
     EEPROM.commit();
-    HP = TREASURE_LEVEL1_INITIAL_HP;
+    HP = TREASURE_V2_INITIAL_HP;
   };
 
   void receiveAction()
   {
     int currStatus = EEPROM.read(ENABLE_add);
-    if (TreasureLevel1_IR.available())
+    if (TreasureV2_IR.available())
     {
-      ir_signal IRsignal_ = TreasureLevel1_IR.read();
+      ir_signal IRsignal_ = TreasureV2_IR.read();
       unsigned long currTime = millis();
-      if ((currStatus == 1) && (currTime - lastActionReceived > TREASURE_LEVEL1_ACTION_RECV_WAIT))
+      if ((currStatus == 1) && (currTime - lastActionReceived > TREASURE_V2_ACTION_RECV_WAIT))
       {
         Serial.printf("RECV %d %d %d %d | %d %d %d %d \n", IRsignal_.address.digit3, IRsignal_.address.digit2, IRsignal_.address.digit1, IRsignal_.address.digit0, IRsignal_.command.digit3, IRsignal_.command.digit2, IRsignal_.command.digit1, IRsignal_.command.digit0);
         CLAN_ = IRsignal_.address.digit2;
@@ -214,7 +214,7 @@ public:
   {
     unsigned long currTime = millis();
     int powerup_ID = random(1, 6);
-    Treasure_EspNOW.send_data(2, CLAN_, ID_, ID, true, powerup_ID, channel_);
+    TreasureV2_EspNOW.send_data(2, CLAN_, ID_, ID, true, powerup_ID, channel_);
   };
 
   void handle_Bomb()
@@ -252,16 +252,16 @@ public:
 
     for (int i = 0; i < 3; ++i)
     {
-      Treasure_Buzzer.sound(NOTE_C2);
+      TreasureV2_Buzzer.sound(NOTE_C2);
       displayBombed();
-      TreasureLevel1_NeoPixel.displayRGB_FRONT(5, 0, 0);
-      TreasureLevel1_NeoPixel.displayRGB_TOP(5, 0, 0);
+      TreasureV2_NeoPixel.displayRGB_FRONT(5, 0, 0);
+      TreasureV2_NeoPixel.displayRGB_TOP(5, 0, 0);
       delay(600);
 
-      Treasure_Buzzer.end_sound();
+      TreasureV2_Buzzer.end_sound();
       displayClear();
-      TreasureLevel1_NeoPixel.off_FRONT();
-      TreasureLevel1_NeoPixel.off_TOP();
+      TreasureV2_NeoPixel.off_FRONT();
+      TreasureV2_NeoPixel.off_TOP();
       delay(600);
     }
   }
@@ -271,8 +271,8 @@ public:
     interim_collected_display();
 
     // inform the server here ...
-    TreasureLevel1_NeoPixel.off_FRONT();
-    TreasureLevel1_NeoPixel.off_TOP();
+    TreasureV2_NeoPixel.off_FRONT();
+    TreasureV2_NeoPixel.off_TOP();
 
     Serial.printf("TREASURE%d opened by CLAN %d ID %d\n", ID, CLAN_, ID_);
     feedback_collect(CLAN_, ID_, channel_);
@@ -306,7 +306,7 @@ public:
     }
     EEPROM.commit();
 
-    Treasure_Buzzer.sound(NOTE_DS1);
+    TreasureV2_Buzzer.sound(NOTE_DS1);
     tempNoti_start = millis();
 
     if (WIFI_ON)
@@ -326,9 +326,9 @@ public:
       Serial.println("Reopening Treasure..");
       isBombed = false;
       EEPROM.write(ENABLE_add, 1);
-      HP = TREASURE_LEVEL1_INITIAL_HP;
-      TreasureLevel1_NeoPixel.displayRGB_FRONT(R_ON, G_ON, B_ON);
-      TreasureLevel1_NeoPixel.displayRGB_TOP(R_ON, G_ON, B_ON);
+      HP = TREASURE_V2_INITIAL_HP;
+      TreasureV2_NeoPixel.displayRGB_FRONT(R_ON, G_ON, B_ON);
+      TreasureV2_NeoPixel.displayRGB_TOP(R_ON, G_ON, B_ON);
     }
   };
 
@@ -384,7 +384,7 @@ public:
   }
 };
 
-TreasureV2 Treasure; // use OLED to input ID
+TreasureV2 TreasureV2; // use OLED to input ID
 bool gameStarted = 0;
 
 void clearEEPROM()
@@ -402,7 +402,7 @@ void update_sound()
   unsigned long currTime = millis();
   if (currTime - tempNoti_start >= NOTI_SOUND_DURATION)
   {
-    Treasure_Buzzer.end_sound();
+    TreasureV2_Buzzer.end_sound();
   }
 }
 
@@ -420,8 +420,8 @@ int get_game_state()
     {
       GAME_CONSTANTS game_consts = dbc.getGameConstants();
       HTTP_TIMEOUT = game_consts.HTTP_TIMEOUT;
-      TREASURE_LEVEL1_INITIAL_HP = game_consts.TREASURE_LEVEL1_INITIAL_HP;
-      TREASURE_LEVEL1_ACTION_RECV_WAIT = game_consts.TREASURE_LEVEL1_ACTION_RECV_WAIT;
+      TREASURE_V2_INITIAL_HP = game_consts.TREASURE_LEVEL1_INITIAL_HP;
+      TREASURE_V2_ACTION_RECV_WAIT = game_consts.TREASURE_LEVEL1_ACTION_RECV_WAIT;
       TREASURE_RECOVER_DURATION = game_consts.TREASURE_LEVEL1_RECOVER_DURATION;
       parameters_updated = true;
       Serial.println("[BACKGROUND] Parameters Retrieved");
@@ -441,9 +441,9 @@ int get_game_state()
     if (gameStarted)
     {
       Serial.println("[BACKGROUND] Game has started! Initialising Treasure..");
-      TreasureLevel1_NeoPixel.displayRGB_FRONT(R_ON, G_ON, B_ON);
-      TreasureLevel1_NeoPixel.displayRGB_TOP(R_ON, G_ON, B_ON);
-      Treasure.init_treasure();
+      TreasureV2_NeoPixel.displayRGB_FRONT(R_ON, G_ON, B_ON);
+      TreasureV2_NeoPixel.displayRGB_TOP(R_ON, G_ON, B_ON);
+      TreasureV2.init_treasure();
       setUpDone = 1;
       WiFi.disconnect();
     }
@@ -464,9 +464,9 @@ void backgroundTaskCode(void *pvParameters)
       // offline mode
       if (!setUpDone)
       {
-        TreasureLevel1_NeoPixel.displayRGB_FRONT(R_ON, G_ON, B_ON);
-        TreasureLevel1_NeoPixel.displayRGB_TOP(R_ON, G_ON, B_ON);
-        Treasure.init_treasure();
+        TreasureV2_NeoPixel.displayRGB_FRONT(R_ON, G_ON, B_ON);
+        TreasureV2_NeoPixel.displayRGB_TOP(R_ON, G_ON, B_ON);
+        TreasureV2.init_treasure();
         setUpDone = 1;
       }
       vTaskDelayUntil(&xLastWakeTime, pdMS_TO_TICKS(10));
@@ -512,20 +512,20 @@ void setup()
   }
   StartUpDisplay();
   Serial.begin(115200);
-  TreasureLevel1_NeoPixel.initialize();
-  TreasureLevel1_NeoPixel.off_FRONT();
-  TreasureLevel1_NeoPixel.off_TOP();
+  TreasureV2_NeoPixel.initialize();
+  TreasureV2_NeoPixel.off_FRONT();
+  TreasureV2_NeoPixel.off_TOP();
 
-  TreasureLevel1_IR.enable();
-  Treasure_EspNOW.enable();
+  TreasureV2_IR.enable();
+  TreasureV2_EspNOW.enable();
   EEPROM.begin(EEPROM_SIZE);
   ID = EEPROM.read(ID_add);
   WIFI_ON = EEPROM.read(ONLINE_mode_add);
 
   // Hardcoded constants, in case there is no WiFi to update
   HTTP_TIMEOUT = 30000;
-  TREASURE_LEVEL1_INITIAL_HP = 1;
-  TREASURE_LEVEL1_ACTION_RECV_WAIT = 3000;
+  TREASURE_V2_INITIAL_HP = 1;
+  TREASURE_V2_ACTION_RECV_WAIT = 3000;
   TREASURE_RECOVER_DURATION = 2000;
 
   xTaskCreatePinnedToCore(
@@ -542,15 +542,15 @@ void loop()
 {
   if (AdminFunction)
   {
-    TreasureLevel1_Admin.AdminLoop();
+    TreasureV2_Admin.AdminLoop();
   }
   else if (!WIFI_ON)
   {
     // offline mode
     handleJoystick();
-    Treasure.display_in_game();
-    Treasure.receiveAction();
-    Treasure.recover();
+    TreasureV2.display_in_game();
+    TreasureV2.receiveAction();
+    TreasureV2.recover();
     update_sound();
   }
   else
@@ -559,14 +559,14 @@ void loop()
     handleJoystick();
     if (setUpDone)
     {
-      Treasure.display_in_game();
-      Treasure.receiveAction();
-      Treasure.recover();
+      TreasureV2.display_in_game();
+      TreasureV2.receiveAction();
+      TreasureV2.recover();
       update_sound();
     }
     else
     {
-      Treasure.display_not_playing_yet();
+      TreasureV2.display_not_playing_yet();
     }
   }
 }

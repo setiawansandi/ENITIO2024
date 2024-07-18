@@ -218,4 +218,4 @@ public:
   }
 };
 
-EspNOW Treasure_EspNOW;
+EspNOW TreasureV2_EspNOW;

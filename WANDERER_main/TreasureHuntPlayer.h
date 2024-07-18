@@ -1141,7 +1141,7 @@ public:
           HEAL_MULTIPLIER = 4;
           MAX_ATTACK_MULTIPLIER = 3;
           MAX_COLLECT_MULTIPLIER = 10;
-          BOMB_HP_DEDUCTION = 6;
+          BOMB_HP_DEDUCTION = 69;
           KILL_UPDATE_SERVER_INTERVAL = 10 * 60 * 1000; // 10 mins
           WIFI_ON = EEPROM.read(ONLINE_mode_add);
           MAX_COOLDOWN = 10;

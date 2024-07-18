@@ -61,4 +61,4 @@ class Joystick{
         }
 };
 
-Joystick TreasureLevel1_joystick;
+Joystick TreasureV2_joystick;

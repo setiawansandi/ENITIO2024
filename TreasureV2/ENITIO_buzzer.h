@@ -25,7 +25,7 @@ class Buzzer{
 };
 
 
-Buzzer Treasure_Buzzer;
+Buzzer TreasureV2_Buzzer;
 
 
 #define NOTE_B0  31
