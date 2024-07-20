@@ -70,7 +70,8 @@ private:
   int PowerUpNav = 0;
   bool choosingPowerUp = false;
 
-  bool active_bomb = 0;
+  bool active_bomb = false;
+  bool isBombed = false;
 
   int temp_bomb_attacked = 0;
   int temp_bomb_killed = 0;
@@ -304,12 +305,21 @@ public:
     unsigned long elapsedTime = currTime - timeOfDeath;
     int currentCooldown = MAX_COOLDOWN - (elapsedTime / 1000);
 
+    if (isBombed)
+    {
+      currentCooldown += (TEMP_NOTI_WAIT/1000);
+    }
+
     if (currentCooldown > 0)
     {
-      permNoti = "     Respawn in " + String(currentCooldown) + "s     ";
+      if ((!isBombed) || (isBombed && (elapsedTime > TEMP_NOTI_WAIT)))
+      {
+        permNoti = "     Respawn in " + String(currentCooldown) + "s     ";
+      }
     }
     else
     {
+      isBombed = false;
       onCooldown = false;
       timeOfDeath = 0;
       HP = MaxHP;
@@ -953,6 +963,7 @@ public:
   {
     if (HP > 0)
     {
+      isBombed = true;
       HP = std::max(HP - BOMB_HP_DEDUCTION, 0);
       std::tie(tempNoti, tempNoti_start) = std::make_pair("   You are Bombed!!  ", millis());
       Player_Buzzer.sound(NOTE_E3);
