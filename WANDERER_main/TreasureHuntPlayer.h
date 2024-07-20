@@ -307,7 +307,7 @@ public:
 
     if (isBombed)
     {
-      currentCooldown += (TEMP_NOTI_WAIT/1000);
+      currentCooldown += (TEMP_NOTI_WAIT / 1000);
     }
 
     if (currentCooldown > 0)
@@ -1140,13 +1140,13 @@ public:
           id = EEPROM.read(ID_add);
 
           HTTP_TIMEOUT = 15000;
-          EN_RECOVER_DURATION = 5000;
+          EN_RECOVER_DURATION = 1500;
           VIRUS_DECAY_DURATION = 30000;
           VIRUS_IMMUNITY_DURATION = 120000;
           VIRUS_INFECTION_PROBABILITY = 30;
           PARTICIPANT_MaxHP = 12;
           GL_MaxHP = 50;
-          PARTICIPANT_MaxEn = 5;
+          PARTICIPANT_MaxEn = 12;
           GL_MaxEn = 50;
           INITIAL_MULTIPLIER = 1;
           HEAL_MULTIPLIER = 4;
