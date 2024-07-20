@@ -56,6 +56,7 @@ int TREASURE_V2_INITIAL_HP;
 int TREASURE_V2_ACTION_RECV_WAIT;
 int TREASURE_RECOVER_DURATION;
 int NOTI_SOUND_DURATION = 300;
+int FAKE_CHEST_PROBABILITY = 25;
 
 unsigned long tempNoti_start = 0;
 bool clicked_once = 0;
@@ -153,7 +154,7 @@ public:
         {
           int randomValue = random(100); // Generate a random number between 0 and 99 (inclusive)
 
-          if (randomValue < 50)
+          if (randomValue < FAKE_CHEST_PROBABILITY)
           { // chance in %
             handle_Bomb();
           }
