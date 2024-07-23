@@ -373,7 +373,7 @@ public:
     }
     else
     {
-      if (isBombed == 1)
+      if (isBombed == true)
       {
         displayCombusted();
       }
