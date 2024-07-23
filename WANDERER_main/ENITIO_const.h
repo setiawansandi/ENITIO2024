@@ -11,7 +11,7 @@ const int MACAddressProcess = 5;
 
 #define NAV_WAIT 4000
 
-#define EEPROM_SIZE 28
+#define EEPROM_SIZE 29
 
 const int PROFILE_enable_add = 0;
 const int CLAN_add = 1;
@@ -41,6 +41,7 @@ const int POINT_EPHILIA_add = 24;
 const int POINT_AKRONA_add = 25;
 const int POINT_SOLARIS_add = 26;
 const int PLAYER_totalTreasure_add = 27;
+const int PLAYER_num_death = 28;
 
 
 

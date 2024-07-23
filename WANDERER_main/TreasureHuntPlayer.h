@@ -150,6 +150,7 @@ public:
       EEPROM.write(POINT_AKRONA_add, 0);
       EEPROM.write(POINT_SOLARIS_add, 0);
       EEPROM.write(PLAYER_totalTreasure_add, 0);
+      EEPROM.write(PLAYER_num_death, 0);
       EEPROM.commit();
     }
     else
@@ -175,6 +176,7 @@ public:
       scoreAkrona = EEPROM.read(POINT_AKRONA_add);
       scoreSolaris = EEPROM.read(POINT_SOLARIS_add);
       totalTreasure = EEPROM.read(PLAYER_totalTreasure_add);
+      numDeath = EEPROM.read(PLAYER_num_death);
     }
 
     if (WIFI_ON)
@@ -736,7 +738,8 @@ public:
             break;
           }
 
-          numDeath = scoreInvicta + scoreDynari + scoreEphilia + scoreAkrona + scoreSolaris;
+          ++numDeath;
+          EEPROM.write(PLAYER_num_death, numDeath);
         }
 
         EEPROM.write(PLAYER_HP_add, HP);
@@ -968,6 +971,13 @@ public:
       std::tie(tempNoti, tempNoti_start) = std::make_pair("   You are Bombed!!  ", millis());
       Player_Buzzer.sound(NOTE_E3);
       feedback_bomb(feedbackData.attacker_CLAN, feedbackData.attacker_ID);
+
+      if (HP == 0) // only increase death count if HP is 0
+      {
+        ++numDeath;
+        EEPROM.write(PLAYER_num_death, numDeath);
+        EEPROM.commit();
+      }
     }
   }
 
