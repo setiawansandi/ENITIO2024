@@ -433,7 +433,8 @@ class Admin {
                 StartUpDisplay();
                 clearEEPROM();
                 EEPROM.write(ID_add, ID);
-                EEPROM.write(ONLINE_mode_add, 1);
+                EEPROM.write(ONLINE_mode_add, 0);
+                EEPROM.write(ENABLE_add, 1);
                 EEPROM.commit();
                 ESP.restart();
                 break;
@@ -441,7 +442,8 @@ class Admin {
               case 2:
                 StartUpDisplay();
                 clearEEPROM();
-                EEPROM.write(ONLINE_mode_add, 1);
+                EEPROM.write(ONLINE_mode_add, 0);
+                EEPROM.write(ENABLE_add, 1);
                 EEPROM.commit();
                 ESP.restart();
                 break;
