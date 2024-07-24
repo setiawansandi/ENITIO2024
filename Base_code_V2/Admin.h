@@ -434,6 +434,7 @@ class Admin {
                 clearEEPROM();
                 EEPROM.write(ID_add, ID);
                 EEPROM.write(ONLINE_mode_add, 1);
+                EEPROM.write(PROFILE_enable_add, 0);
                 EEPROM.commit();
                 ESP.restart();
                 break;

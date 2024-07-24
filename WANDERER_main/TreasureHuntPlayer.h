@@ -686,8 +686,13 @@ public:
         tempNoti = "       Attacked      ";
         tempNoti_start = millis();
         feedback_attack(CLAN_, ID_, channel_);
+<<<<<<< Updated upstream
         Player_Buzzer.sound(NOTE_E3);
       } 
+=======
+        //Player_Buzzer.sound(NOTE_E3);
+      }
+>>>>>>> Stashed changes
       break;
 
     case heal:

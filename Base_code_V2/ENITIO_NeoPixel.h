@@ -9,6 +9,7 @@
 #define FRONT_NUMPIXELS 10
 #define TOP_NUMPIXELS 5
 
+
 Adafruit_NeoPixel pixelsFRONT(FRONT_NUMPIXELS, FRONT_PIN, NEO_GRB + NEO_KHZ800);
 Adafruit_NeoPixel pixelsTOP(TOP_NUMPIXELS, TOP_PIN, NEO_GRB + NEO_KHZ800);
 
@@ -20,8 +21,9 @@ class NeoPixel {
         #if defined(__AVR_ATtiny85__) && (F_CPU == 16000000)
         clock_prescale_set(clock_div_1);
         #endif
-        // END of Trinket-specific code.
 
+        pixelsTOP.setBrightness(255);
+        pixelsFRONT.setBrightness(255);
         pixelsTOP.begin(); // INITIALIZE NeoPixel strip object (REQUIRED)
         pixelsFRONT.begin();
 
