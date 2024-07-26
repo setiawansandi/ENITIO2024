@@ -121,6 +121,7 @@ int SOLARIS_TREAS = 0;
 
 int action = 0;
 int BaseClanValue;
+int treasureCount = 0;
 
 bool clicked_once = 0;
 unsigned long last_clicked = 0;
@@ -234,6 +235,8 @@ public:
     {
       TreasureBase_NeoPixel.off_FRONT();
       TreasureBase_NeoPixel.off_TOP();
+
+      depositEvent = false;
     }
 
     int currStatus = EEPROM.read(ENABLE_add);
@@ -273,11 +276,14 @@ public:
 
   void handleDeposit(int CLAN_, int ID_, int Treas_Deposit_, int MULTIPLIER_, int channel_)
   {
-    depositEvent = true;
+    if (Treas_Deposit_ % 16 <= 0)
+      return;
 
-    int treasureCount = Treas_Deposit_ % 16;
+    treasureCount = Treas_Deposit_ % 16;
 
     interim_collected_display();
+
+    depositEvent = true;
 
     TreasureBase_NeoPixel.displayRGB_FRONT(R_ON, G_ON, B_ON);
     TreasureBase_NeoPixel.displayRGB_TOP(R_ON, G_ON, B_ON);
@@ -429,6 +435,30 @@ public:
     }
   };
 
+  int getTotalTreasure()
+  {
+    switch (BaseClanValue)
+    {
+    case INVICTA:
+      return EEPROM.read(INVICTA_add);
+
+    case DYNARI:
+      return EEPROM.read(DYNARI_add);
+
+    case EPHILIA:
+      return EEPROM.read(EPHILIA_add);
+
+    case AKRONA:
+      return EEPROM.read(AKRONA_add);
+
+    case SOLARIS:
+      return EEPROM.read(SOLARIS_add);
+
+    default:
+      return 0;
+    }
+  }
+
   void display_not_playing_yet()
   {
     display.clearDisplay();
@@ -483,7 +513,7 @@ public:
         display.print("INVICTA");
         break;
       case 1:
-        display.setCursor(30, 22);
+        display.setCursor(29, 22);
         display.print("DYNARI");
         break;
       case 2:
@@ -552,7 +582,6 @@ public:
     }
   }
 
-
   void display_base_destroyed(bool showCooldown)
   {
     display.clearDisplay();
@@ -563,12 +592,63 @@ public:
     display.println(" Destroyed");
 
     // TODO: implement cooldown
-    if (showCooldown) {
+    if (showCooldown)
+    {
       display.setTextSize(1);
       display.setCursor(12, 54);
-      display.println("Respawing in 20s");
+      display.println("Respawning in 20s");
     }
-  
+
+    display.display();
+  }
+
+  void display_deposited(int current_deposited, int total_deposited)
+  {
+    display.clearDisplay();
+    display.setTextSize(1);                             // Draw SIZE
+    display.setTextColor(SSD1306_BLACK, SSD1306_WHITE); // Draw 'inverse' text
+    display.setCursor(0, 0);
+    display.println("    Treasure Base    ");
+
+    display.setTextSize(2);              // Normal 1:1 pixel scale
+    display.setTextColor(SSD1306_WHITE); // Draw white text
+
+    switch (BaseClanValue)
+    {
+    case 0:
+      display.setCursor(21, 22);
+      display.print("INVICTA");
+      break;
+    case 1:
+      display.setCursor(30, 22);
+      display.print("DYNARI");
+      break;
+    case 2:
+      display.setCursor(22, 22);
+      display.print("EPHILIA");
+      break;
+    case 3:
+      display.setCursor(29, 22);
+      display.print("AKRONA");
+      break;
+    case 4:
+      display.setCursor(22, 22);
+      display.print("SOLARIS");
+      break;
+    default:
+      display.setCursor(21, 22);
+      display.print("UNKNOWN");
+      break;
+    }
+
+    display.setTextSize(1);  
+    display.setCursor(5, 45);
+    display.print("Deposited: ");
+    display.println(current_deposited);
+    display.setCursor(5, 55);
+    display.print("Clan total: ");
+    display.println(total_deposited);
+
     display.display();
   }
 
@@ -576,9 +656,12 @@ public:
   {
     unsigned long currentMillis = millis();
 
-    if (depositEvent || currentMillis - lastAttackedTime >= DISPLAY_HP_DURATION)
+    if (depositEvent)
     {
-      depositEvent = false;
+      display_deposited(treasureCount, getTotalTreasure());
+    }
+    else if (currentMillis - lastAttackedTime >= DISPLAY_HP_DURATION)
+    {
       display_default_screen();
     }
     else
@@ -735,8 +818,8 @@ void loop()
   {
     // offline mode
     handleJoystick();
-    treasureBase.display_in_game();
     treasureBase.receiveAction();
+    treasureBase.display_in_game();
     treasureBase.recover();
     update_sound();
   }
@@ -746,8 +829,8 @@ void loop()
     handleJoystick();
     if (setUpDone)
     {
-      treasureBase.display_in_game();
       treasureBase.receiveAction();
+      treasureBase.display_in_game();
       treasureBase.recover();
       update_sound();
     }
