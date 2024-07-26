@@ -871,6 +871,7 @@ public:
     case 1:
       if ((feedbackData.attacker_CLAN == CLAN) && (feedbackData.attacker_ID == ID))
       {
+        Player_Buzzer.Blaster();
         if (feedbackData.is_attackee_killed == true)
         {
           tempNoti = " You killed a person ";
@@ -884,7 +885,6 @@ public:
         {
           tempNoti = " Attack successfully ";
           tempNoti_start = millis();
-          Player_Buzzer.Blaster();
         }
       }
       break;
@@ -1077,7 +1077,7 @@ public:
           if (((currTime - tempNoti_start) / TEMP_NOTI_BLINKING) % 2 == 0)
             noti_to_display = tempNoti;
           else
-            noti_to_display = " ";
+            noti_to_display = "";
         }
         else
         {
@@ -1128,9 +1128,8 @@ public:
   void update_sound()
   {
     unsigned long currTime = millis();
-    if (currTime - tempNoti_start >= NOTI_SOUND_DURATION && tempNoti_start != 0)
+    if (currTime - tempNoti_start >= NOTI_SOUND_DURATION && !isBuzzerOn)
     {
-      tempNoti_start = 0;
       Player_Buzzer.end_sound();
     }
   }
