@@ -778,6 +778,15 @@ public:
 
           ++numDeath;
           EEPROM.write(PLAYER_num_death, numDeath);
+
+          xTaskCreate(
+              playDeathSoundTask, // Task function
+              "PlayDeathSound",   // Name of the task
+              2048,               // Stack size (in words)
+              NULL,               // Task input parameter
+              1,                  // Priority of the task
+              NULL                // Task handle
+          );
         }
 
         EEPROM.write(PLAYER_HP_add, HP);
@@ -889,7 +898,7 @@ public:
         }
       }
       break;
-    
+
     // from treasure level 1 & v2
     case 2:
       if ((feedbackData.attacker_CLAN == CLAN) && (feedbackData.attacker_ID == ID))
@@ -900,7 +909,7 @@ public:
 
         Player_Buzzer.sound(NOTE_E3);
         tempNoti = " Treasure Collected! ";
-        
+
         tempNoti_start = millis();
       }
       break;
@@ -950,7 +959,6 @@ public:
         }
       }
       break;
-
 
     // from wanderers (gl)
     case 5:
@@ -1118,7 +1126,7 @@ public:
   void update_sound()
   {
     unsigned long currTime = millis();
-    if (currTime - tempNoti_start >= NOTI_SOUND_DURATION && !isBuzzerOn)
+    if (currTime - tempNoti_start >= NOTI_SOUND_DURATION && !isBuzzerOn && !isPlayingDeathSFX)
     {
       Player_Buzzer.end_sound();
     }
