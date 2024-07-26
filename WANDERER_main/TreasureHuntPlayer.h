@@ -868,6 +868,7 @@ public:
   {
     switch (feedbackData.attackee_type)
     {
+    // from wanderers
     case 1:
       if ((feedbackData.attacker_CLAN == CLAN) && (feedbackData.attacker_ID == ID))
       {
@@ -888,7 +889,23 @@ public:
         }
       }
       break;
+    
+    // from treasure level 1 & v2
+    case 2:
+      if ((feedbackData.attacker_CLAN == CLAN) && (feedbackData.attacker_ID == ID))
+      {
+        Serial.println("Treasure Collected");
+        numL1Treasure++;
+        EEPROM.write(PLAYER_numL1Treasure_add, numL1Treasure);
 
+        Player_Buzzer.sound(NOTE_E3);
+        tempNoti = " Treasure Collected! ";
+        
+        tempNoti_start = millis();
+      }
+      break;
+
+    // from treasure level 2
     case 3:
       if ((feedbackData.attacker_CLAN == CLAN) && (feedbackData.attacker_ID == ID))
       {
@@ -914,56 +931,7 @@ public:
       }
       break;
 
-    case 2:
-      if ((feedbackData.attacker_CLAN == CLAN) && (feedbackData.attacker_ID == ID))
-      {
-        //  Serial.print("L1 Treasure Collected Power Up:");
-        //  Serial.println(feedbackData.powerup_received);
-        Serial.println("Treasure Collected");
-        numL1Treasure++;
-        EEPROM.write(PLAYER_numL1Treasure_add, numL1Treasure);
-
-        Player_Buzzer.sound(NOTE_E3);
-        tempNoti = " Treasure Collected! ";
-        //   switch (feedbackData.powerup_received)
-        //   {
-        //   case bonus6HP:
-        //     num_bonus6HP++;
-        //     EEPROM.write(PLAYER_num_bonus6HP_add, num_bonus6HP);
-        //     tempNoti = "    PowerUp: +6 HP   ";
-        //     break;
-
-        //   case bonus1MaxEn:
-        //     num_bonus1MaxEn++;
-        //     EEPROM.write(PLAYER_num_bonus1MaxEn_add, num_bonus1MaxEn);
-        //     tempNoti = "  PowerUp: +1 Max En ";
-        //     break;
-
-        //   case bonus1MULTIPLIER:
-        //     num_bonus1Multiplier++;
-        //     EEPROM.write(PLAYER_num_bonus1MULTIPLIER_add, num_bonus1Multiplier);
-        //     tempNoti = "   PowerUp: +1 MULTIPLIER  ";
-        //     break;
-
-        //   case fiveminx2EnRegen:
-        //     num_fiveminx2EnRegen++;
-        //     EEPROM.write(PLAYER_num_fiveminx2EnRegen_add, num_fiveminx2EnRegen);
-        //     tempNoti = "PowerUp: x2 En Regen ";
-        //     break;
-
-        //   case bomb:
-        //     num_bomb++;
-        //     EEPROM.write(PLAYER_num_bomb_add, num_bomb);
-        //     tempNoti = "  PowerUp: A Bomb!!  ";
-        //     break;
-
-        //   default:
-        //     break;
-        //   }
-        tempNoti_start = millis();
-      }
-      break;
-
+    // bomb feedback, source: wanderers and treasure v2
     case 4:
       if ((feedbackData.attacker_CLAN == CLAN) && (feedbackData.attacker_ID == ID))
       {
@@ -983,6 +951,8 @@ public:
       }
       break;
 
+
+    // from wanderers (gl)
     case 5:
       // received a heal feedback
       if (HP != 0)
@@ -992,6 +962,26 @@ public:
       tempNoti = "        Healed       ";
       tempNoti_start = millis();
       last_received_heal = tempNoti_start;
+      break;
+
+    // from treasure base
+    case 6:
+      if ((feedbackData.attacker_CLAN == CLAN) && (feedbackData.attacker_ID == ID))
+      {
+        Player_Buzzer.Blaster();
+        if (feedbackData.is_attackee_killed == true)
+        {
+          tempNoti = " You destroyed a base";
+          tempNoti_start = millis();
+          Multiplier++;
+          EEPROM.write(PLAYER_MULTIPLIER_add, Multiplier);
+        }
+        else
+        {
+          tempNoti = "    Damaged a base    ";
+          tempNoti_start = millis();
+        }
+      }
       break;
 
     default:

@@ -338,6 +338,8 @@ public:
     TreasureBase_NeoPixel.displayRGB_FRONT(R_ATTACKED, G_ATTACKED, B_ATTACKED);
     TreasureBase_NeoPixel.displayRGB_TOP(R_ATTACKED, G_ATTACKED, B_ATTACKED);
 
+    feedback_attack(CLAN_, ID_, channel_);
+
     if (HP == 0)
     {
       EEPROM.write(ENABLE_add, 2);
@@ -367,14 +369,12 @@ public:
     lastAttackedTime = millis();
 
     EEPROM.commit();
-
-    feedback_attack(CLAN_, ID_, channel_);
   }
 
   void feedback_attack(int CLAN_, int ID_, int channel_)
   {
     bool killed = (HP == 0);
-    TreasureBase_EspNOW.send_data_attacked(1, 1, CLAN_, ID_, BaseClanValue, killed, channel_);
+    TreasureBase_EspNOW.send_data_attacked(1, 6, CLAN_, ID_, BaseClanValue, killed, channel_);
   }
 
   void sendDepositAction(int CLAN_, int ID_, int MULTIPLIER_, int action_, int channel_)
