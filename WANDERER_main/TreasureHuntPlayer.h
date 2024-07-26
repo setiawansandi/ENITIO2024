@@ -8,6 +8,11 @@
 
 #define x2_En_Regen_bonus_duration 300000 // [ms]
 
+// For treasure buzzer
+#define BUZZ_INTERVAL 60  // Interval between beeps in milliseconds
+#define BEEP_CYCLES 5     // Number of beep cycles
+#define BEEPS_PER_CYCLE 4 // Number of beeps per cycle
+
 int game_started_buffer = 1;
 
 uint8_t newMACAddress_AP[] = {4, 8, 1, 255, 255, 0};
@@ -90,11 +95,14 @@ private:
   int scoreSolaris = 0;
   int numDeath = 0;
 
+  // For treasure buzzer
   bool buzzerFirstRun = true;
+  bool beeping = false;
+  bool isBuzzerOn = false;
+  int beepCount = 0;
+  int beepCycleCount = 0;
+  unsigned long randomLongPause = 0;
   unsigned long buzzerEndTime = 0;
-  unsigned long buzzerEndDelay = 0;
-  unsigned long TREASURE_BUZZ_DURATION = 5000;
-  unsigned long BUZZER_STARTING_DELAY = 0;
 
 public:
   bool gameStarted = 0;
@@ -639,6 +647,7 @@ public:
     }
   }
 
+  // TODO: Optimization on the logic
   void handleTreasureBuzzer()
   {
     unsigned long currentMillis = millis();
@@ -659,38 +668,67 @@ public:
     // Handle first run delay when numL1Treasure becomes > 0
     if (buzzerFirstRun)
     {
-      if (currentMillis - previousMillis >= BUZZER_STARTING_DELAY)
-      {
-        buzzerFirstRun = false;
-        previousMillis = currentMillis;
-        buzzerEndDelay = random(3000, 20000);
-        Serial.println("First run delay completed. Next buzz in " + String(buzzerEndDelay) + "ms");
-      }
+      buzzerFirstRun = false;
+      previousMillis = currentMillis;
+      randomLongPause = random(3000, 15000);
+      buzzerEndTime = currentMillis + randomLongPause;
+      Serial.println("First run delay completed. Next buzz in " + String(randomLongPause) + "ms");
+
       return;
     }
 
-    // Handle treasure buzz when numL1Treasure > 0 and first run is complete
-    if (currentMillis - previousMillis >= buzzerEndDelay && buzzerEndTime == 0)
+    if (beeping)
     {
-      // Start a new treasure buzz
-      Player_Buzzer.sound(NOTE_E4);
-      buzzerEndTime = currentMillis + TREASURE_BUZZ_DURATION;
-      previousMillis = currentMillis;
-      buzzerEndDelay = random(3000, 20000);
-      Serial.println("Treasure Buzzer started. Next in " + String(buzzerEndDelay) + "ms");
-    }
-    else if (currentMillis < buzzerEndTime)
-    {
-      // Continue ongoing treasure buzz
-      Player_Buzzer.sound(NOTE_E4);
-    }
+      // Handle the beeping sequence
+      if (currentMillis - previousMillis >= BUZZ_INTERVAL)
+      {
+        previousMillis = currentMillis;
+        if (!isBuzzerOn)
+        {
+          isBuzzerOn = true;
+          Player_Buzzer.sound(NOTE_E4);
+          // Serial.println("Buzz");
+        }
+        else
+        {
+          isBuzzerOn = false;
+          Player_Buzzer.end_sound();
+          ++beepCount;
+          // Serial.println("End");
+        }
 
-    // Stop any completed buzz
-    if (buzzerEndTime != 0 && currentMillis >= buzzerEndTime)
+        // After n beeps, switch to pause state
+        if (beepCount >= BEEPS_PER_CYCLE)
+        {
+          beeping = false;
+          beepCount = 0;
+          beepCycleCount++;
+          Player_Buzzer.end_sound();
+
+          if (beepCycleCount >= BEEP_CYCLES)
+          {
+            beepCycleCount = 0;
+            randomLongPause = random(3000, 18000);
+            buzzerEndTime = currentMillis + randomLongPause;
+            Serial.println("Treasure Buzzer paused. Next buzz in " + String(randomLongPause) + "ms");
+          }
+          else
+          {
+            buzzerEndTime = currentMillis + 1000;
+            // Serial.println("Beep cycle " + String(beepCycleCount) + " completed");
+          }
+        }
+      }
+    }
+    else
     {
-      Player_Buzzer.end_sound();
-      buzzerEndTime = 0;
-      Serial.println("Treasure Buzzer stopped");
+      // During pause, wait for the random interval to elapse
+      if (currentMillis >= buzzerEndTime)
+      {
+        beeping = true;
+        previousMillis = currentMillis;
+        // Serial.println("Treasure Buzzer resumed");
+      }
     }
   }
 
@@ -747,7 +785,6 @@ public:
         tempNoti = "       Attacked      ";
         tempNoti_start = millis();
         feedback_attack(CLAN_, ID_, channel_);
-        Player_Buzzer.sound(NOTE_E3);
       }
       break;
 
@@ -1091,8 +1128,9 @@ public:
   void update_sound()
   {
     unsigned long currTime = millis();
-    if (currTime - tempNoti_start >= NOTI_SOUND_DURATION)
+    if (currTime - tempNoti_start >= NOTI_SOUND_DURATION && tempNoti_start != 0)
     {
+      tempNoti_start = 0;
       Player_Buzzer.end_sound();
     }
   }
