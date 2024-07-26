@@ -68,9 +68,8 @@ const unsigned char enitioLogo[] PROGMEM = {
 
 // down arrow 10 x 9px
 const unsigned char downArrow[] PROGMEM = {
-	0x0c, 0x00, 0x0c, 0x00, 0x0c, 0x00, 0x0c, 0x00, 0x0c, 0x00, 0x7f, 0x80, 0x3f, 0x00, 0x1e, 0x00,
-	0x0c, 0x00};
-
+    0x0c, 0x00, 0x0c, 0x00, 0x0c, 0x00, 0x0c, 0x00, 0x0c, 0x00, 0x7f, 0x80, 0x3f, 0x00, 0x1e, 0x00,
+    0x0c, 0x00};
 
 #define EEPROM_SIZE 11
 
@@ -95,6 +94,10 @@ const unsigned char downArrow[] PROGMEM = {
 #define R_OFF 5
 #define G_OFF 0
 #define B_OFF 0
+
+#define R_ATTACKED 6
+#define G_ATTACKED 1
+#define B_ATTACKED 0
 
 #define DOUBLE_CLICK_LENGTH 1000 // [ms]
 
@@ -123,7 +126,9 @@ bool clicked_once = 0;
 unsigned long last_clicked = 0;
 unsigned long lastRecoveredTime = 0;
 
+unsigned long tempNoti_start = 0;
 const unsigned long DISPLAY_HP_DURATION = 15000;
+const int NOTI_SOUND_DURATION = 300;
 bool depositEvent = false;
 
 // stub functions
@@ -224,6 +229,7 @@ public:
   {
     unsigned long currTime = millis();
 
+    // Turn off LED
     if (currTime - lastActionReceived > TREASURE_BASE_ACTION_RECV_WAIT)
     {
       TreasureBase_NeoPixel.off_FRONT();
@@ -320,11 +326,17 @@ public:
     HP = max(HP - MULTIPLIER_, 0);
     EEPROM.write(HP_add, HP);
     Serial.println(HP);
+
+    TreasureBase_Buzzer.sound(NOTE_B0);
+    tempNoti_start = millis();
+    TreasureBase_NeoPixel.displayRGB_FRONT(R_ATTACKED, G_ATTACKED, B_ATTACKED);
+    TreasureBase_NeoPixel.displayRGB_TOP(R_ATTACKED, G_ATTACKED, B_ATTACKED);
+
     if (HP == 0)
     {
       EEPROM.write(ENABLE_add, 2);
 
-      display_base_destroyed();
+      display_base_destroyed(false);
 
       for (int i = 0; i < 3; ++i)
       {
@@ -341,7 +353,7 @@ public:
 
       // set what the base recover duration
       recovery_time = TREASURE_BASE_RECOVER_DURATION + millis();
-      Serial.print("Treasure will respawn at ");
+      Serial.print("Base will respawn at ");
       Serial.print(recovery_time);
       Serial.print(" Current time: ");
       Serial.println(millis());
@@ -349,6 +361,14 @@ public:
     lastAttackedTime = millis();
 
     EEPROM.commit();
+
+    feedback_attack(CLAN_, ID_, channel_);
+  }
+
+  void feedback_attack(int CLAN_, int ID_, int channel_)
+  {
+    bool killed = (HP == 0);
+    TreasureBase_EspNOW.send_data_attacked(1, 1, CLAN_, ID_, BaseClanValue, killed, channel_);
   }
 
   void sendDepositAction(int CLAN_, int ID_, int MULTIPLIER_, int action_, int channel_)
@@ -528,11 +548,12 @@ public:
     }
     else if (HP <= 0)
     {
-      display_base_destroyed();
+      display_base_destroyed(true);
     }
   }
 
-  void display_base_destroyed()
+
+  void display_base_destroyed(bool showCooldown)
   {
     display.clearDisplay();
     display.setTextSize(2);
@@ -540,6 +561,14 @@ public:
     display.setCursor(0, 16);
     display.println(" Base");
     display.println(" Destroyed");
+
+    // TODO: implement cooldown
+    if (showCooldown) {
+      display.setTextSize(1);
+      display.setCursor(12, 54);
+      display.println("Respawing in 20s");
+    }
+  
     display.display();
   }
 
@@ -570,6 +599,15 @@ void clearEEPROM()
     EEPROM.write(i, 0);
   }
   EEPROM.commit();
+}
+
+void update_sound()
+{
+  unsigned long currTime = millis();
+  if (currTime - tempNoti_start >= NOTI_SOUND_DURATION)
+  {
+    TreasureBase_Buzzer.end_sound();
+  }
 }
 
 bool setUpDone = 0;
@@ -700,6 +738,7 @@ void loop()
     treasureBase.display_in_game();
     treasureBase.receiveAction();
     treasureBase.recover();
+    update_sound();
   }
   else
   {
@@ -710,6 +749,7 @@ void loop()
       treasureBase.display_in_game();
       treasureBase.receiveAction();
       treasureBase.recover();
+      update_sound();
     }
     else
     {
