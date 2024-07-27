@@ -16,7 +16,7 @@
 
 #define R_ON 0
 #define G_ON 0
-#define B_ON 0 // 255
+#define B_ON 50 // 255
 
 #define DOUBLE_CLICK_LENGTH 1000 // [ms]
 
@@ -52,11 +52,13 @@ bool isBombed = false;
 const int CLAN = -1; // -1 since chest doesn't belong to any clan
 
 // Constants
-int TREASURE_V2_INITIAL_HP;
-int TREASURE_V2_ACTION_RECV_WAIT;
-int TREASURE_RECOVER_DURATION;
+int TREASURE_V2_INITIAL_HP = 1;
+int TREASURE_V2_ACTION_RECV_WAIT = 3000;
+int TREASURE_MAX_RECOVER_DURATION = 3 * 60000; // 3 mins
+int TREASURE_MIN_RECOVER_DURATION = 1 * 60000; // 1 min
+
 int NOTI_SOUND_DURATION = 300;
-int FAKE_CHEST_PROBABILITY = 31;
+int FAKE_CHEST_PROBABILITY = 33;
 
 unsigned long tempNoti_start = 0;
 bool clicked_once = 0;
@@ -118,7 +120,7 @@ class TreasureV2
 private:
   int HP;
 
-  int this_recover_duration = TREASURE_RECOVER_DURATION;
+  int this_recover_duration;
   unsigned long lastOpenedTime = 0;
   unsigned long lastActionReceived = 0;
 
@@ -127,9 +129,10 @@ public:
 
   void init_treasure()
   {
-    EEPROM.write(ENABLE_add, 1);
+    EEPROM.write(ENABLE_add, 2);
     EEPROM.commit();
     HP = TREASURE_V2_INITIAL_HP;
+    this_recover_duration = TREASURE_MAX_RECOVER_DURATION;
   };
 
   void receiveAction()
@@ -165,13 +168,14 @@ public:
 
           // SET treasure chest COOLDOWN
           lastOpenedTime = millis();
-          this_recover_duration = TREASURE_RECOVER_DURATION * random(1, 9);
+          this_recover_duration = random(TREASURE_MIN_RECOVER_DURATION, TREASURE_MAX_RECOVER_DURATION);
+          Serial.printf("Treasure will recover in %d\n", this_recover_duration);
         }
       }
     }
   };
 
-  void receiveEspNOW() { //TODO
+  void receiveEspNOW() { //TODO if want to keep track no of killed by treasure chest
     // if (EspNOW_received >= 1)
     // {
     //   int i;
@@ -318,7 +322,7 @@ public:
 
   void recover()
   {
-    // Level1Treasures can recover after a fixed amt of time
+    // Treasures can recover after a fixed amt of time
     int currStatus = EEPROM.read(ENABLE_add);
     unsigned int currTime = millis();
 
@@ -423,7 +427,7 @@ int get_game_state()
       HTTP_TIMEOUT = game_consts.HTTP_TIMEOUT;
       TREASURE_V2_INITIAL_HP = game_consts.TREASURE_LEVEL1_INITIAL_HP;
       TREASURE_V2_ACTION_RECV_WAIT = game_consts.TREASURE_LEVEL1_ACTION_RECV_WAIT;
-      TREASURE_RECOVER_DURATION = game_consts.TREASURE_LEVEL1_RECOVER_DURATION;
+      TREASURE_MAX_RECOVER_DURATION = game_consts.TREASURE_LEVEL1_RECOVER_DURATION;
       parameters_updated = true;
       Serial.println("[BACKGROUND] Parameters Retrieved");
     }
@@ -442,8 +446,8 @@ int get_game_state()
     if (gameStarted)
     {
       Serial.println("[BACKGROUND] Game has started! Initialising Treasure..");
-      TreasureV2_NeoPixel.displayRGB_FRONT(R_ON, G_ON, B_ON);
-      TreasureV2_NeoPixel.displayRGB_TOP(R_ON, G_ON, B_ON);
+      // TreasureV2_NeoPixel.displayRGB_FRONT(R_ON, G_ON, B_ON);
+      // TreasureV2_NeoPixel.displayRGB_TOP(R_ON, G_ON, B_ON);
       TreasureV2.init_treasure();
       setUpDone = 1;
       WiFi.disconnect();
@@ -465,8 +469,8 @@ void backgroundTaskCode(void *pvParameters)
       // offline mode
       if (!setUpDone)
       {
-        TreasureV2_NeoPixel.displayRGB_FRONT(R_ON, G_ON, B_ON);
-        TreasureV2_NeoPixel.displayRGB_TOP(R_ON, G_ON, B_ON);
+        // TreasureV2_NeoPixel.displayRGB_FRONT(R_ON, G_ON, B_ON);
+        // TreasureV2_NeoPixel.displayRGB_TOP(R_ON, G_ON, B_ON);
         TreasureV2.init_treasure();
         setUpDone = 1;
       }
@@ -525,9 +529,6 @@ void setup()
 
   // Hardcoded constants, in case there is no WiFi to update
   HTTP_TIMEOUT = 30000;
-  TREASURE_V2_INITIAL_HP = 1;
-  TREASURE_V2_ACTION_RECV_WAIT = 3000;
-  TREASURE_RECOVER_DURATION = 2000;
 
   xTaskCreatePinnedToCore(
       backgroundTaskCode, /* Task function. */
