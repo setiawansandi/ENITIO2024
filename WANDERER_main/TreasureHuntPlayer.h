@@ -517,7 +517,8 @@ public:
           currentPage = lastPageNav;
         if (currentPage == exitPage)
         {
-          // Turn off LED
+          // Turn off LED & Buzzer
+          Player_Buzzer.end_sound();
           Player_NeoPixel.off_FRONT();
           Player_NeoPixel.off_TOP();
           ledIsOn = false;
@@ -526,25 +527,6 @@ public:
           currentPage = mainPage; // reset current page
           lastPageNav = currentPage;
         }
-        // if (currentPage == powerupPage)
-        // {
-        //   choosingPowerUp = true;
-        //   lastPageNav = mainPage;
-        // }
-        //}
-
-        // else
-        // {
-        //   if (PowerUpNav == 0)
-        //   {
-        //     currentPage = mainPage;
-        //     choosingPowerUp = false;
-        //   }
-        //   else
-        //   {
-        //     handlePowerUp(PowerUpNav);
-        //   }
-        // }
 
         Player_joystick.set_state();
         break;
@@ -647,7 +629,6 @@ public:
     }
   }
 
-  // TODO: Optimization on the logic
   void handleTreasureBuzzer()
   {
     unsigned long currentMillis = millis();
@@ -779,6 +760,7 @@ public:
           ++numDeath;
           EEPROM.write(PLAYER_num_death, numDeath);
 
+          // Play death SFX
           xTaskCreate(
               playDeathSoundTask, // Task function
               "PlayDeathSound",   // Name of the task
@@ -1012,6 +994,16 @@ public:
         ++numDeath;
         EEPROM.write(PLAYER_num_death, numDeath);
         EEPROM.commit();
+
+        // Play death SFX
+        xTaskCreate(
+            playDeathSoundTask, // Task function
+            "PlayDeathSound",   // Name of the task
+            2048,               // Stack size (in words)
+            NULL,               // Task input parameter
+            1,                  // Priority of the task
+            NULL                // Task handle
+        );
       }
     }
   }
