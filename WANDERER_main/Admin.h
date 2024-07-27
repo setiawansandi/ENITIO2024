@@ -196,7 +196,7 @@ class Admin {
                             StartUpDisplay();
                             clearEEPROM();
                             // write into EEPROM Online mode again
-                            EEPROM.write(ONLINE_mode_add, 1);
+                            EEPROM.write(ONLINE_mode_add, 0);
                             EEPROM.commit();
                             ESP.restart();
                             break;
