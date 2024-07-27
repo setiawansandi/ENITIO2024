@@ -1090,9 +1090,13 @@ public:
       TreasureHunt_OLED.display_infoPage(CLAN, ID, Multiplier, MaxEn, noti_to_display, lastPageNav);
       break;
     case achievementPage:
-      TreasureHunt_OLED.display_achievementPage_new(numKilled,
-                                                    numDeath,
+      TreasureHunt_OLED.display_achievementPage_new(numDeath,
                                                     totalTreasure,
+                                                    scoreInvicta,
+                                                    scoreDynari,
+                                                    scoreEphilia,
+                                                    scoreAkrona,
+                                                    scoreSolaris,
                                                     noti_to_display,
                                                     lastPageNav);
       break;
