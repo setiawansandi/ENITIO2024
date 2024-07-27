@@ -75,7 +75,7 @@ const unsigned char downArrow[] PROGMEM = {
 
 #define ID_BOUND 50
 
-#define ENABLE_add 0 // 0 means Treasure has not been initialized, 1 means already initialized
+#define ENABLE_add 0 // 0 means Base has not been initialized, 1 means base active, 2 means base destroyed
 #define ID_add 1
 #define HP_add 2
 #define INVICTA_add 3
@@ -120,17 +120,18 @@ int EPHILIA_TREAS = 0;
 int SOLARIS_TREAS = 0;
 
 int action = 0;
-int BaseClanValue;
-int treasureCount = 0;
+int BASE_CLAN_VALUE;
+int currentTreasureDeposited = 0;
 
 bool clicked_once = 0;
 unsigned long last_clicked = 0;
-unsigned long lastRecoveredTime = 0;
 
-unsigned long tempNoti_start = 0;
-const unsigned long DISPLAY_HP_DURATION = 15000;
+const unsigned long DISPLAY_HP_DURATION = 8000;
 const int NOTI_SOUND_DURATION = 300;
+const int HP_RECOVERY_RATE = 20000; // 1HP / 20s
+
 bool depositEvent = false;
+unsigned long tempNoti_start = 0;
 
 // stub functions
 void StartUpDisplay();
@@ -146,7 +147,7 @@ void clearEEPROM();
 #include "Admin.h"
 
 // Constants
-int TREASURE_BASE_INITIAL_HP = 10;
+int TREASURE_BASE_MAX_HP = 25;
 int TREASURE_BASE_ACTION_RECV_WAIT = 1500;
 int TREASURE_BASE_RECOVER_DURATION = 20000;
 
@@ -211,19 +212,22 @@ class TreasureBase
 {
 private:
   int HP;
+  int MaxHP;
 
   int recovery_time = 0;
   unsigned long lastActionReceived = 0;
   unsigned long lastAttackedTime = INT_MIN;
+  unsigned long lastHpRecoverTime = INT_MIN;
 
 public:
   int CLAN_, ID_, En_, MULTIPLIER_, action_, channel_, Treas_Deposit_;
 
-  void init_treasure()
+  void init_base()
   {
     EEPROM.write(ENABLE_add, 1);
     EEPROM.commit();
-    HP = TREASURE_BASE_INITIAL_HP;
+    HP = TREASURE_BASE_MAX_HP;
+    MaxHP = TREASURE_BASE_MAX_HP;
   }
 
   void receiveAction()
@@ -256,14 +260,14 @@ public:
         action_ = IRsignal_.command.digit0;
         lastActionReceived = currTime;
 
-        if (CLAN_ == BaseClanValue)
+        if (CLAN_ == BASE_CLAN_VALUE)
         {
           if (action_ == collect)
           {
             handleDeposit(CLAN_, ID_, Treas_Deposit_, MULTIPLIER_, channel_);
           }
         }
-        else if (CLAN_ != BaseClanValue)
+        else if (CLAN_ != BASE_CLAN_VALUE)
         {
           if (action_ == attack)
           {
@@ -279,7 +283,7 @@ public:
     if (Treas_Deposit_ % 16 <= 0)
       return;
 
-    treasureCount = Treas_Deposit_ % 16;
+    currentTreasureDeposited = Treas_Deposit_ % 16;
 
     interim_collected_display();
 
@@ -293,27 +297,27 @@ public:
     switch (CLAN_)
     {
     case INVICTA:
-      EEPROM.write(INVICTA_add, EEPROM.read(INVICTA_add) + treasureCount);
+      EEPROM.write(INVICTA_add, EEPROM.read(INVICTA_add) + currentTreasureDeposited);
       INVICTA_TREAS = EEPROM.read(INVICTA_add);
       break;
 
     case DYNARI:
-      EEPROM.write(DYNARI_add, EEPROM.read(DYNARI_add) + treasureCount); // EEPROM.write(address, value)
+      EEPROM.write(DYNARI_add, EEPROM.read(DYNARI_add) + currentTreasureDeposited); // EEPROM.write(address, value)
       DYNARI_TREAS = EEPROM.read(DYNARI_add);
       break;
 
     case EPHILIA:
-      EEPROM.write(EPHILIA_add, EEPROM.read(EPHILIA_add) + treasureCount);
+      EEPROM.write(EPHILIA_add, EEPROM.read(EPHILIA_add) + currentTreasureDeposited);
       EPHILIA_TREAS = EEPROM.read(EPHILIA_add);
       break;
 
     case AKRONA:
-      EEPROM.write(AKRONA_add, EEPROM.read(AKRONA_add) + treasureCount);
+      EEPROM.write(AKRONA_add, EEPROM.read(AKRONA_add) + currentTreasureDeposited);
       AKRONA_TREAS = EEPROM.read(AKRONA_add);
       break;
 
     case SOLARIS:
-      EEPROM.write(SOLARIS_add, EEPROM.read(SOLARIS_add) + treasureCount);
+      EEPROM.write(SOLARIS_add, EEPROM.read(SOLARIS_add) + currentTreasureDeposited);
       SOLARIS_TREAS = EEPROM.read(SOLARIS_add);
       break;
 
@@ -343,6 +347,7 @@ public:
     if (HP == 0)
     {
       EEPROM.write(ENABLE_add, 2);
+      EEPROM.commit();
 
       display_base_destroyed(false);
 
@@ -365,16 +370,17 @@ public:
       Serial.print(recovery_time);
       Serial.print(" Current time: ");
       Serial.println(millis());
+
+      // destroy all the treasure collected
+      destroyAllTreasure();
     }
     lastAttackedTime = millis();
-
-    EEPROM.commit();
   }
 
   void feedback_attack(int CLAN_, int ID_, int channel_)
   {
     bool killed = (HP == 0);
-    TreasureBase_EspNOW.send_data_attacked(1, 6, CLAN_, ID_, BaseClanValue, killed, channel_);
+    TreasureBase_EspNOW.send_data_attacked(1, 6, CLAN_, ID_, BASE_CLAN_VALUE, killed, channel_);
   }
 
   void sendDepositAction(int CLAN_, int ID_, int MULTIPLIER_, int action_, int channel_)
@@ -422,7 +428,8 @@ public:
 
   void recover()
   {
-    // Level1Treasures can recover after a fixed amt of time
+    // Base can recover after a fixed amt of time
+    // currStatus: 1-ALIVE, 2-DEAD
     int currStatus = EEPROM.read(ENABLE_add);
     unsigned int currTime = millis();
 
@@ -431,32 +438,59 @@ public:
       Serial.print("Respawning Base.. | Current-time: ");
       Serial.println(millis());
       EEPROM.write(ENABLE_add, 1);
-      HP = TREASURE_BASE_INITIAL_HP;
+      HP = TREASURE_BASE_MAX_HP;
+    }
+    else if (currStatus == 1)
+    {
+      regenerateHP();
     }
   };
 
-  int getTotalTreasure()
+  void regenerateHP()
   {
-    switch (BaseClanValue)
+    unsigned long currTime = millis();
+
+    if (HP < MaxHP && (currTime - lastHpRecoverTime >= HP_RECOVERY_RATE))
+    {
+      ++HP;
+      EEPROM.write(HP_add, HP);
+      lastHpRecoverTime = currTime;
+    }
+  }
+
+  void destroyAllTreasure()
+  {
+    switch (BASE_CLAN_VALUE)
     {
     case INVICTA:
-      return EEPROM.read(INVICTA_add);
+      EEPROM.write(INVICTA_add, 0);
+      INVICTA_TREAS = EEPROM.read(INVICTA_add);
+      break;
 
     case DYNARI:
-      return EEPROM.read(DYNARI_add);
+      EEPROM.write(DYNARI_add, 0);
+      DYNARI_TREAS = EEPROM.read(DYNARI_add);
+      break;
 
     case EPHILIA:
-      return EEPROM.read(EPHILIA_add);
+      EEPROM.write(EPHILIA_add, 0);
+      EPHILIA_TREAS = EEPROM.read(EPHILIA_add);
+      break;
 
     case AKRONA:
-      return EEPROM.read(AKRONA_add);
+      EEPROM.write(AKRONA_add, 0);
+      AKRONA_TREAS = EEPROM.read(AKRONA_add);
+      break;
 
     case SOLARIS:
-      return EEPROM.read(SOLARIS_add);
+      EEPROM.write(SOLARIS_add, 0);
+      SOLARIS_TREAS = EEPROM.read(SOLARIS_add);
+      break;
 
     default:
-      return 0;
+      break;
     }
+    EEPROM.commit();
   }
 
   void display_not_playing_yet()
@@ -465,7 +499,7 @@ public:
     display.setTextSize(1);                             // Draw SIZE
     display.setTextColor(SSD1306_BLACK, SSD1306_WHITE); // Draw 'inverse' text
     display.setCursor(0, 0);
-    display.println(F("   Level 1 Treasure  "));
+    display.println("    Treasure Base    ");
 
     display.setCursor(0, 16);
     display.setTextColor(SSD1306_WHITE); // Draw white text
@@ -504,38 +538,58 @@ public:
       display.setTextSize(2);              // Normal 1:1 pixel scale
       display.setTextColor(SSD1306_WHITE); // Draw white text
 
-      BaseClanValue = EEPROM.read(CLAN_add);
+      BASE_CLAN_VALUE = EEPROM.read(CLAN_add);
 
-      switch (BaseClanValue)
+      int totalTreasure = 0;
+
+      switch (BASE_CLAN_VALUE)
       {
-      case 0:
-        display.setCursor(21, 22);
+      case INVICTA:
+        display.setCursor(21, 15);
         display.print("INVICTA");
+        totalTreasure = EEPROM.read(INVICTA_add);
         break;
-      case 1:
-        display.setCursor(29, 22);
+      case DYNARI:
+        display.setCursor(29, 15);
         display.print("DYNARI");
+        totalTreasure = EEPROM.read(DYNARI_add);
         break;
-      case 2:
-        display.setCursor(22, 22);
+      case EPHILIA:
+        display.setCursor(22, 15);
         display.print("EPHILIA");
+        totalTreasure = EEPROM.read(EPHILIA_add);
         break;
-      case 3:
-        display.setCursor(29, 22);
+      case AKRONA:
+        display.setCursor(29, 15);
         display.print("AKRONA");
+        totalTreasure = EEPROM.read(AKRONA_add);
         break;
-      case 4:
-        display.setCursor(22, 22);
+      case SOLARIS:
+        display.setCursor(22, 15);
         display.print("SOLARIS");
+        totalTreasure = EEPROM.read(SOLARIS_add);
         break;
       default:
-        display.setCursor(21, 22);
+        display.setCursor(21, 15);
         display.print("UNKNOWN");
         break;
       }
 
+      display.setTextSize(1);
+
+      if (totalTreasure < 10)
+      {
+        display.setCursor(40, 33);
+      }
+      else
+      {
+        display.setCursor(36, 33);
+      }
+
+      display.print("Total: ");
+      display.println(totalTreasure);
+
       display.setCursor(2, 54);
-      display.setTextSize(1);              // Normal 1:1 pixel scale
       display.setTextColor(SSD1306_WHITE); // Draw white text
       display.println("  Hold   to Deposit  ");
       display.drawBitmap(42, 53, downArrow, 12, 15, WHITE);
@@ -570,7 +624,7 @@ public:
       display.print(HP);
 
       // Display HP bar
-      int barWidth = map(HP, 0, 10, 0, 128);                // Assuming max HP is 100 and screen width is 128
+      int barWidth = map(HP, 0, MaxHP, 0, 128);             // map(value, min_input, max_input, min_output, max_output)
       display.drawRect(0, 48, 128, 16, SSD1306_WHITE);      // Draw outline
       display.fillRect(0, 48, barWidth, 16, SSD1306_WHITE); // Fill based on HP
 
@@ -602,7 +656,7 @@ public:
     display.display();
   }
 
-  void display_deposited(int current_deposited, int total_deposited)
+  void display_deposited()
   {
     display.clearDisplay();
     display.setTextSize(1);                             // Draw SIZE
@@ -610,44 +664,26 @@ public:
     display.setCursor(0, 0);
     display.println("    Treasure Base    ");
 
-    display.setTextSize(2);              // Normal 1:1 pixel scale
     display.setTextColor(SSD1306_WHITE); // Draw white text
 
-    switch (BaseClanValue)
-    {
-    case 0:
-      display.setCursor(21, 22);
-      display.print("INVICTA");
-      break;
-    case 1:
-      display.setCursor(30, 22);
-      display.print("DYNARI");
-      break;
-    case 2:
-      display.setCursor(22, 22);
-      display.print("EPHILIA");
-      break;
-    case 3:
-      display.setCursor(29, 22);
-      display.print("AKRONA");
-      break;
-    case 4:
-      display.setCursor(22, 22);
-      display.print("SOLARIS");
-      break;
-    default:
-      display.setCursor(21, 22);
-      display.print("UNKNOWN");
-      break;
-    }
+    display.setTextSize(1);
+    display.setCursor(36, 17);
+    display.println("Deposited");
 
-    display.setTextSize(1);  
-    display.setCursor(5, 45);
-    display.print("Deposited: ");
-    display.println(current_deposited);
-    display.setCursor(5, 55);
-    display.print("Clan total: ");
-    display.println(total_deposited);
+    display.setTextSize(2);
+    if (currentTreasureDeposited < 10)
+    {
+      display.setCursor(58, 32);
+    }
+    else
+    {
+      display.setCursor(51, 32);
+    }
+    display.print(currentTreasureDeposited);
+
+    display.setTextSize(1);
+    display.setCursor(32, 54);
+    display.println("treasure(s)");
 
     display.display();
   }
@@ -658,7 +694,7 @@ public:
 
     if (depositEvent)
     {
-      display_deposited(treasureCount, getTotalTreasure());
+      display_deposited();
     }
     else if (currentMillis - lastAttackedTime >= DISPLAY_HP_DURATION)
     {
@@ -709,7 +745,7 @@ int get_game_state()
   // Assuming the game has started
   if (gameStarted)
   {
-    treasureBase.init_treasure();
+    treasureBase.init_base();
     return 1; // once the game has started then we don't need to check anymore
   }
   else
@@ -717,7 +753,7 @@ int get_game_state()
     gameStarted = true; // Directly set gameStarted to true
 
     Serial.println("[BACKGROUND] Game has started! Initialising Treasure..");
-    treasureBase.init_treasure();
+    treasureBase.init_base();
     setUpDone = 1;
 
     // No need to disconnect WiFi as we're not using it
@@ -742,7 +778,7 @@ void backgroundTaskCode(void *pvParameters)
       {
         TreasureBase_NeoPixel.displayRGB_FRONT(0, 0, 5);
         TreasureBase_NeoPixel.displayRGB_TOP(0, 0, 5);
-        treasureBase.init_treasure();
+        treasureBase.init_base();
         setUpDone = 1;
       }
       vTaskDelayUntil(&xLastWakeTime, pdMS_TO_TICKS(10));
@@ -776,6 +812,15 @@ void backgroundTaskCode(void *pvParameters)
   }
 };
 
+void treasureBaseLoop()
+{
+  treasureBase.receiveAction();
+  treasureBase.display_in_game();
+  treasureBase.recover();
+  update_sound();
+  EEPROM.commit();
+}
+
 void setup()
 {
   if (!display.begin(SSD1306_SWITCHCAPVCC, SCREEN_ADDRESS))
@@ -793,7 +838,7 @@ void setup()
   EEPROM.begin(EEPROM_SIZE);
   ID = EEPROM.read(ID_add);
   WIFI_ON = EEPROM.read(ONLINE_mode_add);
-  BaseClanValue = EEPROM.read(CLAN_add);
+  BASE_CLAN_VALUE = EEPROM.read(CLAN_add);
 
   HTTP_TIMEOUT = 30000;
 
@@ -818,10 +863,7 @@ void loop()
   {
     // offline mode
     handleJoystick();
-    treasureBase.receiveAction();
-    treasureBase.display_in_game();
-    treasureBase.recover();
-    update_sound();
+    treasureBaseLoop();
   }
   else
   {
@@ -829,10 +871,7 @@ void loop()
     handleJoystick();
     if (setUpDone)
     {
-      treasureBase.receiveAction();
-      treasureBase.display_in_game();
-      treasureBase.recover();
-      update_sound();
+      treasureBaseLoop();
     }
     else
     {
