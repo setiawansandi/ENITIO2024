@@ -376,16 +376,32 @@ void displayTreasureLooted(int CLAN_)
 
 	display.print("  Looted by: ");
 
-	if (CLAN_ == INVICTA)
+	switch (CLAN_)
+	{
+	case INVICTA:
 		display.print("INVICTA");
-	else if (CLAN_ == DYNARI)
+		break;
+
+	case DYNARI:
 		display.print("DYNARI");
-	else if (CLAN_ == EPHILIA)
+		break;
+
+	case EPHILIA:
 		display.print("EPHILIA");
-	else if (CLAN_ == AKRONA)
+		break;
+
+	case AKRONA:
 		display.print("AKRONA");
-	else if (CLAN_ == SOLARIS)
+		break;
+
+	case SOLARIS:
 		display.print("SOLARIS");
+		break;
+
+	default:
+		display.print("Sigma Male");
+		break;
+	}
 
 	// Display Loading Bar
 	display.drawBitmap(90, 30, loading_bar[current_loading_frame], 12, 12, WHITE);
