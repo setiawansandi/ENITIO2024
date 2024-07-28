@@ -151,14 +151,14 @@ class Admin_OLED {
       display.clearDisplay();
       display.setTextColor(SSD1306_BLACK, SSD1306_WHITE); // Draw 'inverse' text
       display.setCursor(0, 0);
-      display.println(F(" Confirm to Reset?   "));
+      display.println(F("  Confirm to Reset?  "));
       display.setTextColor(SSD1306_WHITE);
       display.setCursor(10, 12);
       display.println("NO");
       display.setCursor(10, 22);
-      display.println("YES, KEEP TREASURE ID");
+      display.println("YES, KEEP TRES. ID");
       display.setCursor(10, 32);
-      display.println("YES, CLEAR TREASURE ID");
+      display.println("YES, CLEAR TRES. ID");
 
       switch (ConfirmingResetNav)
       {
@@ -434,7 +434,7 @@ class Admin {
                 clearEEPROM();
                 EEPROM.write(ID_add, ID);
                 EEPROM.write(ONLINE_mode_add, 0);
-                EEPROM.write(ENABLE_add, 1);
+                EEPROM.write(ENABLE_add, 0);
                 EEPROM.commit();
                 ESP.restart();
                 break;
@@ -443,7 +443,7 @@ class Admin {
                 StartUpDisplay();
                 clearEEPROM();
                 EEPROM.write(ONLINE_mode_add, 0);
-                EEPROM.write(ENABLE_add, 1);
+                EEPROM.write(ENABLE_add, 0);
                 EEPROM.commit();
                 ESP.restart();
                 break;
