@@ -21,6 +21,16 @@ Edmund Ang
 
 Yash Sinha
 
+Wang Qi
+
+Jonathan Huang
+
+Wesley Wong Kar Ho
+
+Kiran Sudheer
+
+Sandi Setiawan
+
 ## Gallery
 ![image info](./IMG20220731114022.jpg)
 ![image info](./IMG20220731114707.jpg)
