@@ -65,6 +65,10 @@ const unsigned char enitioLogo[] PROGMEM = {
     0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x01, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
     0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00};
 
+// down nav arrow, 13x4px
+const unsigned char downNavArrow[] PROGMEM = {
+    0xff, 0xf8, 0x3f, 0xe0, 0x0f, 0x80, 0x02, 0x00};
+
 const int SetGLFunction = 0;
 const int FactoryResetFunction = 1;
 const int ToggleServerConnectivityFunction = 2;
@@ -86,29 +90,35 @@ void StartUpDisplay()
   display.display();
 }
 
-void CreditsDisplay()
+void CreditsDisplay(const char *const nameList[], int start_index, int end_index, bool isLastPage)
 {
   display.clearDisplay();
   display.setTextColor(SSD1306_BLACK, SSD1306_WHITE); // Draw 'inverse' text
   display.setCursor(0, 0);
-  display.println(F("  ENITIO Tech Team  "));
+  display.println(F("   ENITIO Tech Team  "));
 
   display.setTextColor(SSD1306_WHITE);
   display.setTextSize(1); // Draw SIZE
-  display.setCursor(0, 10);
-  display.println("Quan Tran   Ming Yuan");
-  display.setCursor(0, 19);
-  display.println("Kah Leong     Shirsho");
-  display.setCursor(0, 28);
-  display.println("Siddhangana      Yash");
-  display.setCursor(0, 37);
-  display.println("Edmund      Yan Sheng");
-  display.setCursor(0, 46);
-  display.println("              Winston");
 
-  display.setCursor(10, 56);
-  display.setTextColor(SSD1306_BLACK, SSD1306_WHITE);
-  display.println("(Press to go back)");
+  int name_y_coord = 10;
+  for (int i = start_index; i <= end_index; ++i)
+  {
+    display.setCursor(0, name_y_coord);
+    display.println(nameList[i]);
+    name_y_coord += 9;
+  }
+
+  if (isLastPage)
+  {
+    display.setCursor(10, 56);
+    display.setTextColor(SSD1306_BLACK, SSD1306_WHITE);
+    display.println("(Press to go back)");
+  }
+  else
+  {
+    display.drawBitmap(58, 58, downNavArrow, 13, 4, WHITE);
+  }
+
   display.display();
 }
 
