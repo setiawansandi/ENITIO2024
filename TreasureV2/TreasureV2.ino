@@ -4,6 +4,7 @@
 
 #define hp_pxl_bar_width 100 // [pxl/HP]
 
+// EEPROM ADDRESS
 #define ENABLE_add 0 // 0 means Treasure has not been initialized, 1 means already initialized
 #define ID_add 1
 #define HP_add 2
@@ -13,6 +14,7 @@
 #define AKRONA_add 6
 #define SOLARIS_add 7
 #define ONLINE_mode_add 8
+#define LASTCOLLECTION_add 9
 
 #define R_ON 0
 #define G_ON 0
@@ -58,7 +60,7 @@ int TREASURE_MAX_RECOVER_DURATION = 3 * 60000; // 3 mins
 int TREASURE_MIN_RECOVER_DURATION = 1 * 60000; // 1 min
 
 int NOTI_SOUND_DURATION = 300;
-int FAKE_CHEST_PROBABILITY = 33;
+int FAKE_CHEST_PROBABILITY = 30;
 
 unsigned long tempNoti_start = 0;
 bool clicked_once = 0;
@@ -129,10 +131,21 @@ public:
 
   void init_treasure()
   {
-    EEPROM.write(ENABLE_add, 2);
-    EEPROM.commit();
+    // Make sure chest is always on cooldown on boot but not first flash
+    if (EEPROM.read(ENABLE_add) == 0)
+    {
+      CLAN_ = -1;
+      EEPROM.write(ENABLE_add, 1);
+    }
+    else
+    {
+      CLAN_ = EEPROM.read(LASTCOLLECTION_add);
+      EEPROM.write(ENABLE_add, 2);
+    }
+
     HP = TREASURE_V2_INITIAL_HP;
     this_recover_duration = TREASURE_MAX_RECOVER_DURATION;
+    EEPROM.commit();
   };
 
   void receiveAction()
@@ -175,7 +188,8 @@ public:
     }
   };
 
-  void receiveEspNOW() { //TODO if want to keep track no of killed by treasure chest
+  void receiveEspNOW()
+  { // TODO if want to keep track no of killed by treasure chest
     // if (EspNOW_received >= 1)
     // {
     //   int i;
@@ -231,29 +245,27 @@ public:
     EEPROM.write(ENABLE_add, 2);
     EEPROM.commit();
 
-
     // Send the bomb through espnow
     // Determine a safe stack size to allocate
     const uint32_t stackSize = 10000; // Stack size in bytes
-    
+
     // Check if the required stack size can be allocated
     if (xPortGetFreeHeapSize() > stackSize)
     {
       // Create a new task to handle the bomb scan and send
       xTaskCreate(
-        sendBomb,     // Function to be executed
-        "Bomb Task",  // Name of the task (for debugging)
-        stackSize,    // Stack size (bytes)
-        NULL,         // Parameter to pass to the task
-        1,            // Task priority
-        NULL          // Task handle
+          sendBomb,    // Function to be executed
+          "Bomb Task", // Name of the task (for debugging)
+          stackSize,   // Stack size (bytes)
+          NULL,        // Parameter to pass to the task
+          1,           // Task priority
+          NULL         // Task handle
       );
     }
     else
     {
       Serial.println("Not enough heap memory to create the task!");
     }
-
 
     for (int i = 0; i < 3; ++i)
     {
@@ -284,6 +296,7 @@ public:
     int player_identifier = CLAN_ * pow(16, 2) + ID_;
 
     EEPROM.write(ENABLE_add, 2);
+    EEPROM.write(LASTCOLLECTION_add, CLAN_);
     switch (CLAN_)
     {
     case INVICTA:
@@ -448,7 +461,7 @@ int get_game_state()
       Serial.println("[BACKGROUND] Game has started! Initialising Treasure..");
       // TreasureV2_NeoPixel.displayRGB_FRONT(R_ON, G_ON, B_ON);
       // TreasureV2_NeoPixel.displayRGB_TOP(R_ON, G_ON, B_ON);
-      TreasureV2.init_treasure();
+      // TreasureV2.init_treasure();
       setUpDone = 1;
       WiFi.disconnect();
     }
@@ -471,7 +484,7 @@ void backgroundTaskCode(void *pvParameters)
       {
         // TreasureV2_NeoPixel.displayRGB_FRONT(R_ON, G_ON, B_ON);
         // TreasureV2_NeoPixel.displayRGB_TOP(R_ON, G_ON, B_ON);
-        TreasureV2.init_treasure();
+        // TreasureV2.init_treasure();
         setUpDone = 1;
       }
       vTaskDelayUntil(&xLastWakeTime, pdMS_TO_TICKS(10));
@@ -526,6 +539,8 @@ void setup()
   EEPROM.begin(EEPROM_SIZE);
   ID = EEPROM.read(ID_add);
   WIFI_ON = EEPROM.read(ONLINE_mode_add);
+
+  TreasureV2.init_treasure();
 
   // Hardcoded constants, in case there is no WiFi to update
   HTTP_TIMEOUT = 30000;
