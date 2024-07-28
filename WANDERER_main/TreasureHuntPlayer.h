@@ -68,7 +68,6 @@ private:
   int num_fiveminx2EnRegen = 0;
   int num_bomb = 0;
   int num_poison = 0;
-  int num_of_treas_col = 0;
 
   bool is_x2EnRegen = false;
 
@@ -636,7 +635,7 @@ public:
     // If numL1Treasure is 0, stop any ongoing buzz and reset buzzerFirstRun
     if (numL1Treasure == 0)
     {
-      if (buzzerEndTime != 0)
+      if (buzzerEndTime != 0 && currentMillis - tempNoti_start >= NOTI_SOUND_DURATION)
       {
         Player_Buzzer.end_sound();
         buzzerEndTime = 0;
@@ -818,11 +817,11 @@ public:
       if (HP > 0)
       {
         Serial.printf("Treasure deposited %d\n", numL1Treasure);
-        tempNoti = "   Deposited " + String(num_of_treas_col) + " Trea.";
+        tempNoti = "   Deposited " + String(numL1Treasure) + " Trea.";
         tempNoti_start = millis();
         Player_Buzzer.sound(NOTE_E3);
 
-        update_total_treasure_collected(numL1Treasure); // update the total treasure collected by player (achievement)
+        updateTotalTreasure(numL1Treasure); // update the total treasure collected by player (achievement)
 
         // clear treasure from inventory
         numL1Treasure = 0;
@@ -835,7 +834,7 @@ public:
     }
   }
 
-  void update_total_treasure_collected(int num_of_treasure_deposited)
+  void updateTotalTreasure(int num_of_treasure_deposited)
   {
     totalTreasure = EEPROM.read(PLAYER_totalTreasure_add); // Read the current treasure
     totalTreasure += num_of_treasure_deposited;            // Update the total treasure
@@ -1181,7 +1180,7 @@ public:
           id = EEPROM.read(ID_add);
 
           HTTP_TIMEOUT = 15000;
-          EN_RECOVER_DURATION = 1500;
+          EN_RECOVER_DURATION = 5000;
           VIRUS_DECAY_DURATION = 30000;
           VIRUS_IMMUNITY_DURATION = 120000;
           VIRUS_INFECTION_PROBABILITY = 30;
@@ -1196,7 +1195,7 @@ public:
           BOMB_HP_DEDUCTION = 69;
           KILL_UPDATE_SERVER_INTERVAL = 10 * 60 * 1000; // 10 mins
           WIFI_ON = EEPROM.read(ONLINE_mode_add);
-          MAX_COOLDOWN = 10;
+          MAX_COOLDOWN = 20; // seconds
         }
 
         Serial.printf("[INITIALISE] Current CLAN: %d ID %d\n", CLAN, EEPROM.read(ID_add));
