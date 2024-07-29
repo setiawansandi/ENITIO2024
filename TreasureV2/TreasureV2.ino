@@ -388,16 +388,13 @@ public:
     {
       displayTreasure();
     }
+    else if (isBombed == true)
+    {
+      displayCombusted();
+    }
     else
     {
-      if (isBombed == true)
-      {
-        displayCombusted();
-      }
-      else
-      {
-        displayTreasureLooted(CLAN_);
-      }
+      displayTreasureLooted(CLAN_);
     }
   }
 };

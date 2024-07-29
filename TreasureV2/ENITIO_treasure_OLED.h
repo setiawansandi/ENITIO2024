@@ -14,10 +14,13 @@
 
 // the font height for font size 1 is 8
 #define OLED_RESET -1		// Reset pin # (or -1 if sharing Arduino reset pin)
-#define SCREEN_ADDRESS 0x3C ///< See datasheet for Address; 0x3D for 128x64, 0x3C for 128x32
+#define SCREEN_ADDRESS 0x3C // < See datasheet for Address; 0x3D for 128x64, 0x3C for 128x32
 Adafruit_SSD1306 display(SCREEN_WIDTH, SCREEN_HEIGHT, &Wire, OLED_RESET);
 
+// variables needed for loading bar
 int current_loading_frame = 0;
+static unsigned long lastFrameUpdateTime = 0;	 // To store the last update time
+const unsigned long FRAME_UPDATE_INTERVAL = 200; // Update interval in ms
 
 const unsigned char enitioLogo[] PROGMEM = {
 	0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0xf0, 0x00, 0x00,
@@ -365,6 +368,7 @@ void displayTreasure()
 
 void displayTreasureLooted(int CLAN_)
 {
+
 	display.clearDisplay();
 	display.setTextSize(1); // Draw SIZE
 
@@ -405,10 +409,16 @@ void displayTreasureLooted(int CLAN_)
 
 	// Display Loading Bar
 	display.drawBitmap(90, 30, loading_bar[current_loading_frame], 12, 12, WHITE);
-	++current_loading_frame;
-	if (current_loading_frame >= loading_bar_LEN)
-		current_loading_frame = 0;
-	delay(200);
+
+	// Frame Sequence
+	unsigned long currentTime = millis();
+	if (currentTime - lastFrameUpdateTime >= FRAME_UPDATE_INTERVAL)
+	{
+		++current_loading_frame;
+		if (current_loading_frame >= loading_bar_LEN)
+			current_loading_frame = 0;
+		lastFrameUpdateTime = millis();
+	}
 
 	display.display();
 }
