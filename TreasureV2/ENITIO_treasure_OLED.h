@@ -444,10 +444,15 @@ void displayCombusted()
 
 	// Display Loading Bar
 	display.drawBitmap(57, 8, loading_bar[current_loading_frame], 12, 12, WHITE);
-	++current_loading_frame;
-	if (current_loading_frame >= loading_bar_LEN)
-		current_loading_frame = 0;
-	delay(200);
-
+	
+	// Frame Sequence
+	unsigned long currentTime = millis();
+	if (currentTime - lastFrameUpdateTime >= FRAME_UPDATE_INTERVAL)
+	{
+		++current_loading_frame;
+		if (current_loading_frame >= loading_bar_LEN)
+			current_loading_frame = 0;
+		lastFrameUpdateTime = millis();
+	}
 	display.display();
 }
