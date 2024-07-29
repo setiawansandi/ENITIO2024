@@ -5,7 +5,7 @@
 #define hp_pxl_bar_width 100 // [pxl/HP]
 
 // EEPROM ADDRESS
-#define ENABLE_add 0 // 0 means Treasure has not been initialized, 1 means already initialized
+#define ENABLE_add 0 // 0 means Treasure has not been initialized, 1 means active, 2 means inactive(looted)
 #define ID_add 1
 #define HP_add 2
 #define INVICTA_add 3
@@ -24,7 +24,6 @@
 #define R_BOMB 255
 #define G_BOMB 0
 #define B_BOMB 0
-
 
 #define DOUBLE_CLICK_LENGTH 1000 // [ms]
 
@@ -194,47 +193,6 @@ public:
     }
   };
 
-  void receiveEspNOW()
-  { // TODO if want to keep track no of killed by treasure chest
-    // if (EspNOW_received >= 1)
-    // {
-    //   int i;
-    //   for (i = 0; i < EspNOW_received; i++)
-    //   {
-    //     feedback_message feedbackData = Player_EspNOW.get_feedback_received();
-    //     switch (feedbackData.msg_type)
-    //     {
-    //     case 1:
-    //       handleFeedbackMsg(feedbackData);
-    //       break;
-
-    //     case 2:
-    //       handleBombed(feedbackData);
-    //       break;
-
-    //     default:
-    //       break;
-    //     }
-    //     EspNOW_received--;
-    //   }
-    //   if ((temp_bomb_attacked == Player_EspNOW.num_bombed) && (active_bomb))
-    //   {
-    //     Serial.print("Bombed ");
-    //     Serial.println(temp_bomb_attacked);
-    //     String num_attack_noti = String(" Bombed ");
-    //     num_attack_noti.concat(temp_bomb_attacked);
-    //     String num_killed_noti = String(" Killed ");
-    //     num_killed_noti.concat(temp_bomb_killed);
-    //     num_attack_noti += num_killed_noti;
-    //     tempNoti = num_attack_noti;
-    //     tempNoti_start = millis();
-    //     temp_bomb_attacked = 0;
-    //     temp_bomb_killed = 0;
-    //     active_bomb = false;
-    //   }
-    // }
-  }
-
   void feedback_collect(int CLAN_, int ID_, int channel_)
   {
     unsigned long currTime = millis();
@@ -338,6 +296,14 @@ public:
       dbc.setTreasureAsOpened("TREASURE" + String(ID), CLAN_, ID_);
     }
   };
+
+  void handle_LED()
+  {
+    if (EEPROM.read(ENABLE_add) == 1) // if treasure active
+    {
+      TreasureV2_NeoPixel.displayRainbowLED();
+    }
+  }
 
   void recover()
   {
@@ -565,6 +531,7 @@ void loop()
     TreasureV2.display_in_game();
     TreasureV2.receiveAction();
     TreasureV2.recover();
+    TreasureV2.handle_LED();
     update_sound();
   }
   else
@@ -576,6 +543,7 @@ void loop()
       TreasureV2.display_in_game();
       TreasureV2.receiveAction();
       TreasureV2.recover();
+      TreasureV2.handle_LED();
       update_sound();
     }
     else
