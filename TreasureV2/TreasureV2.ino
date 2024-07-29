@@ -16,9 +16,15 @@
 #define ONLINE_mode_add 8
 #define LASTCOLLECTION_add 9
 
+// NEOPIXEL LED COLOUR
 #define R_ON 0
 #define G_ON 0
-#define B_ON 50 // 255
+#define B_ON 255
+
+#define R_BOMB 255
+#define G_BOMB 0
+#define B_BOMB 0
+
 
 #define DOUBLE_CLICK_LENGTH 1000 // [ms]
 
@@ -271,8 +277,8 @@ public:
     {
       TreasureV2_Buzzer.sound(NOTE_C2);
       displayBombed();
-      TreasureV2_NeoPixel.displayRGB_FRONT(5, 0, 0);
-      TreasureV2_NeoPixel.displayRGB_TOP(5, 0, 0);
+      TreasureV2_NeoPixel.displayRGB_FRONT(R_BOMB, G_BOMB, B_BOMB);
+      TreasureV2_NeoPixel.displayRGB_TOP(R_BOMB, G_BOMB, B_BOMB);
       delay(600);
 
       TreasureV2_Buzzer.end_sound();
@@ -456,9 +462,6 @@ int get_game_state()
     if (gameStarted)
     {
       Serial.println("[BACKGROUND] Game has started! Initialising Treasure..");
-      // TreasureV2_NeoPixel.displayRGB_FRONT(R_ON, G_ON, B_ON);
-      // TreasureV2_NeoPixel.displayRGB_TOP(R_ON, G_ON, B_ON);
-      // TreasureV2.init_treasure();
       setUpDone = 1;
       WiFi.disconnect();
     }
@@ -479,9 +482,6 @@ void backgroundTaskCode(void *pvParameters)
       // offline mode
       if (!setUpDone)
       {
-        // TreasureV2_NeoPixel.displayRGB_FRONT(R_ON, G_ON, B_ON);
-        // TreasureV2_NeoPixel.displayRGB_TOP(R_ON, G_ON, B_ON);
-        // TreasureV2.init_treasure();
         setUpDone = 1;
       }
       vTaskDelayUntil(&xLastWakeTime, pdMS_TO_TICKS(10));
