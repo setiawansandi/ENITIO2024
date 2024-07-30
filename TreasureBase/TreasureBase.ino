@@ -19,6 +19,7 @@
 #define SCREEN_ADDRESS 0x3C ///< See datasheet for Address; 0x3D for 128x64, 0x3C for 128x32
 Adafruit_SSD1306 display(SCREEN_WIDTH, SCREEN_HEIGHT, &Wire, OLED_RESET);
 
+// Enito logo, 128 x 64px
 const unsigned char enitioLogo[] PROGMEM = {
     0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0xf0, 0x00, 0x00,
     0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0xff, 0x00, 0x00,
@@ -66,10 +67,22 @@ const unsigned char enitioLogo[] PROGMEM = {
     0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x01, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
     0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00};
 
-// down arrow 10 x 9px
-const unsigned char downArrow[] PROGMEM = {
+// down arrow, 10 x 9px
+const unsigned char downArrow_bitmap[] PROGMEM = {
     0x0c, 0x00, 0x0c, 0x00, 0x0c, 0x00, 0x0c, 0x00, 0x0c, 0x00, 0x7f, 0x80, 0x3f, 0x00, 0x1e, 0x00,
     0x0c, 0x00};
+
+// heart, 11 x 11px
+const unsigned char heart_bitmap [] PROGMEM = {
+	0x00, 0x00, 0x31, 0x80, 0x7b, 0xc0, 0xff, 0xe0, 0xff, 0xe0, 0x7f, 0xc0, 0x3f, 0x80, 0x1f, 0x00, 
+	0x0e, 0x00, 0x04, 0x00, 0x00, 0x00
+};
+
+// bao, 11x11px
+const unsigned char bao_bitmap [] PROGMEM = {
+	0x00, 0x00, 0x1f, 0x00, 0x6a, 0xc0, 0xdb, 0x60, 0xbf, 0xa0, 0xfb, 0xe0, 0xff, 0xe0, 0xff, 0xe0, 
+	0xff, 0xe0, 0x7f, 0xc0, 0x00, 0x00
+};
 
 // lED RGB values
 // Aqua
@@ -95,12 +108,12 @@ struct RGB
 };
 
 RGB clanColoursRGB[6] = {
-    {255, 255,   0},     // INVICTA
-    {225,   0,   0},     // DYNARI
-    {  0, 255,   0},     // EPHILIA
-    {  0,   0, 255},     // AKRONA
-    { 76,   0, 170},     // SOLARIS
-    {  0,   0,   0},     // UNKNOWN
+    {255, 255, 0}, // INVICTA
+    {225, 0, 0},   // DYNARI
+    {0, 255, 0},   // EPHILIA
+    {0, 0, 255},   // AKRONA
+    {76, 0, 170},  // SOLARIS
+    {0, 0, 0},     // UNKNOWN
 };
 
 #define EEPROM_SIZE 11
@@ -146,11 +159,14 @@ int currentTreasureDeposited = 0;
 bool clicked_once = 0;
 unsigned long last_clicked = 0;
 
-const unsigned long DISPLAY_HP_DURATION = 5000;
-const int NOTI_SOUND_DURATION = 300;
+// Constants
+const int TREASURE_BASE_MAX_HP = 25;
+const int TREASURE_BASE_ACTION_RECV_WAIT = 1500;
+const int TREASURE_BASE_RECOVER_DURATION = 30000;
+const int DISPLAY_HP_DURATION = 5000;
 const int HP_RECOVERY_RATE = 20000; // 1HP / 20s
 
-bool depositEvent = false;
+const int NOTI_SOUND_DURATION = 300;
 unsigned long tempNoti_start = 0;
 
 // stub functions
@@ -165,11 +181,6 @@ void clearEEPROM();
 #include "ENITIO_joystick.h"
 #include "ENITIO_buzzer.h"
 #include "Admin.h"
-
-// Constants
-int TREASURE_BASE_MAX_HP = 25;
-int TREASURE_BASE_ACTION_RECV_WAIT = 1500;
-int TREASURE_BASE_RECOVER_DURATION = 20000;
 
 void StartUpDisplay()
 {
@@ -233,11 +244,13 @@ class TreasureBase
 private:
   int HP;
   int MaxHP;
+  bool depositEvent = false;
 
   int recovery_time = 0;
   unsigned long lastActionReceived = INT_MIN;
   unsigned long lastAttackedTime = INT_MIN;
-  unsigned long lastHpRecoverTime = INT_MIN;
+  unsigned long lastHpRecoverTime = 0;
+  unsigned long cooldownStartTime = 0;
 
 public:
   int CLAN_, ID_, En_, MULTIPLIER_, action_, channel_, Treas_Deposit_;
@@ -467,7 +480,7 @@ public:
       Serial.print("Respawning Base.. | Current-time: ");
       Serial.println(millis());
       EEPROM.write(ENABLE_add, 1);
-      HP = TREASURE_BASE_MAX_HP;
+      HP = MaxHP;
     }
     else if (currStatus == 1)
     {
@@ -571,57 +584,77 @@ public:
 
       int totalTreasure = 0;
 
+      int y_pos = 14;
       switch (BASE_CLAN_VALUE)
       {
       case INVICTA:
-        display.setCursor(21, 15);
+        display.setCursor(21, y_pos);
         display.print("INVICTA");
         totalTreasure = EEPROM.read(INVICTA_add);
         break;
       case DYNARI:
-        display.setCursor(29, 15);
+        display.setCursor(29, y_pos);
         display.print("DYNARI");
         totalTreasure = EEPROM.read(DYNARI_add);
         break;
       case EPHILIA:
-        display.setCursor(22, 15);
+        display.setCursor(22, y_pos);
         display.print("EPHILIA");
         totalTreasure = EEPROM.read(EPHILIA_add);
         break;
       case AKRONA:
-        display.setCursor(29, 15);
+        display.setCursor(29, y_pos);
         display.print("AKRONA");
         totalTreasure = EEPROM.read(AKRONA_add);
         break;
       case SOLARIS:
-        display.setCursor(22, 15);
+        display.setCursor(22, y_pos);
         display.print("SOLARIS");
         totalTreasure = EEPROM.read(SOLARIS_add);
         break;
       default:
-        display.setCursor(21, 15);
+        display.setCursor(21, y_pos);
         display.print("UNKNOWN");
         break;
       }
 
+
       display.setTextSize(1);
 
-      if (totalTreasure < 10)
-      {
-        display.setCursor(40, 33);
-      }
-      else
-      {
-        display.setCursor(36, 33);
-      }
+      // draw tables
+      /*
+          (x_start, y_start)
+                    _____________
+                    |           |
+                    |           |
+                    |           |
+                    _____________
+                          (x_end, y_end)
+      */
+      int x_start = 13, y_start = 33;
+      int x_end = 114, y_end = 47;
+      int mid_x = (x_start + x_end) / 2;
 
-      display.print("Total: ");
-      display.println(totalTreasure);
+      display.drawLine(x_start, y_start, x_end, y_start, SSD1306_WHITE); // horizontal
+      display.drawLine(x_start, y_end, x_end, y_end, SSD1306_WHITE); // horizontal
+      display.drawLine(x_start, y_start, x_start, y_end, SSD1306_WHITE); // vertical
+      display.drawLine(mid_x, y_start, mid_x, y_end, SSD1306_WHITE); // vertical
+      display.drawLine(x_end, y_start, x_end, y_end, SSD1306_WHITE); // vertical
+
+      display.drawBitmap(x_start + 3, y_start + 2, heart_bitmap, 11, 11, SSD1306_WHITE);
+      display.drawBitmap(mid_x + 4, y_start + 2, bao_bitmap, 11, 11, SSD1306_WHITE);
+
+      display.setCursor(x_start + 18, y_start + 4);
+      display.printf("%-2d/25\n", HP);
+      
+      display.setCursor(mid_x + 19, y_start + 4);
+      display.printf("x%4d\n", totalTreasure);
+
 
       display.setCursor(2, 54);
       display.setTextColor(SSD1306_WHITE); // Draw white text
       display.println("  Hold   to Deposit  ");
-      display.drawBitmap(42, 53, downArrow, 12, 15, WHITE);
+      display.drawBitmap(42, 53, downArrow_bitmap, 12, 15, WHITE);
 
       display.display();
     }
@@ -644,7 +677,7 @@ public:
 
       display.setCursor(0, 16);
       display.setTextColor(SSD1306_WHITE); // Draw white text
-      display.println("   Base Attacked!!   ");
+      display.println("   BASE ATTACKED!!   ");
       display.display();
 
       // Display HP as text
@@ -732,8 +765,8 @@ public:
     else
     {
       TreasureBase_NeoPixel.displayRGB_FRONT(clanColoursRGB[BASE_CLAN_VALUE].R,
-                                        clanColoursRGB[BASE_CLAN_VALUE].G,
-                                        clanColoursRGB[BASE_CLAN_VALUE].B);
+                                             clanColoursRGB[BASE_CLAN_VALUE].G,
+                                             clanColoursRGB[BASE_CLAN_VALUE].B);
 
       TreasureBase_NeoPixel.displayRGB_TOP(clanColoursRGB[BASE_CLAN_VALUE].R,
                                            clanColoursRGB[BASE_CLAN_VALUE].G,
