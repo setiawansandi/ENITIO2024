@@ -407,6 +407,7 @@ public:
       }
 
       // set what the base recover duration
+      cooldownStartTime = millis();
       recovery_time = TREASURE_BASE_RECOVER_DURATION + millis();
       Serial.print("Base will respawn at ");
       Serial.print(recovery_time);
@@ -416,6 +417,7 @@ public:
       // destroy all the treasure collected
       destroyAllTreasure();
     }
+    lastHpRecoverTime = millis();
     lastAttackedTime = millis();
   }
 
@@ -703,12 +705,14 @@ public:
     display.println(" Base");
     display.println(" Destroyed");
 
-    // TODO: implement cooldown
-    if (showCooldown)
+    unsigned long elapsed = millis() - cooldownStartTime;
+
+    if (showCooldown && elapsed < TREASURE_BASE_RECOVER_DURATION)
     {
+      unsigned long remainingTime = (TREASURE_BASE_RECOVER_DURATION - (millis() - cooldownStartTime)) / 1000;
       display.setTextSize(1);
       display.setCursor(12, 54);
-      display.println("Respawning in 20s");
+      display.printf("Respawning in %ds", remainingTime);
     }
 
     display.display();
