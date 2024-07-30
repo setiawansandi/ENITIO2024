@@ -71,6 +71,38 @@ const unsigned char downArrow[] PROGMEM = {
     0x0c, 0x00, 0x0c, 0x00, 0x0c, 0x00, 0x0c, 0x00, 0x0c, 0x00, 0x7f, 0x80, 0x3f, 0x00, 0x1e, 0x00,
     0x0c, 0x00};
 
+// lED RGB values
+// Aqua
+#define R_DEPOSITED 6
+#define G_DEPOSITED 62
+#define B_DEPOSITED 42
+
+// Orange
+#define R_ATTACKED 255
+#define G_ATTACKED 42
+#define B_ATTACKED 0
+
+// Orange
+#define R_DESTROYED 255
+#define G_DESTROYED 42
+#define B_DESTROYED 0
+
+struct RGB
+{
+  int R;
+  int G;
+  int B;
+};
+
+RGB clanColoursRGB[6] = {
+    {255, 255,   0},     // INVICTA
+    {225,   0,   0},     // DYNARI
+    {  0, 255,   0},     // EPHILIA
+    {  0,   0, 255},     // AKRONA
+    { 76,   0, 170},     // SOLARIS
+    {  0,   0,   0},     // UNKNOWN
+};
+
 #define EEPROM_SIZE 11
 
 #define ID_BOUND 50
@@ -85,19 +117,7 @@ const unsigned char downArrow[] PROGMEM = {
 #define SOLARIS_add 7
 #define ONLINE_mode_add 8
 #define CLAN_add 9
-#define PROFILE_enable_add 10
-
-#define R_ON 0
-#define G_ON 5
-#define B_ON 0
-
-#define R_OFF 5
-#define G_OFF 0
-#define B_OFF 0
-
-#define R_ATTACKED 6
-#define G_ATTACKED 1
-#define B_ATTACKED 0
+#define CLAN_enable_add 10 // 0 means clan has not been set, 1 otherwise
 
 #define DOUBLE_CLICK_LENGTH 1000 // [ms]
 
@@ -126,7 +146,7 @@ int currentTreasureDeposited = 0;
 bool clicked_once = 0;
 unsigned long last_clicked = 0;
 
-const unsigned long DISPLAY_HP_DURATION = 8000;
+const unsigned long DISPLAY_HP_DURATION = 5000;
 const int NOTI_SOUND_DURATION = 300;
 const int HP_RECOVERY_RATE = 20000; // 1HP / 20s
 
@@ -215,7 +235,7 @@ private:
   int MaxHP;
 
   int recovery_time = 0;
-  unsigned long lastActionReceived = 0;
+  unsigned long lastActionReceived = INT_MIN;
   unsigned long lastAttackedTime = INT_MIN;
   unsigned long lastHpRecoverTime = INT_MIN;
 
@@ -224,6 +244,15 @@ public:
 
   void init_base()
   {
+    if (EEPROM.read(CLAN_enable_add) == 0)
+    {
+      BASE_CLAN_VALUE = 5; // unknown clan
+    }
+    else
+    {
+      BASE_CLAN_VALUE = EEPROM.read(CLAN_add);
+    }
+
     EEPROM.write(ENABLE_add, 1);
     EEPROM.commit();
     HP = TREASURE_BASE_MAX_HP;
@@ -289,8 +318,8 @@ public:
 
     depositEvent = true;
 
-    TreasureBase_NeoPixel.displayRGB_FRONT(R_ON, G_ON, B_ON);
-    TreasureBase_NeoPixel.displayRGB_TOP(R_ON, G_ON, B_ON);
+    TreasureBase_NeoPixel.displayRGB_FRONT(R_DEPOSITED, G_DEPOSITED, B_DEPOSITED);
+    TreasureBase_NeoPixel.displayRGB_TOP(R_DEPOSITED, G_DEPOSITED, B_DEPOSITED);
 
     Serial.printf("TREASURE%d deposited by CLAN %d ID %d\n", ID, CLAN_, ID_);
 
@@ -354,8 +383,8 @@ public:
       for (int i = 0; i < 3; ++i)
       {
         TreasureBase_Buzzer.sound(NOTE_C2);
-        TreasureBase_NeoPixel.displayRGB_FRONT(R_OFF, G_OFF, B_OFF);
-        TreasureBase_NeoPixel.displayRGB_TOP(R_OFF, G_OFF, B_OFF);
+        TreasureBase_NeoPixel.displayRGB_FRONT(R_DESTROYED, G_DESTROYED, B_DESTROYED);
+        TreasureBase_NeoPixel.displayRGB_TOP(R_DESTROYED, G_DESTROYED, B_DESTROYED);
         delay(600);
 
         TreasureBase_Buzzer.end_sound();
@@ -698,6 +727,14 @@ public:
     }
     else if (currentMillis - lastAttackedTime >= DISPLAY_HP_DURATION)
     {
+      TreasureBase_NeoPixel.displayRGB_FRONT(clanColoursRGB[BASE_CLAN_VALUE].R,
+                                             clanColoursRGB[BASE_CLAN_VALUE].G,
+                                             clanColoursRGB[BASE_CLAN_VALUE].B);
+
+      TreasureBase_NeoPixel.displayRGB_TOP(clanColoursRGB[BASE_CLAN_VALUE].R,
+                                           clanColoursRGB[BASE_CLAN_VALUE].G,
+                                           clanColoursRGB[BASE_CLAN_VALUE].B);
+
       display_default_screen();
     }
     else
@@ -776,8 +813,6 @@ void backgroundTaskCode(void *pvParameters)
       // offline mode
       if (!setUpDone)
       {
-        TreasureBase_NeoPixel.displayRGB_FRONT(0, 0, 5);
-        TreasureBase_NeoPixel.displayRGB_TOP(0, 0, 5);
         treasureBase.init_base();
         setUpDone = 1;
       }
@@ -838,7 +873,6 @@ void setup()
   EEPROM.begin(EEPROM_SIZE);
   ID = EEPROM.read(ID_add);
   WIFI_ON = EEPROM.read(ONLINE_mode_add);
-  BASE_CLAN_VALUE = EEPROM.read(CLAN_add);
 
   HTTP_TIMEOUT = 30000;
 

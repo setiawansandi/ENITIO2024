@@ -227,59 +227,57 @@ public:
   }
 
   void display_SettingClan(int clanPointer)
-{
+  {
     display.clearDisplay();
     display.setTextSize(1);
 
     const char *clans[] = {"INVICTA", "DYNARI", "EPHILIA", "AKRONA", "SOLARIS"};
 
-    if (!(EEPROM.read(PROFILE_enable_add) == 1))
+    if (!(EEPROM.read(CLAN_enable_add) == 1))
     {
-        // Display title
-        display.setTextColor(SSD1306_BLACK, SSD1306_WHITE);
-        display.setCursor(0, 0);
-        display.println(" Choose your CLAN... ");
+      // Display title
+      display.setTextColor(SSD1306_BLACK, SSD1306_WHITE);
+      display.setCursor(0, 0);
+      display.println(" Choose your CLAN... ");
 
-        // Display clan selection menu
-        display.setCursor(0, 13);
-        display.setTextColor(SSD1306_WHITE);
-        for (int i = 0; i < 5; ++i)
+      // Display clan selection menu
+      display.setCursor(0, 13);
+      display.setTextColor(SSD1306_WHITE);
+      for (int i = 0; i < 5; ++i)
+      {
+        if (i == clanPointer)
         {
-            if (i == clanPointer)
-            {
-                display.print("> ");
-            }
-            else
-            {
-                display.print("  ");
-            }
-            display.println(clans[i]);
+          display.print("> ");
         }
-        display.setCursor(4, 56);
-        display.setTextColor(SSD1306_BLACK, SSD1306_WHITE);
-        display.println("< Press to confirm >");
-
+        else
+        {
+          display.print("  ");
+        }
+        display.println(clans[i]);
+      }
+      display.setCursor(4, 56);
+      display.setTextColor(SSD1306_BLACK, SSD1306_WHITE);
+      display.println("< Press to confirm >");
     }
     else
     {
-        // Display registered clan info
-        display.setCursor(0, 0);
-        display.setTextColor(SSD1306_BLACK, SSD1306_WHITE);
-        display.println("    Treasure Base    ");
-        display.setCursor(0, 15);
-        display.setTextColor(SSD1306_WHITE);
-        display.println("Your registered clan:");
-        display.setTextSize(1);
-        display.println(" ");
-        display.println(clans[EEPROM.read(CLAN_add)]);
-        display.setCursor(2, 56);
-        display.setTextColor(SSD1306_BLACK, SSD1306_WHITE);
-        display.println("      < Back >      ");
-
+      // Display registered clan info
+      display.setCursor(0, 0);
+      display.setTextColor(SSD1306_BLACK, SSD1306_WHITE);
+      display.println("    Treasure Base    ");
+      display.setCursor(0, 15);
+      display.setTextColor(SSD1306_WHITE);
+      display.println("Your registered clan:");
+      display.setTextSize(1);
+      display.println(" ");
+      display.println(clans[EEPROM.read(CLAN_add)]);
+      display.setCursor(2, 56);
+      display.setTextColor(SSD1306_BLACK, SSD1306_WHITE);
+      display.println("      < Back >      ");
     }
 
     display.display();
-}
+  }
 
   void display_CheckingCollection(int invicta_collection, int dynari_collection, int ephilia_collection,
                                   int akrona_collection, int solaris_collection)
@@ -532,24 +530,11 @@ public:
           break;
 
         case 1:
-          StartUpDisplay();
-          clearEEPROM();
-          EEPROM.write(ID_add, ID);
-          EEPROM.write(ONLINE_mode_add, 0);
-          EEPROM.write(PROFILE_enable_add, 0);
-          EEPROM.write(CLAN_add, -1);
-          EEPROM.commit();
-          ESP.restart();
+          eeepromResetRoutine(true); // Keep id
           break;
 
         case 2:
-          StartUpDisplay();
-          clearEEPROM();
-          EEPROM.write(ONLINE_mode_add, 0);
-          EEPROM.write(PROFILE_enable_add, 0);
-          EEPROM.write(CLAN_add, -1);
-          EEPROM.commit();
-          ESP.restart();
+          eeepromResetRoutine(false);
           break;
 
         default:
@@ -566,6 +551,21 @@ public:
         break;
       }
     }
+  }
+
+  void eeepromResetRoutine(bool keepID)
+  {
+    StartUpDisplay();
+    clearEEPROM();
+
+    if (keepID)
+    {
+      EEPROM.write(ID_add, ID);
+    }
+    EEPROM.write(ONLINE_mode_add, 0); // set to 1 if you want to default online
+    EEPROM.write(CLAN_add, -1);
+    EEPROM.commit();
+    ESP.restart();
   }
 
   void handleJoystickCheckingCollection()
@@ -652,21 +652,21 @@ public:
         TreasureBase_joystick.set_state();
 
         // Store CLAN and enable profile in EEPROM
-        if (!(EEPROM.read(PROFILE_enable_add) == 1)) 
+        if (!(EEPROM.read(CLAN_enable_add) == 1))
         {
           EEPROM.write(CLAN_add, clanPointer);
-          EEPROM.write(PROFILE_enable_add, 1); // prevent changes unless reset
+          EEPROM.write(CLAN_enable_add, 1); // prevent changes unless reset
           EEPROM.commit();
         }
-        else{
+        else
+        {
           isSettingClan = false;
         }
-        
+
         Serial.print("CLAN Registered: CLAN=");
         Serial.println(clanPointer);
 
         break;
-
 
       default:
         TreasureBase_joystick.set_state();
