@@ -632,7 +632,7 @@ public:
   {
     unsigned long currentMillis = millis();
 
-    if (HP > 0 && HP != lastHP)
+    if (HP != lastHP)
     {
       lastHP = HP;
 
@@ -658,10 +658,6 @@ public:
       display.fillRect(0, 48, barWidth, 16, SSD1306_WHITE); // Fill based on HP
 
       display.display();
-    }
-    else if (HP <= 0)
-    {
-      display_base_destroyed(true);
     }
   }
 
@@ -725,21 +721,25 @@ public:
     {
       display_deposited();
     }
-    else if (currentMillis - lastAttackedTime >= DISPLAY_HP_DURATION)
+    else if (HP <= 0)
+    {
+      display_base_destroyed(true);
+    }
+    else if (currentMillis - lastAttackedTime < DISPLAY_HP_DURATION)
+    {
+      display_hp_screen();
+    }
+    else
     {
       TreasureBase_NeoPixel.displayRGB_FRONT(clanColoursRGB[BASE_CLAN_VALUE].R,
-                                             clanColoursRGB[BASE_CLAN_VALUE].G,
-                                             clanColoursRGB[BASE_CLAN_VALUE].B);
+                                        clanColoursRGB[BASE_CLAN_VALUE].G,
+                                        clanColoursRGB[BASE_CLAN_VALUE].B);
 
       TreasureBase_NeoPixel.displayRGB_TOP(clanColoursRGB[BASE_CLAN_VALUE].R,
                                            clanColoursRGB[BASE_CLAN_VALUE].G,
                                            clanColoursRGB[BASE_CLAN_VALUE].B);
 
       display_default_screen();
-    }
-    else
-    {
-      display_hp_screen();
     }
   }
 };
