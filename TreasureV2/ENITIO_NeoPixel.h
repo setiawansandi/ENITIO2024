@@ -31,8 +31,8 @@ public:
         pixelsTOP.begin(); // INITIALIZE NeoPixel strip object (REQUIRED)
         pixelsFRONT.begin();
 
-        pixelsFRONT.setBrightness(5);
-        pixelsTOP.setBrightness(5);
+        pixelsFRONT.setBrightness(255);
+        pixelsTOP.setBrightness(255);
 
         off_FRONT();
         off_TOP();
