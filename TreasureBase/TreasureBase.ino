@@ -107,13 +107,13 @@ struct RGB
   int B;
 };
 
-RGB clanColoursRGB[6] = {
-    {255, 255, 0}, // INVICTA
-    {225, 0, 0},   // DYNARI
-    {0, 255, 0},   // EPHILIA
-    {0, 0, 255},   // AKRONA
-    {76, 0, 170},  // SOLARIS
-    {0, 0, 0},     // UNKNOWN
+RGB clanColoursRGB[6] = { 
+    {220, 80, 0}, // INVICTA 
+    {225, 0, 0},   // DYNARI 
+    {0, 255, 0},   // EPHILIA 
+    {0, 0, 255},   // AKRONA 
+    {54, 1, 63},  // SOLARIS 
+    {0, 0, 0},     // UNKNOWN 
 };
 
 #define EEPROM_SIZE 11
