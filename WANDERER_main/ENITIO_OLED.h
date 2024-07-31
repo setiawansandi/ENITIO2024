@@ -696,7 +696,7 @@ private:
   String lastNoti;
 
 public:
-  void display_mainPage(int HP, int En, String noti, int pageNav)
+  void display_mainPage(int HP, int MaxHP, int En, int MaxEn, String noti, int pageNav)
   {
     display.clearDisplay();
     display.setTextSize(1); // Draw SIZE
@@ -714,38 +714,45 @@ public:
     }
 
     display.setCursor(0, 12);
-    display.setTextSize(2);              // Normal 1:1 pixel scale
     display.setTextColor(SSD1306_WHITE); // Draw white text
 
-    int i;
-    if (HP <= 12)
+    display.setTextSize(2);
+
+    if (HP <= 12 && MaxHP <= 12)
     {
       display.println("HP ");
-      for (i = 0; i < HP; i++)
+      for (int i = 0; i < HP; i++)
       {
         display.fillRect(34 + i * 8, 12, 4, 16, SSD1306_WHITE);
       }
     }
     else
     {
-      display.print("HP ");
-      display.println(HP);
+      display.printf("HP %d", HP);
+      display.setTextSize(1);
+      display.setCursor(60, 19);
+      display.printf("/%d", MaxHP);
     }
 
     display.setCursor(0, 32);
 
-    if (En <= 12)
+    display.setTextSize(2);
+
+    if (En <= 12 && MaxEn <= 12)
     {
       display.println("EN ");
-      for (i = 0; i < En; i++)
+      for (int i = 0; i < En; i++)
       {
         display.fillRect(34 + i * 8, 32, 4, 16, SSD1306_WHITE);
       }
     }
     else
     {
-      display.print("EN ");
-      display.println(En);
+      display.setTextSize(2);
+      display.printf("EN %d", En);
+      display.setTextSize(1);
+      display.setCursor(60, 39);
+      display.printf("/%d", MaxEn);
     }
 
     display.setTextSize(1);
@@ -793,6 +800,23 @@ public:
       display.print(F(" >"));
       break;
     }
+    display.display();
+  }
+
+  void display_noClanPage()
+  {
+    display.clearDisplay();
+    display.setTextColor(SSD1306_WHITE);
+    display.setTextSize(2);
+    display.setCursor(20, 12);
+    display.print(F("NO CLAN"));
+    display.setTextSize(1);
+    display.setCursor(8, 32);
+    display.print(F("Set it in <Profile>"));
+
+    display.setTextColor(SSD1306_BLACK, SSD1306_WHITE);
+    display.setCursor(0, 56);
+    display.println("  Press to go back!  ");
     display.display();
   }
 
