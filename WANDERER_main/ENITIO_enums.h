@@ -38,5 +38,11 @@ typedef enum {
     poison = 6,
 } power_up; 
 
+typedef enum {
+    freshman = 0,
+    groupLeader = 1,
+    sigma = 2,
+} role;
+
 #endif
 

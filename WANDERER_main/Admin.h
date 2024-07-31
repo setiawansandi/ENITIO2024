@@ -217,7 +217,7 @@ public:
                     StartUpDisplay();
                     clearEEPROM();
                     EEPROM.write(ONLINE_mode_add, 0); // set default OFFLINE mode
-                    EEPROM.write(CLAN_add, 255); // 255 to set clan to unknown (default 0 is invicta)
+                    EEPROM.write(CLAN_add, 255);      // 255 to set clan to unknown (default 0 is invicta)
                     EEPROM.commit();
                     ESP.restart();
                     break;
@@ -251,28 +251,42 @@ public:
                 break;
 
             case down:
-                isGLNav = min(isGLNav + 1, 1);
+                isGLNav = min(isGLNav + 1, 2);
                 Player_joystick.set_state();
                 break;
 
             case button:
-                EEPROM.write(isGL_add, isGLNav);
+                EEPROM.write(ROLE_add, isGLNav);
                 Admin_OLED.ConfirmSettingGLDisplay(isGLNav);
-                if (isGLNav)
+
+                // set HP and Energy
+                switch (isGLNav)
                 {
-                    // set to GL HP and Energy
-                    EEPROM.write(PLAYER_HP_add, GL_MaxHP);
-                    EEPROM.write(PLAYER_EN_add, GL_MaxEn);
-                    EEPROM.write(PLAYER_MaxHP_add, GL_MaxHP);
-                    EEPROM.write(PLAYER_MaxEn_add, GL_MaxEn);
-                }
-                else
-                {
+                case freshman:
                     EEPROM.write(PLAYER_HP_add, PARTICIPANT_MaxHP);
                     EEPROM.write(PLAYER_EN_add, PARTICIPANT_MaxEn);
                     EEPROM.write(PLAYER_MaxHP_add, PARTICIPANT_MaxHP);
                     EEPROM.write(PLAYER_MaxEn_add, PARTICIPANT_MaxEn);
+                    break;
+
+                case groupLeader:
+                    EEPROM.write(PLAYER_HP_add, GL_MaxHP);
+                    EEPROM.write(PLAYER_EN_add, GL_MaxEn);
+                    EEPROM.write(PLAYER_MaxHP_add, GL_MaxHP);
+                    EEPROM.write(PLAYER_MaxEn_add, GL_MaxEn);
+                    break;
+
+                case sigma:
+                    EEPROM.write(PLAYER_HP_add, SIGMA_MaxHP);
+                    EEPROM.write(PLAYER_EN_add, SIGMA_MaxEn);
+                    EEPROM.write(PLAYER_MaxHP_add, SIGMA_MaxHP);
+                    EEPROM.write(PLAYER_MaxEn_add, SIGMA_MaxEn);
+                    break;
+
+                default:
+                    break;
                 }
+
                 EEPROM.commit();
                 isGLNav = 1;
                 isSettingGL = false;

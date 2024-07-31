@@ -71,31 +71,36 @@ void setup()
 
   my_MAC_address = WiFi.macAddress();
 
-  //  here is a set of fixed constants
+  //  here is a set of fixed constants [FOR OFFLINE MODE]
   HTTP_TIMEOUT = 15000;
-  EN_RECOVER_DURATION = 1500;
+  EN_RECOVER_DURATION = 5000;
   VIRUS_DECAY_DURATION = 30000;
   VIRUS_IMMUNITY_DURATION = 120000;
   VIRUS_INFECTION_PROBABILITY = 30;
   PARTICIPANT_MaxHP = 12;
-  GL_MaxHP = 50;
+  GL_MaxHP = 24;
+  SIGMA_MaxHP = 24;
   PARTICIPANT_MaxEn = 12;
-  GL_MaxEn = 50;
+  GL_MaxEn = 18;
+  SIGMA_MaxEn = 30;
   INITIAL_MULTIPLIER = 1;
   HEAL_MULTIPLIER = 4;
   MAX_ATTACK_MULTIPLIER = 3;
   MAX_COLLECT_MULTIPLIER = 10;
-  BOMB_HP_DEDUCTION = 6;
+  BOMB_HP_DEDUCTION = 69;
   KILL_UPDATE_SERVER_INTERVAL = 10 * 60 * 1000; // 10 mins
   WIFI_ON = EEPROM.read(ONLINE_mode_add);
+  MAX_COOLDOWN = 20; // seconds
+  SIGMA_KILLED_SCORE = 10;
+  HP_RECOVERY_RATE = 5000; // 1HP/5s
 
   Serial.print("Actual MAC Address: ");
   Serial.println(my_MAC_address);
 
   pinMode(LED_BUILTIN, OUTPUT);
 
-  if (EEPROM.read(PLAYER_enable_add) == 0) // will only run after fac. reset or once on the very FIRST flash 
-    EEPROM.write(CLAN_add, 255); // 255 to set clan to unknown (default 0 is invicta)
+  if (EEPROM.read(PLAYER_enable_add) == 0) // will only run after fac. reset or once on the very FIRST flash
+    EEPROM.write(CLAN_add, 255);           // 255 to set clan to unknown (default 0 is invicta)
 
   xTaskCreatePinnedToCore(
       backgroundTaskCode, // Task function.

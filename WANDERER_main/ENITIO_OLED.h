@@ -171,22 +171,34 @@ public:
     display.display();
   }
 
-  void ConfirmSettingGLDisplay(int isGL)
+  void ConfirmSettingGLDisplay(int role)
   {
     display.clearDisplay();
     display.setTextSize(1); // Draw SIZE
 
     display.setTextColor(SSD1306_WHITE);
-    display.setCursor(0, 22);
+    display.setCursor(0, 12);
 
-    display.println("    Registered as    ");
+    display.println("    Registered as:     ");
 
-    display.setCursor(0, 34);
-    if (isGL)
-      display.println("     Group Leader    ");
-
-    else
+    display.setCursor(0, 32);
+    switch (role)
+    {
+    case freshman:
       display.println("       Freshman      ");
+      break;
+
+    case groupLeader:
+      display.println("     Group Leader    ");
+      break;
+
+    case sigma:
+      display.println("        SIGMA       ");
+
+    default:
+      break;
+    }
+
     display.display();
   }
 
@@ -422,6 +434,8 @@ public:
     display.println("Freshman (default)");
     display.setCursor(10, 22);
     display.println("Group Leader");
+    display.setCursor(10, 32);
+    display.println("Sigma");
 
     switch (isGLNav)
     {
@@ -432,6 +446,11 @@ public:
 
     case 1:
       display.setCursor(2, 22);
+      display.println(">");
+      break;
+
+    case 2:
+      display.setCursor(2, 32);
       display.println(">");
       break;
 
@@ -573,7 +592,7 @@ class Profile_OLED
 {
 private:
 public:
-  void display_CompleteProfilePage(int CLAN, int isGL)
+  void display_CompleteProfilePage(int CLAN, int role)
   {
     display.clearDisplay();
     display.setTextSize(1);                             // Draw SIZE
@@ -587,13 +606,21 @@ public:
 
     display.setCursor(0, 24);
 
-    if (isGL == 0)
+    switch (role)
     {
+    case freshman:
       display.println("Freshman");
-    }
-    else
-    {
+      break;
+
+    case groupLeader:
       display.println("Group Leader");
+      break;
+
+    case sigma:
+      display.println("SIGMA");
+
+    default:
+      break;
     }
 
     display.setCursor(0, 36);

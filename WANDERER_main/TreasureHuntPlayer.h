@@ -23,7 +23,8 @@ class TreasureHuntPlayer
 private:
   int ID;
   int CLAN;
-  bool _isGL;
+  int ROLE;
+  // bool _isGL;
   int HP;
   int MaxHP;
   int En; // energy
@@ -109,11 +110,11 @@ public:
   bool gameStarted = 0;
   bool deviceReady = 0;
 
-  void setup_initial_state(int id, int clan, bool isGL)
+  void setup_initial_state(int id, int clan, int role)
   {
     ID = id;
     CLAN = clan;
-    _isGL = isGL;
+    ROLE = role;
 
     newMACAddress_AP[3] = CLAN;
     newMACAddress_AP[4] = ID;
@@ -131,22 +132,37 @@ public:
     {
       Serial.print("Initializing EEPROM...");
 
-      if (!_isGL)
+      switch (ROLE)
       {
+      case freshman:
         HP = PARTICIPANT_MaxHP;
         En = PARTICIPANT_MaxEn;
         MaxHP = PARTICIPANT_MaxHP;
         MaxEn = PARTICIPANT_MaxEn;
-        Multiplier = INITIAL_MULTIPLIER;
-      }
-      else
-      {
+        break;
+
+      case groupLeader:
         HP = GL_MaxHP;
         En = GL_MaxEn;
         MaxHP = GL_MaxHP;
         MaxEn = GL_MaxEn;
-        Multiplier = INITIAL_MULTIPLIER;
+        break;
+
+      case sigma:
+        HP = SIGMA_MaxHP;
+        En = SIGMA_MaxEn;
+        MaxHP = SIGMA_MaxHP;
+        MaxEn = SIGMA_MaxEn;
+        break;
+
+      default:
+        HP = 404;
+        En = 404;
+        MaxHP = 404;
+        MaxEn = 404;
+        break;
       }
+      Multiplier = INITIAL_MULTIPLIER;
 
       EEPROM.write(PLAYER_enable_add, 1);
       EEPROM.write(PLAYER_HP_add, HP);
@@ -222,7 +238,7 @@ public:
       case attack:
         Player_Buzzer.Blaster();
         this_action_multiplier = min(Multiplier, MAX_ATTACK_MULTIPLIER);
-        command_digits.digit3 = _isGL;
+        command_digits.digit3 = ROLE;
         break;
 
       case collect:
@@ -256,7 +272,8 @@ public:
 
       start_receiving_feedback = millis();
 
-      if ((EEPROM.read(isGL_add)) && (action == heal))
+      // when GL uses heal they lose Hp in exchange
+      if ((EEPROM.read(ROLE_add) == groupLeader) && (action == heal))
       {
         HP--;
         EEPROM.write(PLAYER_HP_add, HP);
@@ -271,7 +288,7 @@ public:
 
   void receiveAction()
   {
-    int CLAN_, ID_, En_, MULTIPLIER_, action_, channel_, isGL_; // underscore denotes details of IR signal sender
+    int CLAN_, ID_, En_, MULTIPLIER_, action_, channel_, role_; // underscore denotes details of IR signal sender
     unsigned long currTime = millis();
     if (Player_IR.available())
     {
@@ -279,20 +296,28 @@ public:
       Serial.printf("SIG RECV ON %d %d %d\n", currTime, lastActionReceived, ACTION_RECV_WAIT);
       if (currTime - lastActionReceived > ACTION_RECV_WAIT)
       {
-        CLAN_ = IRsignal_.address.digit2;
-        ID_ = IRsignal_.address.digit0 + (IRsignal_.address.digit1 << 4);
-
-        isGL_ = IRsignal_.command.digit3;
+        role_ = IRsignal_.command.digit3;
         channel_ = IRsignal_.command.digit2;
         MULTIPLIER_ = IRsignal_.command.digit1;
         action_ = IRsignal_.command.digit0;
+
+        CLAN_ = (role_ == sigma) ? 255 : IRsignal_.address.digit2;
+        ID_ = IRsignal_.address.digit0 + (IRsignal_.address.digit1 << 4);
 
         Serial.printf("RECV %d %d %d %d | %d %d %d %d \n", IRsignal_.address.digit3, IRsignal_.address.digit2, IRsignal_.address.digit1, IRsignal_.address.digit0, IRsignal_.command.digit3, IRsignal_.command.digit2, IRsignal_.command.digit1, IRsignal_.command.digit0);
 
         lastActionReceived = currTime;
 
-        if (((CLAN_ != CLAN) && (action_ == attack)) || ((action_ == heal) && (CLAN_ == CLAN) && (ID_ != ID)) || ((action_ == heal) && (CLAN_ != CLAN)) || (action_ == revive) || ((action_ == deposit) && (CLAN_ == CLAN) && (ID_ == ID)))
-          handleAction(CLAN_, ID_, action_, MULTIPLIER_, channel_, isGL_);
+        if (
+            ((CLAN_ != CLAN) && (action_ == attack)) ||
+            ((ROLE == sigma) && (action_ == attack)) || // enable players to shoot Sigma regardless of clan
+            ((action_ == heal) && (CLAN_ == CLAN) && (ID_ != ID)) ||
+            ((action_ == heal) && (CLAN_ != CLAN)) ||
+            (action_ == revive) ||
+            ((action_ == deposit) && (CLAN_ == CLAN) && (ID_ == ID)))
+        {
+          handleAction(CLAN_, ID_, action_, MULTIPLIER_, channel_, role_);
+        }
       }
     }
   }
@@ -407,8 +432,8 @@ public:
         }
       }
 
-      // HP RECOVERY for GL ONLY
-      if (!_isGL)
+      // HP RECOVERY for SIGMA ONLY
+      if (ROLE != sigma)
         return;
 
       if (HP >= MaxHP)
@@ -432,7 +457,7 @@ public:
   void sync_state()
   {
     ID = EEPROM.read(ID_add);
-    _isGL = EEPROM.read(isGL_add);
+    ROLE = EEPROM.read(ROLE_add);
 
     MaxHP = EEPROM.read(PLAYER_MaxHP_add);
     MaxEn = EEPROM.read(PLAYER_MaxEn_add);
@@ -487,7 +512,7 @@ public:
         break;
 
       case down:
-        if (!EEPROM.read(isGL_add))
+        if (EEPROM.read(ROLE_add) == freshman)
           action = collect;
         else
           action = heal;
@@ -751,7 +776,7 @@ public:
     }
   }
 
-  void handleAction(int CLAN_, int ID_, int action_, int MULTIPLIER_, int channel_, int isGL_)
+  void handleAction(int CLAN_, int ID_, int action_, int MULTIPLIER_, int channel_, int role_)
   {
     Serial.print("Action ID: ");
     Serial.println(action_);
@@ -760,43 +785,44 @@ public:
     case attack:
       if (HP > 0)
       {
-        HP = (isGL_ == 1 && !_isGL) ? 0 : max(HP - MULTIPLIER_, 0);
+        HP = (role_ == sigma) ? 0 : max(HP - MULTIPLIER_, 0);
 
         if (HP == 0)
         {
           switch (CLAN_)
           {
           case INVICTA:
-            scoreInvicta += (isGL_ == 1) ? GL_KILLED_SCORE : 1;
+            scoreInvicta += (ROLE == sigma) ? SIGMA_KILLED_SCORE : 1;
             EEPROM.write(POINT_INVICTA_add, scoreInvicta);
             Serial.println("INVICTA Scores!");
             break;
 
           case DYNARI:
-            scoreDynari += (isGL_ == 1) ? GL_KILLED_SCORE : 1;
+            scoreDynari += (ROLE == sigma) ? SIGMA_KILLED_SCORE : 1;
             EEPROM.write(POINT_DYNARI_add, scoreDynari);
             Serial.println("DYNARI Scores!");
             break;
 
           case EPHILIA:
-            scoreEphilia += (isGL_ == 1) ? GL_KILLED_SCORE : 1;
+            scoreEphilia += (ROLE == sigma) ? SIGMA_KILLED_SCORE : 1;
             EEPROM.write(POINT_EPHILIA_add, scoreEphilia);
             Serial.println("EPHILIA Scores!");
             break;
 
           case AKRONA:
-            scoreAkrona += (isGL_ == 1) ? GL_KILLED_SCORE : 1;
+            scoreAkrona += (ROLE == sigma) ? SIGMA_KILLED_SCORE : 1;
             EEPROM.write(POINT_AKRONA_add, scoreAkrona);
             Serial.println("AKRONA Scores!");
             break;
 
           case SOLARIS:
-            scoreSolaris += (isGL_ == 1) ? GL_KILLED_SCORE : 1;
+            scoreSolaris += (ROLE == sigma) ? SIGMA_KILLED_SCORE : 1;
             EEPROM.write(POINT_SOLARIS_add, scoreSolaris);
             Serial.println("SOLARIS Scores!");
             break;
 
           default:
+            Serial.println("Attacked by SIGMA!");
             break;
           }
 
@@ -816,7 +842,7 @@ public:
 
         EEPROM.write(PLAYER_HP_add, HP);
         Serial.printf("Attacked. Current HP: %d \n", HP);
-        if (isGL_ == 1 && !_isGL)
+        if (role_ == sigma)
         {
           tempNoti = "     One-shotted     ";
           isInstantKilled = true;
@@ -1201,7 +1227,7 @@ public:
       {
         Serial.println("Game has started! Starting initialisation processes...");
         int CLAN = EEPROM.read(CLAN_add);
-        bool isGL = EEPROM.read(isGL_add);
+        int role = EEPROM.read(ROLE_add);
         int id;
 
         if (WIFI_ON)
@@ -1237,42 +1263,20 @@ public:
         else
         {
           Serial.println("WIFI MODE DISABLED, retrieving ID and constants from hardcoded memory");
-
           id = EEPROM.read(ID_add);
-
-          HTTP_TIMEOUT = 15000;
-          EN_RECOVER_DURATION = 5000;
-          VIRUS_DECAY_DURATION = 30000;
-          VIRUS_IMMUNITY_DURATION = 120000;
-          VIRUS_INFECTION_PROBABILITY = 30;
-          PARTICIPANT_MaxHP = 12;
-          GL_MaxHP = 25;
-          PARTICIPANT_MaxEn = 12;
-          GL_MaxEn = 15;
-          INITIAL_MULTIPLIER = 1;
-          HEAL_MULTIPLIER = 4;
-          MAX_ATTACK_MULTIPLIER = 3;
-          MAX_COLLECT_MULTIPLIER = 10;
-          BOMB_HP_DEDUCTION = 69;
-          KILL_UPDATE_SERVER_INTERVAL = 10 * 60 * 1000; // 10 mins
-          WIFI_ON = EEPROM.read(ONLINE_mode_add);
-          MAX_COOLDOWN = 20; // seconds
-          GL_KILLED_SCORE = 10;
-          HP_RECOVERY_RATE = 5000; // 1HP/5s
         }
 
         Serial.printf("[INITIALISE] Current CLAN: %d ID %d\n", CLAN, EEPROM.read(ID_add));
-        setup_initial_state(id, CLAN, isGL); // initialize Player
+        setup_initial_state(id, CLAN, role); // initialize Player
         deviceReady = 1;
       }
       return gameStarted;
     }
-    else
-      if (CLAN == 255)
-      {
-        CLAN = EEPROM.read(CLAN_add);
-      }
-      return 1;
+    else if (CLAN == 255)
+    {
+      CLAN = EEPROM.read(CLAN_add);
+    }
+    return 1;
   }
 
   void gameMainLoop()

@@ -48,7 +48,7 @@ class Profile {
 
             EEPROM.write(CLAN_add, CLAN);
             EEPROM.write(PROFILE_enable_add, 1);
-            if (EEPROM.read(isGL_add) != 1) EEPROM.write(isGL_add, 0);
+            // if (EEPROM.read(isGL_add) != 1) EEPROM.write(isGL_add, 0);
             EEPROM.commit();
             Player_joystick.set_state();
             break;
@@ -81,7 +81,7 @@ class Profile {
       else {
         handleJoystickRegistered();
         int CLAN_ = EEPROM.read(CLAN_add);
-        int isGL_ = EEPROM.read(isGL_add);
+        int isGL_ = EEPROM.read(ROLE_add);
         Profile_OLED.display_CompleteProfilePage(CLAN_, isGL_);
       }
     }

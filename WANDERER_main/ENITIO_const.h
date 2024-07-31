@@ -16,7 +16,7 @@ const int MACAddressProcess = 5;
 const int PROFILE_enable_add = 0;
 const int CLAN_add = 1;
 const int NAME_add = 2;
-const int isGL_add = 3;
+const int ROLE_add = 3;
 const int ID_add = 4;
 const int PLAYER_enable_add = 5;
 const int PLAYER_HP_add = 6;
@@ -51,8 +51,10 @@ int VIRUS_IMMUNITY_DURATION;
 int VIRUS_INFECTION_PROBABILITY;  // integer between 0 and 100
 int PARTICIPANT_MaxHP;
 int GL_MaxHP;
+int SIGMA_MaxHP;
 int PARTICIPANT_MaxEn;
 int GL_MaxEn;
+int SIGMA_MaxEn;
 int INITIAL_MULTIPLIER;
 int MAX_ATTACK_MULTIPLIER;
 int MAX_COLLECT_MULTIPLIER;
@@ -62,7 +64,7 @@ int revival_MULTIPLIER;
 int HEAL_MULTIPLIER;
 int WIFI_ON;
 int MAX_COOLDOWN; // in seconds
-int GL_KILLED_SCORE;
+int SIGMA_KILLED_SCORE;
 int HP_RECOVERY_RATE; // 1HP/n seconds
 
 
