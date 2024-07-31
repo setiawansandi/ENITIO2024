@@ -30,6 +30,8 @@ private:
   int MaxEn;
   int Multiplier;
 
+  unsigned long last_hp_recover = 0;
+
   action_id action;
   bool poisonActive = false;
 
@@ -75,7 +77,7 @@ private:
   bool choosingPowerUp = false;
 
   bool active_bomb = false;
-  bool isBombed = false;
+  bool isInstantKilled = false;
 
   int temp_bomb_attacked = 0;
   int temp_bomb_killed = 0;
@@ -128,6 +130,7 @@ public:
     if (EEPROM.read(PLAYER_enable_add) == 0)
     {
       Serial.print("Initializing EEPROM...");
+
       if (!_isGL)
       {
         HP = PARTICIPANT_MaxHP;
@@ -157,7 +160,7 @@ public:
       EEPROM.write(POINT_AKRONA_add, 0);
       EEPROM.write(POINT_SOLARIS_add, 0);
       EEPROM.write(PLAYER_totalTreasure_add, 0);
-      EEPROM.write(PLAYER_num_death, 0);
+      EEPROM.write(PLAYER_num_death_add, 0);
       EEPROM.commit();
     }
     else
@@ -183,7 +186,7 @@ public:
       scoreAkrona = EEPROM.read(POINT_AKRONA_add);
       scoreSolaris = EEPROM.read(POINT_SOLARIS_add);
       totalTreasure = EEPROM.read(PLAYER_totalTreasure_add);
-      numDeath = EEPROM.read(PLAYER_num_death);
+      numDeath = EEPROM.read(PLAYER_num_death_add);
     }
 
     if (WIFI_ON)
@@ -217,7 +220,9 @@ public:
       switch (action)
       {
       case attack:
+        Player_Buzzer.Blaster();
         this_action_multiplier = min(Multiplier, MAX_ATTACK_MULTIPLIER);
+        command_digits.digit3 = _isGL;
         break;
 
       case collect:
@@ -266,7 +271,7 @@ public:
 
   void receiveAction()
   {
-    int CLAN_, ID_, En_, MULTIPLIER_, action_, channel_; // underscore denotes details of IR signal sender
+    int CLAN_, ID_, En_, MULTIPLIER_, action_, channel_, isGL_; // underscore denotes details of IR signal sender
     unsigned long currTime = millis();
     if (Player_IR.available())
     {
@@ -277,6 +282,7 @@ public:
         CLAN_ = IRsignal_.address.digit2;
         ID_ = IRsignal_.address.digit0 + (IRsignal_.address.digit1 << 4);
 
+        isGL_ = IRsignal_.command.digit3;
         channel_ = IRsignal_.command.digit2;
         MULTIPLIER_ = IRsignal_.command.digit1;
         action_ = IRsignal_.command.digit0;
@@ -286,7 +292,7 @@ public:
         lastActionReceived = currTime;
 
         if (((CLAN_ != CLAN) && (action_ == attack)) || ((action_ == heal) && (CLAN_ == CLAN) && (ID_ != ID)) || ((action_ == heal) && (CLAN_ != CLAN)) || (action_ == revive) || ((action_ == deposit) && (CLAN_ == CLAN) && (ID_ == ID)))
-          handleAction(CLAN_, ID_, action_, MULTIPLIER_, channel_);
+          handleAction(CLAN_, ID_, action_, MULTIPLIER_, channel_, isGL_);
       }
     }
   }
@@ -314,21 +320,21 @@ public:
     unsigned long elapsedTime = currTime - timeOfDeath;
     int currentCooldown = MAX_COOLDOWN - (elapsedTime / 1000);
 
-    if (isBombed)
+    if (isInstantKilled)
     {
       currentCooldown += (TEMP_NOTI_WAIT / 1000);
     }
 
     if (currentCooldown > 0)
     {
-      if ((!isBombed) || (isBombed && (elapsedTime > TEMP_NOTI_WAIT)))
+      if ((!isInstantKilled) || (isInstantKilled && (elapsedTime > TEMP_NOTI_WAIT)))
       {
         permNoti = "     Respawn in " + String(currentCooldown) + "s     ";
       }
     }
     else
     {
-      isBombed = false;
+      isInstantKilled = false;
       onCooldown = false;
       timeOfDeath = 0;
       HP = MaxHP;
@@ -374,6 +380,7 @@ public:
       permNoti = "";
       last_max_en_decay = currTime;
 
+      // ENERGY RECOVERY
       if (En >= MaxEn)
       {
         last_en_recover = currTime;
@@ -399,6 +406,24 @@ public:
           last_en_recover = currTime;
         }
       }
+
+      // HP RECOVERY for GL ONLY
+      if (!_isGL)
+        return;
+
+      if (HP >= MaxHP)
+      {
+        last_hp_recover = currTime;
+      }
+      else
+      {
+        if (currTime - last_hp_recover >= HP_RECOVERY_RATE)
+        {
+          HP++;
+          EEPROM.write(PLAYER_HP_add, HP);
+          last_hp_recover = currTime;
+        }
+      }
     }
 
     EEPROM.commit();
@@ -411,6 +436,8 @@ public:
 
     MaxHP = EEPROM.read(PLAYER_MaxHP_add);
     MaxEn = EEPROM.read(PLAYER_MaxEn_add);
+    HP = EEPROM.read(PLAYER_HP_add);
+    En = EEPROM.read(PLAYER_EN_add);
 
     if (HP > MaxHP)
       HP = MaxHP;
@@ -510,17 +537,20 @@ public:
         break;
 
       case button:
-        // if (!choosingPowerUp)
-        //{
+        if (EEPROM.read(CLAN_add) == 255)
+        {
+          runExitRoutine();
+
+          currentProcess = MainMenuProcess;
+          currentPage = mainPage; // reset current page
+          lastPageNav = currentPage;
+        }
+
         if (lastPageNav != currentPage)
           currentPage = lastPageNav;
         if (currentPage == exitPage)
         {
-          // Turn off LED & Buzzer
-          Player_Buzzer.end_sound();
-          Player_NeoPixel.off_FRONT();
-          Player_NeoPixel.off_TOP();
-          ledIsOn = false;
+          runExitRoutine();
 
           currentProcess = MainMenuProcess;
           currentPage = mainPage; // reset current page
@@ -551,6 +581,15 @@ public:
           lastPageNav = currentPage;
       }
     }
+  }
+
+  void runExitRoutine()
+  {
+    // Turn off LED & Buzzer
+    Player_Buzzer.end_sound();
+    Player_NeoPixel.off_FRONT();
+    Player_NeoPixel.off_TOP();
+    ledIsOn = false;
   }
 
   void handlePowerUp(int powerup)
@@ -712,7 +751,7 @@ public:
     }
   }
 
-  void handleAction(int CLAN_, int ID_, int action_, int MULTIPLIER_, int channel_)
+  void handleAction(int CLAN_, int ID_, int action_, int MULTIPLIER_, int channel_, int isGL_)
   {
     Serial.print("Action ID: ");
     Serial.println(action_);
@@ -721,34 +760,39 @@ public:
     case attack:
       if (HP > 0)
       {
-        HP = max(HP - MULTIPLIER_, 0);
+        HP = (isGL_ == 1 && !_isGL) ? 0 : max(HP - MULTIPLIER_, 0);
 
         if (HP == 0)
         {
           switch (CLAN_)
           {
           case INVICTA:
-            EEPROM.write(POINT_INVICTA_add, ++scoreInvicta);
+            scoreInvicta += (isGL_ == 1) ? GL_KILLED_SCORE : 1;
+            EEPROM.write(POINT_INVICTA_add, scoreInvicta);
             Serial.println("INVICTA Scores!");
             break;
 
           case DYNARI:
-            EEPROM.write(POINT_DYNARI_add, ++scoreDynari);
+            scoreDynari += (isGL_ == 1) ? GL_KILLED_SCORE : 1;
+            EEPROM.write(POINT_DYNARI_add, scoreDynari);
             Serial.println("DYNARI Scores!");
             break;
 
           case EPHILIA:
-            EEPROM.write(POINT_EPHILIA_add, ++scoreEphilia);
+            scoreEphilia += (isGL_ == 1) ? GL_KILLED_SCORE : 1;
+            EEPROM.write(POINT_EPHILIA_add, scoreEphilia);
             Serial.println("EPHILIA Scores!");
             break;
 
           case AKRONA:
-            EEPROM.write(POINT_AKRONA_add, ++scoreAkrona);
+            scoreAkrona += (isGL_ == 1) ? GL_KILLED_SCORE : 1;
+            EEPROM.write(POINT_AKRONA_add, scoreAkrona);
             Serial.println("AKRONA Scores!");
             break;
 
           case SOLARIS:
-            EEPROM.write(POINT_SOLARIS_add, ++scoreSolaris);
+            scoreSolaris += (isGL_ == 1) ? GL_KILLED_SCORE : 1;
+            EEPROM.write(POINT_SOLARIS_add, scoreSolaris);
             Serial.println("SOLARIS Scores!");
             break;
 
@@ -757,7 +801,7 @@ public:
           }
 
           ++numDeath;
-          EEPROM.write(PLAYER_num_death, numDeath);
+          EEPROM.write(PLAYER_num_death_add, numDeath);
 
           // Play death SFX
           xTaskCreate(
@@ -772,7 +816,16 @@ public:
 
         EEPROM.write(PLAYER_HP_add, HP);
         Serial.printf("Attacked. Current HP: %d \n", HP);
-        tempNoti = "       Attacked      ";
+        if (isGL_ == 1 && !_isGL)
+        {
+          tempNoti = "     One-shotted     ";
+          isInstantKilled = true;
+        }
+        else
+        {
+          tempNoti = "       Attacked      ";
+        }
+
         tempNoti_start = millis();
         feedback_attack(CLAN_, ID_, channel_);
       }
@@ -862,7 +915,7 @@ public:
     case 1:
       if ((feedbackData.attacker_CLAN == CLAN) && (feedbackData.attacker_ID == ID))
       {
-        Player_Buzzer.Blaster();
+        // Player_Buzzer.Blaster();
         if (feedbackData.is_attackee_killed == true)
         {
           tempNoti = " You killed a person ";
@@ -957,7 +1010,7 @@ public:
     case 6:
       if ((feedbackData.attacker_CLAN == CLAN) && (feedbackData.attacker_ID == ID))
       {
-        Player_Buzzer.Blaster();
+        // Player_Buzzer.Blaster();
         if (feedbackData.is_attackee_killed == true)
         {
           tempNoti = " You destroyed a base";
@@ -982,7 +1035,7 @@ public:
   {
     if (HP > 0)
     {
-      isBombed = true;
+      isInstantKilled = true;
       HP = std::max(HP - BOMB_HP_DEDUCTION, 0);
       std::tie(tempNoti, tempNoti_start) = std::make_pair("   You are Bombed!!  ", millis());
       Player_Buzzer.sound(NOTE_E3);
@@ -991,7 +1044,7 @@ public:
       if (HP == 0) // only increase death count if HP is 0
       {
         ++numDeath;
-        EEPROM.write(PLAYER_num_death, numDeath);
+        EEPROM.write(PLAYER_num_death_add, numDeath);
         EEPROM.commit();
 
         // Play death SFX
@@ -1083,7 +1136,15 @@ public:
     switch (currentPage)
     {
     case mainPage:
-      TreasureHunt_OLED.display_mainPage(HP, En, noti_to_display, lastPageNav);
+      if (EEPROM.read(CLAN_add) != 255)
+      {
+        TreasureHunt_OLED.display_mainPage(HP, MaxHP, En, MaxEn, noti_to_display, lastPageNav);
+      }
+      else
+      {
+        TreasureHunt_OLED.display_noClanPage();
+      }
+
       break;
     case infoPage:
       TreasureHunt_OLED.display_infoPage(CLAN, ID, Multiplier, MaxEn, noti_to_display, lastPageNav);
@@ -1185,9 +1246,9 @@ public:
           VIRUS_IMMUNITY_DURATION = 120000;
           VIRUS_INFECTION_PROBABILITY = 30;
           PARTICIPANT_MaxHP = 12;
-          GL_MaxHP = 50;
+          GL_MaxHP = 25;
           PARTICIPANT_MaxEn = 12;
-          GL_MaxEn = 50;
+          GL_MaxEn = 15;
           INITIAL_MULTIPLIER = 1;
           HEAL_MULTIPLIER = 4;
           MAX_ATTACK_MULTIPLIER = 3;
@@ -1196,6 +1257,8 @@ public:
           KILL_UPDATE_SERVER_INTERVAL = 10 * 60 * 1000; // 10 mins
           WIFI_ON = EEPROM.read(ONLINE_mode_add);
           MAX_COOLDOWN = 20; // seconds
+          GL_KILLED_SCORE = 10;
+          HP_RECOVERY_RATE = 5000; // 1HP/5s
         }
 
         Serial.printf("[INITIALISE] Current CLAN: %d ID %d\n", CLAN, EEPROM.read(ID_add));
@@ -1205,6 +1268,10 @@ public:
       return gameStarted;
     }
     else
+      if (CLAN == 255)
+      {
+        CLAN = EEPROM.read(CLAN_add);
+      }
       return 1;
   }
 
