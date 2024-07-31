@@ -41,7 +41,7 @@ const int POINT_EPHILIA_add = 24;
 const int POINT_AKRONA_add = 25;
 const int POINT_SOLARIS_add = 26;
 const int PLAYER_totalTreasure_add = 27;
-const int PLAYER_num_death = 28;
+const int PLAYER_num_death_add = 28;
 
 
 
@@ -62,7 +62,8 @@ int revival_MULTIPLIER;
 int HEAL_MULTIPLIER;
 int WIFI_ON;
 int MAX_COOLDOWN; // in seconds
-
+int GL_KILLED_SCORE;
+int HP_RECOVERY_RATE; // 1HP/n seconds
 
 
 int failed_kill_feedback = 0;
