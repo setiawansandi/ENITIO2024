@@ -195,8 +195,8 @@ class Admin {
                         case 1:
                             StartUpDisplay();
                             clearEEPROM();
-                            // write into EEPROM Online mode again
-                            EEPROM.write(ONLINE_mode_add, 0);
+                            EEPROM.write(ONLINE_mode_add, 0); // set default OFFLINE mode
+                            EEPROM.write(CLAN_add, 255); // reset clan
                             EEPROM.commit();
                             ESP.restart();
                             break;
