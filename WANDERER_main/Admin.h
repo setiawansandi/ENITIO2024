@@ -190,6 +190,7 @@ public:
 
     void handleJoystickConfirmReset()
     {
+        int player_id;
         joystick_pos joystick_pos = Player_joystick.read_Joystick();
         if (Player_joystick.get_state() == 0)
         {
@@ -201,7 +202,7 @@ public:
                 break;
 
             case down:
-                ConfirmingResetNav = min(ConfirmingResetNav + 1, 1);
+                ConfirmingResetNav = min(ConfirmingResetNav + 1, 2);
                 Player_joystick.set_state();
                 break;
 
@@ -218,6 +219,17 @@ public:
                     clearEEPROM();
                     EEPROM.write(ONLINE_mode_add, 0); // set default OFFLINE mode
                     EEPROM.write(CLAN_add, 255);      // 255 to set clan to unknown (default 0 is invicta)
+                    EEPROM.commit();
+                    ESP.restart();
+                    break;
+
+                case 2:
+                    StartUpDisplay();
+                    player_id = EEPROM.read(ID_add);
+                    clearEEPROM();
+                    EEPROM.write(ONLINE_mode_add, 0); // set default OFFLINE mode
+                    EEPROM.write(CLAN_add, 255);      // 255 to set clan to unknown (default 0 is invicta)
+                    EEPROM.write(ID_add, player_id);
                     EEPROM.commit();
                     ESP.restart();
                     break;

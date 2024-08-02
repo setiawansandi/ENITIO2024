@@ -398,7 +398,9 @@ public:
     display.setCursor(10, 12);
     display.println("NO");
     display.setCursor(10, 22);
-    display.println("YES");
+    display.println("YES, CLEAR ID");
+    display.setCursor(10, 32);
+    display.println("YES, KEEP ID");
 
     switch (ConfirmingResetNav)
     {
@@ -409,6 +411,11 @@ public:
 
     case 1:
       display.setCursor(2, 22);
+      display.println(">");
+      break;
+
+    case 2:
+      display.setCursor(2, 32);
       display.println(">");
       break;
 
