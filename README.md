@@ -32,7 +32,11 @@ Kiran Sudheer
 Sandi Setiawan
 
 ## Gallery
-![image info](./IMG20220731114022.jpg)
-![image info](./IMG20220731114707.jpg)
-![image info](./IMG20220731114904.jpg)
-![image info](./IMG20220731115857.jpg)
+2024
+![image info](./images/new_handle.png)
+![image info](./images/treasure.png)
+2023
+![image info](./images/IMG20220731114022.jpg)
+![image info](./images//IMG20220731114707.jpg)
+![image info](./images//IMG20220731114904.jpg)
+![image info](./images//IMG20220731115857.jpg)
